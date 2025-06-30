@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.10 - 2025-07-02](#1610---2025-07-02)
 - [1.6.9 - 2025-07-02](#169---2025-07-02)
 - [1.6.8 - 2025-06-26](#168---2025-06-26)
 - [1.6.7 - 2025-06-25](#167---2025-06-25)
@@ -138,6 +139,15 @@ All notable changes to this project will be documented in this file. The format 
 ### Security
 
 ---
+
+## [1.6.10] - 2025-07-02
+
+### Added
+- Comprehensive documentation overhaul with new tutorials, guides, and reference materials
+- Interactive coding environment integration
+
+### Changed
+- Reorganized documentation structure
 
 
 ## [1.6.9] - 2025-07-02
