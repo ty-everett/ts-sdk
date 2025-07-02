@@ -36,6 +36,7 @@ import {
   VersionString7To30Bytes,
 } from '../Wallet.interfaces.js'
 import { WERR_REVIEW_ACTIONS } from '../WERR_REVIEW_ACTIONS.js'
+import { toOriginHeader } from './utils/toOriginHeader.js'
 
 export default class HTTPWalletJSON implements WalletInterface {
   baseUrl: string
@@ -52,14 +53,23 @@ export default class HTTPWalletJSON implements WalletInterface {
     this.originator = originator
     this.httpClient = httpClient
 
+    // Detect if we're in a browser environment
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'
+
     this.api = async (call: string, args: object) => {
+      // In browser environments, let the browser handle Origin header automatically
+      // In Node.js environments, we need to set it manually if originator is provided
+      const origin = !isBrowser && this.originator
+        ? toOriginHeader(this.originator, 'http')
+        : undefined
+
       const res = await (
         await httpClient(`${this.baseUrl}/${call}`, {
           method: 'POST',
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            Originator: this.originator ?? ''
+            ...(origin ? { Origin: origin } : {}),
           },
           body: JSON.stringify(args)
         })
