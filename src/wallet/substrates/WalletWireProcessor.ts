@@ -2094,7 +2094,7 @@ export default class WalletWireProcessor implements WalletWire {
         cert.certifier,
         cert.revocationOutpoint,
         cert.fields,
-        cert.signaturre
+        cert.signature
       )
       const certBin = certificate.toBinary()
 
