@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.9 - 2025-07-02](#169---2025-07-02)
 - [1.6.8 - 2025-06-26](#168---2025-06-26)
 - [1.6.7 - 2025-06-25](#167---2025-06-25)
 - [1.6.6 - 2025-06-25](#166---2025-06-25)
@@ -137,6 +138,13 @@ All notable changes to this project will be documented in this file. The format 
 ### Security
 
 ---
+
+
+## [1.6.9] - 2025-07-02
+
+### Fixed
+
+- Fixed an edge-case where the originator header wasn't correctly set when in non-browser environments.
 
 ## [1.6.8] - 2025-06-26
 
