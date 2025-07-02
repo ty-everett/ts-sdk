@@ -3958,6 +3958,15 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ## Functions
 
+### Function: toOriginHeader
+
+```ts
+export function toOriginHeader(originator: string, fallbackScheme = "http"): string | undefined 
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ## Types
 
 | | | |
