@@ -4,3 +4,7 @@ node_modules
 
 eslint-debug-output.txt
 file_list.txt
+
+# MkDocs documentation
+/site
+.DS_Store
