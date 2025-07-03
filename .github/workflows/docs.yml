@@ -10,7 +10,7 @@ permissions:
 jobs:
   deploy:
     # Add repository check to ensure it only runs on main repo
-    if: github.repository == 'bitcoin-sv/ts-sdk'  
+    if: github.repository == 'bsv-blockchain/ts-sdk'  
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
