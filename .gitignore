@@ -7,3 +7,4 @@ file_list.txt
 
 # MkDocs documentation
 /site
+.DS_Store
