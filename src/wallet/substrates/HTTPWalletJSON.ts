@@ -54,7 +54,7 @@ export default class HTTPWalletJSON implements WalletInterface {
     this.httpClient = httpClient
 
     // Detect if we're in a browser environment
-    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && window?.origin !== 'file://'
 
     this.api = async (call: string, args: object) => {
       // In browser environments, let the browser handle Origin header automatically
@@ -63,6 +63,10 @@ export default class HTTPWalletJSON implements WalletInterface {
         ? toOriginHeader(this.originator, 'http')
         : undefined
 
+      if (!isBrowser && origin === undefined) {
+        console.error('Originator is required in Node.js environments')
+      }
+
       const res = await (
         await httpClient(`${this.baseUrl}/${call}`, {
           method: 'POST',
@@ -70,6 +74,7 @@ export default class HTTPWalletJSON implements WalletInterface {
             Accept: 'application/json',
             'Content-Type': 'application/json',
             ...(origin ? { Origin: origin } : {}),
+            ...(origin ? { Originator: origin } : {}),
           },
           body: JSON.stringify(args)
         })
