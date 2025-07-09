@@ -278,6 +278,7 @@ export default class WalletClient implements WalletInterface {
     counterparty?: PubKeyHex | 'self' | 'anyone'
     privileged?: BooleanDefaultFalse
   }): Promise<{ plaintext: Byte[] }> {
+    await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).decrypt(
       args,
       this.originator
