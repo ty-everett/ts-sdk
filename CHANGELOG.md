@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.12 - 2025-07-08](#1612---2025-07-08)
 - [1.6.11 - 2025-07-05](#1611---2025-07-05)
 - [1.6.10 - 2025-07-02](#1610---2025-07-02)
 - [1.6.9 - 2025-07-02](#169---2025-07-02)
@@ -138,6 +139,13 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+## [1.6.12] - 2025-07-08
+
+### Fixed
+- Fixed a bug where the WalletClient decrypt method was not first calling connectToSubstrate.
 
 ---
 
