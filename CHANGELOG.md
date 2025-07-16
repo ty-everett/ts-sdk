@@ -142,6 +142,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+## [1.6.13] - 2025-07-16
+
+### Added
+
+- Added new guides covering advanced SDK usage patterns
+- Added markdown validation system with pre-commit hooks for documentation quality
+
+### Fixed
+
+- Fixed markdown formatting issues for improved Material MkDocs rendering
+
+---
+
 ## [1.6.12] - 2025-07-08
 
 ### Fixed
