@@ -3,6 +3,7 @@
 **Duration**: 90 minutes  
 **Prerequisites**: Node.js, basic TypeScript knowledge, understanding of digital certificates  
 **Learning Goals**:
+
 - Understand decentralized identity concepts
 - Use IdentityClient for certificate management
 - Implement identity verification systems

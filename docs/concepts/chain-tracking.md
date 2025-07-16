@@ -19,21 +19,25 @@ const txData = await chainTracker.getTransaction('txid')
 ## Key Functions
 
 ### Transaction Lookup
+
 - Retrieve transaction details by ID
 - Get transaction status and confirmations
 - Access transaction inputs and outputs
 
 ### UTXO Queries
+
 - Find unspent transaction outputs
 - Check UTXO availability and value
 - Retrieve UTXO locking scripts
 
 ### Block Information
+
 - Get block headers and merkle proofs
 - Verify transaction inclusion in blocks
 - Access block timestamps and difficulty
 
 ### Network Status
+
 - Check network connectivity
 - Monitor chain tip and height
 - Get fee rate recommendations
@@ -41,6 +45,7 @@ const txData = await chainTracker.getTransaction('txid')
 ## SPV Integration
 
 Chain trackers enable SPV (Simplified Payment Verification):
+
 - **Merkle Proofs**: Verify transaction inclusion without full blocks
 - **Header Chain**: Maintain block headers for proof verification
 - **Lightweight**: Minimal data requirements compared to full nodes
@@ -63,16 +68,19 @@ const config = {
 ## Benefits
 
 ### Scalability
+
 - No need to store the entire blockchain
 - Fast startup and synchronization
 - Minimal storage requirements
 
 ### Reliability
+
 - Multiple provider support
 - Automatic failover capabilities
 - Redundant data sources
 
 ### Performance
+
 - Targeted data queries
 - Caching of frequently accessed data
 - Optimized for application needs
@@ -80,6 +88,7 @@ const config = {
 ## Common Patterns
 
 ### Transaction Verification
+
 ```typescript
 // Verify a transaction exists
 const exists = await chainTracker.getTransaction(txid)
@@ -89,6 +98,7 @@ if (exists) {
 ```
 
 ### UTXO Validation
+
 ```typescript
 // Check if UTXO is still unspent
 const utxo = await chainTracker.getUTXO(txid, outputIndex)
@@ -100,6 +110,7 @@ if (utxo) {
 ## Error Handling
 
 Chain tracker operations can fail due to:
+
 - Network connectivity issues
 - Service provider downtime
 - Invalid transaction IDs
@@ -110,6 +121,7 @@ The SDK provides automatic retry and failover mechanisms.
 ## Configuration
 
 Chain trackers can be configured for:
+
 - **Network**: Mainnet, testnet, or regtest
 - **Endpoints**: Custom service URLs
 - **Timeouts**: Request timeout settings

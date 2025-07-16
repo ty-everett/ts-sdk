@@ -3,6 +3,7 @@
 **Duration**: 45 minutes  
 **Prerequisites**: Node.js, basic TypeScript knowledge, completed "Your First BSV Transaction" tutorial  
 **Learning Goals**:
+
 - Understand ProtoWallet's role in development and testing
 - Implement cryptographic operations without blockchain interaction
 - Use ProtoWallet for key derivation and signing
@@ -20,6 +21,7 @@ ProtoWallet is a lightweight wallet implementation designed for development and 
 ## What You'll Build
 
 In this tutorial, you'll create a development toolkit using ProtoWallet that includes:
+
 - Key generation and management
 - Message signing and verification
 - Symmetric encryption/decryption

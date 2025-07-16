@@ -1,6 +1,25 @@
 # Configuring HTTP Clients
 
-This guide covers how to configure HTTP clients for use with the BSV TypeScript SDK, focusing on Axios and alternatives.
+This guide covers how to configure HTTP clients for use with the BSV TypeScript SDK, focusing on Axios and alternatives for general HTTP operations, transaction broadcasting, and SDK infrastructure.
+
+## When to Use This Guide
+
+**Use this guide when you need:**
+
+- Custom HTTP client setup for SDK operations (Axios, fetch, etc.)
+- Transaction broadcasting via ARC endpoints
+- Environment-specific HTTP configuration (timeouts, retries, headers)
+- Testing and mocking HTTP clients for SDK functionality
+- Integration with existing HTTP infrastructure
+
+**For authenticated peer-to-peer communication, use [AuthFetch Tutorial](../tutorials/authfetch-tutorial.md) instead:**
+
+- BRC-103/104 cryptographic authentication
+- Wallet-signed HTTP requests
+- Certificate-based peer verification
+- Secure application-to-application communication
+
+> **📚 Related Concepts**: This guide relates to [Chain Tracking](../concepts/chain-tracking.md) and [SDK Design Philosophy](../concepts/sdk-philosophy.md) for understanding network interaction patterns.
 
 ## Using Axios with the SDK
 
@@ -24,6 +43,20 @@ const customAxios = axios.create({
 // Use the custom client when broadcasting transactions
 const broadcastTransaction = async (tx) => {
   try {
+    // Create a simple transaction with P2PKH output
+    const tx = new Transaction()
+    const privateKey = PrivateKey.fromRandom()
+    const publicKey = privateKey.toPublicKey()
+    const address = publicKey.toAddress()
+    
+    // Add an output using P2PKH (instantiate the class first)
+    const p2pkh = new P2PKH()
+    const lockingScript = p2pkh.lock(address)
+    tx.addOutput({
+      satoshis: 100,
+      lockingScript
+    })
+    
     // Convert the transaction to hex format
     const txHex = tx.toHex()
     
@@ -57,10 +90,26 @@ const customAxios = axios.create({
   }
 })
 
+// Create an adapter to make Axios compatible with HttpClient interface
+class AxiosAdapter {
+  constructor(private axiosInstance: any) {}
+  
+  async request(url: string, options: any = {}) {
+    const response = await this.axiosInstance({
+      url,
+      method: options.method || 'GET',
+      data: options.body,
+      headers: options.headers
+    })
+    return response.data
+  }
+}
+
 // Create an ARC instance with custom HTTP client
-const arc = new ARC({
-  apiUrl: 'https://api.taal.com/arc',
-  httpClient: customAxios
+const httpClient = new AxiosAdapter(customAxios)
+const arc = new ARC('https://api.taal.com/arc', {
+  apiKey: 'YOUR_API_KEY',
+  httpClient
 })
 
 // Use the configured ARC instance to broadcast a transaction
@@ -93,7 +142,7 @@ const client = axios.create({
 axiosRetry(client, {
   retries: 3,
   retryDelay: axiosRetry.exponentialDelay,
-  retryCondition: (error) => {
+  retryCondition: (error: any) => {
     // Retry on network errors or 5xx responses
     return axiosRetry.isNetworkOrIdempotentRequestError(error) || 
            (error.response && error.response.status >= 500)
@@ -101,7 +150,7 @@ axiosRetry(client, {
 })
 
 // Add request interceptor for logging
-client.interceptors.request.use(request => {
+client.interceptors.request.use((request: any) => {
   console.log('Starting request:', request.url)
   return request
 })
@@ -127,14 +176,14 @@ client.interceptors.response.use(
 ```typescript
 import axios from 'axios'
 
-const getConfiguredClient = (environment = 'production') => {
-  const baseURLs = {
+const getConfiguredClient = (environment: 'production' | 'staging' | 'development' = 'production') => {
+  const baseURLs: Record<string, string> = {
     production: 'https://api.taal.com',
     staging: 'https://api-staging.taal.com',
     development: 'http://localhost:3000'
   }
 
-  const timeouts = {
+  const timeouts: Record<string, number> = {
     production: 10000,
     staging: 15000,
     development: 30000
@@ -230,33 +279,17 @@ While the SDK provides built-in HTTP clients and Axios is commonly used, you can
 ```typescript
 import { ARC } from '@bsv/sdk'
 
-// Create a fetch-based HTTP client
-const fetchClient = {
-  post: async (url, data, options = {}) => {
+// Create a fetch-based HTTP client that implements HttpClient interface
+class CustomFetchClient {
+  async request(url: string, options: any = {}) {
     const response = await fetch(url, {
-      method: 'POST',
+      method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers
-      },
-      body: JSON.stringify(data)
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`HTTP error ${response.status}: ${errorText}`)
-    }
-    
-    return await response.json()
-  },
-  
-  get: async (url, options = {}) => {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
         'Accept': 'application/json',
         ...options.headers
-      }
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined
     })
     
     if (!response.ok) {
@@ -269,8 +302,9 @@ const fetchClient = {
 }
 
 // Use with ARC
-const arc = new ARC({
-  apiUrl: 'https://api.taal.com/arc',
+const fetchClient = new CustomFetchClient()
+const arc = new ARC('https://api.taal.com/arc', {
+  apiKey: 'your-api-key',
   httpClient: fetchClient
 })
 ```
@@ -282,16 +316,21 @@ When testing your application, you may want to mock HTTP responses:
 ```typescript
 import { ARC } from '@bsv/sdk'
 
-// Create a mock HTTP client for testing
-const mockHttpClient = {
-  post: jest.fn().mockResolvedValue({ data: { txid: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' } }),
-  get: jest.fn().mockResolvedValue({ data: { status: 'confirmed' } })
+// Create a mock HTTP client for testing that implements HttpClient interface
+class MockHttpClient {
+  request = jest.fn().mockImplementation(async (url: string, options: any = {}) => {
+    if (options.method === 'POST' && url.includes('/tx')) {
+      return { txid: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' }
+    }
+    return { status: 'confirmed' }
+  })
 }
 
 // Create an ARC instance with the mock client
-const arc = new ARC({
-  apiUrl: 'https://api.example.com/arc',
-  httpClient: mockHttpClient
+const mockClient = new MockHttpClient()
+const arc = new ARC('https://api.example.com/arc', {
+  apiKey: 'test-api-key',
+  httpClient: mockClient
 })
 
 // Test transaction broadcasting
@@ -300,10 +339,12 @@ const testBroadcast = async () => {
   const result = await arc.broadcast(mockTxHex)
   
   // Verify the mock was called correctly
-  expect(mockHttpClient.post).toHaveBeenCalledWith(
-    'https://api.example.com/arc/tx',
-    { rawTx: mockTxHex },
-    expect.any(Object)
+  expect(mockClient.request).toHaveBeenCalledWith(
+    expect.stringContaining('/tx'),
+    expect.objectContaining({
+      method: 'POST',
+      body: expect.objectContaining({ rawTx: mockTxHex })
+    })
   )
   
   return result
@@ -315,7 +356,7 @@ const testBroadcast = async () => {
 You can create your own HTTP client implementation by implementing the `HttpClient` interface from the SDK. This gives you complete control over how HTTP requests are handled:
 
 ```typescript
-import { HttpClient, HttpClientResponse, HttpClientRequestOptions, ARC } from '@bsv/sdk'
+import { HttpClient, HttpClientResponse, HttpClientRequestOptions, ARC, Transaction, PrivateKey, P2PKH } from '@bsv/sdk'
 
 // Implement the HttpClient interface
 class CustomHttpClient implements HttpClient {
@@ -381,10 +422,23 @@ const arc = new ARC('https://api.taal.com/arc', {
 })
 
 // Example broadcasting a transaction with the custom client
-const broadcastTx = async (tx) => {
+const broadcastTx = async () => {
   try {
-    // Make sure to use toHex() for proper serialization
-    const txHex = tx.toHex()
+    // Create a simple transaction with P2PKH output
+    const tx = new Transaction()
+    const privateKey = PrivateKey.fromRandom()
+    const publicKey = privateKey.toPublicKey()
+    const address = publicKey.toAddress()
+    
+    // Add an output using P2PKH (instantiate the class first)
+    const p2pkh = new P2PKH()
+    const lockingScript = p2pkh.lock(address)
+    tx.addOutput({
+      satoshis: 100,
+      lockingScript
+    })
+    
+    // Broadcast the transaction
     const result = await arc.broadcast(tx)
     
     // Transaction ID needs specific handling
@@ -406,6 +460,26 @@ const broadcastTx = async (tx) => {
 5. **Use environment variables** - Store API keys and endpoints in environment variables
 6. **Consider rate limiting** - Implement backoff strategies for rate-limited APIs
 7. **Use the built-in clients** - The SDK's `defaultHttpClient()` handles environment detection automatically
+
+## Related Documentation
+
+### For Authenticated Communication
+
+- **[AuthFetch Tutorial](../tutorials/authfetch-tutorial.md)** - Use for BRC-103/104 cryptographic authentication, wallet-signed requests, and secure peer-to-peer communication
+
+### For Advanced HTTP Scenarios
+
+- **[Error Handling Guide](error-handling.md)** - Comprehensive error handling patterns for HTTP operations
+- **[Chain Tracking](../concepts/chain-tracking.md)** - Understanding network interaction patterns
+- **[SDK Design Philosophy](../concepts/sdk-philosophy.md)** - Core principles behind SDK HTTP client design
+
+### For Transaction Broadcasting
+
+- **[Transaction Broadcasting Tutorial](../tutorials/transaction-broadcasting.md)** - Step-by-step transaction broadcasting examples
+
+---
+
+**Summary**: This guide covers infrastructure-level HTTP client configuration for SDK operations. For application-level authenticated communication using BSV cryptographic protocols, see the [AuthFetch Tutorial](../tutorials/authfetch-tutorial.md).
 
 ## Related Resources
 

@@ -50,6 +50,7 @@ interface NetworkConfig {
 ### Predefined Networks
 
 #### Mainnet Configuration
+
 ```typescript
 const MAINNET_CONFIG: NetworkConfig = {
   name: 'mainnet',
@@ -76,6 +77,7 @@ const MAINNET_CONFIG: NetworkConfig = {
 ```
 
 #### Testnet Configuration
+
 ```typescript
 const TESTNET_CONFIG: NetworkConfig = {
   name: 'testnet',
@@ -101,6 +103,7 @@ const TESTNET_CONFIG: NetworkConfig = {
 ```
 
 #### Regtest Configuration
+
 ```typescript
 const REGTEST_CONFIG: NetworkConfig = {
   name: 'regtest',
@@ -808,18 +811,21 @@ function validateConfig(config: SDKConfig): string[] {
 ### Environment-Specific Settings
 
 #### Development
+
 - Use testnet or regtest networks
 - Enable debug logging
 - Shorter timeouts for faster feedback
 - Disable strict validation for testing
 
 #### Staging
+
 - Mirror production configuration
 - Enable comprehensive logging
 - Use production-like endpoints
 - Enable all validation checks
 
 #### Production
+
 - Use mainnet network
 - Minimal logging (warn/error only)
 - Longer timeouts for reliability

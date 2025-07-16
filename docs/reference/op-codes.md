@@ -14,6 +14,7 @@ Bitcoin scripts operate in a **stack-based execution environment** with two prim
 - **Alt Stack**: Provides additional stack flexibility for complex operations
 
 Scripts consist of two parts:
+
 1. **Unlocking Script**: Provided by the spender, supplies data to satisfy locking conditions
 2. **Locking Script**: Defines the conditions that must be met to spend the output
 
@@ -47,6 +48,7 @@ const script = Script.fromASM('OP_DUP OP_HASH160 ' + publicKeyHash + ' OP_EQUALV
 ## Opcode Categories
 
 ### Push Operations
+
 Push data onto the stack:
 
 ```typescript
@@ -63,6 +65,7 @@ OP.OP_PUSHDATA4  // Push up to 4,294,967,295 bytes
 ```
 
 ### Stack Operations
+
 Manipulate stack contents:
 
 ```typescript
@@ -75,6 +78,7 @@ OP.OP_TOALTSTACK // Move item to alt stack
 ```
 
 ### Arithmetic Operations
+
 Perform mathematical operations:
 
 ```typescript
@@ -88,6 +92,7 @@ OP.OP_MAX        // Return maximum of two values
 ```
 
 ### Comparison Operations
+
 Compare values and return boolean results:
 
 ```typescript
@@ -100,6 +105,7 @@ OP.OP_WITHIN        // Check if value is within range
 ```
 
 ### Cryptographic Operations
+
 Perform cryptographic functions:
 
 ```typescript
@@ -112,6 +118,7 @@ OP.OP_CHECKMULTISIG // Verify multiple signatures
 ```
 
 ### Control Flow Operations
+
 Control script execution:
 
 ```typescript
@@ -125,6 +132,7 @@ OP.OP_RETURN     // Mark output as unspendable
 ## Common Script Patterns
 
 ### Pay-to-Public-Key-Hash (P2PKH)
+
 The most common Bitcoin script pattern:
 
 ```typescript
@@ -145,6 +153,7 @@ const p2pkhUnlock = new UnlockingScript([
 ```
 
 ### Data Storage Script
+
 Store arbitrary data on the blockchain:
 
 ```typescript
@@ -156,6 +165,7 @@ const dataScript = new LockingScript([
 ```
 
 ### Multi-Signature Script
+
 Require multiple signatures:
 
 ```typescript
@@ -170,10 +180,10 @@ const multisigScript = new LockingScript([
 ])
 ```
 
-
 ## Security Considerations
 
 ### Disabled Opcodes
+
 Some opcodes are disabled for security reasons:
 
 ```typescript
@@ -187,6 +197,7 @@ OP.OP_VERNOTIF  // Disabled: inverse conditional verification
 ## Best Practices
 
 ### 1. Use Script Templates
+
 Leverage SDK script templates for common patterns:
 
 ```typescript
@@ -198,6 +209,7 @@ const lockingScript = p2pkh.lock(publicKeyHash)
 ```
 
 ### 2. Validate Scripts
+
 Always validate scripts before use:
 
 ```typescript
@@ -210,6 +222,7 @@ try {
 ```
 
 ### 3. Handle Execution Errors
+
 Implement proper error handling:
 
 ```typescript
@@ -228,6 +241,7 @@ try {
 ## Common Use Cases
 
 ### 1. Payment Scripts
+
 Standard payment to public key hash:
 
 ```typescript
@@ -235,6 +249,7 @@ const paymentScript = Script.fromASM(`OP_DUP OP_HASH160 ${pubKeyHash} OP_EQUALVE
 ```
 
 ### 2. Data Storage
+
 Store application data on-chain:
 
 ```typescript
@@ -242,6 +257,7 @@ const dataScript = Script.fromASM(`OP_RETURN ${Buffer.from(jsonData).toString('h
 ```
 
 ### 3. Smart Contracts
+
 Create conditional spending logic:
 
 ```typescript
@@ -256,6 +272,7 @@ const contractScript = Script.fromASM(`
 ```
 
 ### 4. Puzzle Scripts
+
 Create cryptographic puzzles:
 
 ```typescript
@@ -266,6 +283,7 @@ const puzzleScript = Script.fromASM(`OP_HASH256 ${targetHash} OP_EQUAL`)
 ## Debugging Scripts
 
 ### Script Execution Tracing
+
 Monitor script execution step by step:
 
 ```typescript
@@ -284,6 +302,7 @@ while (!spend.isFinished()) {
 ```
 
 ### Common Debugging Patterns
+
 Identify and fix common script issues:
 
 ```typescript

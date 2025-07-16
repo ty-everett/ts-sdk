@@ -780,6 +780,7 @@ function estimateMultisigTxSize(
 Multi-signature transactions provide enhanced security through distributed key management. The BSV TypeScript SDK offers flexible tools for implementing various multisig patterns, from simple 2-of-3 schemes to complex threshold signatures with time locks.
 
 Key takeaways:
+
 - Always validate inputs and signatures
 - Implement proper error handling
 - Use secure key generation and storage

@@ -17,6 +17,7 @@
 Advanced Encryption Standard (AES) is a symmetric encryption algorithm where the same key is used for both encryption and decryption. The BSV TypeScript SDK provides the `SymmetricKey` class that implements AES-GCM (Galois/Counter Mode), which provides both confidentiality and authenticity.
 
 AES-GCM offers several advantages:
+
 - **Confidentiality**: Data is encrypted and unreadable without the key
 - **Authenticity**: Built-in authentication prevents tampering
 - **Performance**: Fast encryption/decryption operations
@@ -127,11 +128,13 @@ console.log('SDK decrypted from hex:', sdkDecryptedMessage)
 The `enc` parameter in the SDK's `encrypt()` and `decrypt()` methods can be confusing. Here's how it actually works:
 
 **In `encrypt(data, enc)`:**
+
 - `enc` specifies how to **interpret the input data**
 - `enc: 'hex'` means the input data is a hex string that should be converted to bytes
 - The output format is determined by the `enc` parameter (hex string if `enc: 'hex'`, byte array otherwise)
 
 **In `decrypt(data, enc)`:**
+
 - `enc` specifies the **output format**
 - `enc: 'hex'` returns the decrypted data as a hex string
 - `enc: 'utf8'` returns the decrypted data as a UTF-8 string
@@ -152,7 +155,6 @@ console.log('Decrypted as hex:', decryptedHex) // '48656c6c6f2c20576f726c6421'
 const finalMessage = Buffer.from(decryptedHex, 'hex').toString('utf8')
 console.log('Final message:', finalMessage) // 'Hello, World!'
 ```
-
 
 ## Complete Encryption Example
 

@@ -4,6 +4,7 @@
 **Prerequisites**: Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Install and configure the BSV TypeScript SDK
 - Create a simple transaction using `WalletClient` interface on the mainnet network. This approach makes it easy to build transactions by abstracting away many of the low-level details. By the end, you'll understand the basic components of a BSV transaction and how to construct, sign, and broadcast one on the BSV blockchain.
 
@@ -15,7 +16,7 @@ In this tutorial, you'll learn how to create your first Bitcoin SV transactions 
 
 > **💡 Try It Interactive**: Want to experiment with the code examples from this tutorial? Check out our [Interactive BSV Coding Environment](https://fast.brc.dev/) where you can run SDK code directly in your browser without any setup!
 
-## Precondition 
+## Precondition
 
 Install a BRC-100 compliant wallet such as the [MetaNet Desktop Wallet](https://metanet.bsvb.tech/). When you install it, you'll receive a small amount of funds to play with.
 
@@ -118,7 +119,6 @@ Run it as follows:
 npx ts-node step1-simple-transaction.ts
 ```
 
-
 **What's happening here:**
 
 - We connect to your BRC-100 wallet (like MetaNet Desktop)
@@ -162,14 +162,12 @@ async function createToken() {
 createToken().catch(console.error)
 ```
 
-
 Run it as follows:
 
 ```bash
 # Run the TypeScript file directly
 npx ts-node step2-create-token.ts
 ```
-
 
 **What's happening here:**
 
@@ -227,7 +225,6 @@ async function spendToken() {
 spendToken().catch(console.error)
 ```
 
-
 Run it as follows:
 
 ```bash
@@ -235,15 +232,12 @@ Run it as follows:
 npx ts-node step3-spend-token.ts
 ```
 
-
 **What's happening here:**
 
 - We list tokens from our 'my-tokens' basket
 - Spend the first available token by providing its outpoint
 - Create a new output with proof that we spent the token
 - The BEEF (Blockchain Exchange Format) provides the transaction history
-
-
 
 ## What You've Learned
 

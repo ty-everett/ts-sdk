@@ -19,6 +19,7 @@ await wallet.authenticate()
 ## BRC-100 Compliance
 
 The SDK follows the BRC-100 standard for wallet communication:
+
 - **Standardized APIs**: Consistent interface across different wallets
 - **Authentication**: Secure identity verification
 - **Transaction Signing**: Wallet handles private key operations
@@ -51,16 +52,19 @@ const action = await wallet.createAction({
 ## Key Benefits
 
 ### Security
+
 - Private keys never leave the wallet
 - User controls transaction approval
 - Secure authentication protocols
 
 ### User Experience
+
 - Familiar wallet interface
 - Consistent across applications
 - Single sign-on capabilities
 
 ### Developer Simplicity
+
 - No key management complexity
 - Standardized APIs
 - Automatic UTXO handling
@@ -68,6 +72,7 @@ const action = await wallet.createAction({
 ## Wallet Types
 
 The SDK works with various wallet implementations:
+
 - **Desktop Wallets**: Local applications with full control
 - **Web Wallets**: Browser-based wallet services
 - **Mobile Wallets**: Smartphone applications
@@ -76,6 +81,7 @@ The SDK works with various wallet implementations:
 ## Error Handling
 
 Common wallet integration scenarios:
+
 - Wallet not available or offline
 - User denies transaction approval
 - Insufficient funds in wallet

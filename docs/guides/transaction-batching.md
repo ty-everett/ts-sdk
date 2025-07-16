@@ -127,6 +127,6 @@ async function createConsolidationBatch() {
 
 ## Conclusion
 
-Transaction batching is a powerful technique for optimizing Bitcoin applications. 
+Transaction batching is a powerful technique for optimizing Bitcoin applications.
 
 Understanding of `WalletClient` usage is essential for implementing these strategies effectively. While the `WalletClient` provides convenient single-transaction creation, batching multiple operations into fewer transactions can significantly improve efficiency and reduce costs. Integration with `WalletClient` is straightforward, and the benefits of batching can be substantial.

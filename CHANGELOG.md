@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file. The format 
 - [1.5.3 - 2025-05-29](#153---2025-05-29)
 - [1.5.1 - 2025-05-13](#151---2025-05-13)
 - [1.5.0 - 2025-05-09](#150---2025-05-09)
-  - Hereon compatible with Metanet Mobile v0.0.1
+    - Hereon compatible with Metanet Mobile v0.0.1
 - [1.4.23 - 2025-04-29](#1423---2025-04-29)
 - [1.4.22 - 2025-04-27](#1422---2025-04-27)
 - [1.4.21 - 2025-04-13](#1421---2025-04-17)
@@ -45,7 +45,7 @@ All notable changes to this project will be documented in this file. The format 
 - [1.4.2 - 2025-03-13](#142---2025-03-13)
 - [1.4.1 - 2025-03-12](#141---2025-03-12)
 - [1.4.0 - 2025-03-10](#140---2025-03-7)
-  - Scope increase to include Identity, Storage, and Message Box client functionality
+    - Scope increase to include Identity, Storage, and Message Box client functionality
 - [1.3.36 - 2025-03-07](#1336---2025-03-7)
 - [1.3.35 - 2025-03-07](#1335---2025-03-7)
 - [1.3.34 - 2025-03-06](#1334---2025-03-6)
@@ -79,7 +79,7 @@ All notable changes to this project will be documented in this file. The format 
 - [1.3.2 - 2025-01-13](#132---2025-01-13)
 - [1.3.1 - 2025-01-13](#131---2025-01-13)
 - [1.3.0 - 2025-01-11](#130---2025-01-11)
-  - Scope increase to include [auth](./src/auth/) Mutual Authentication and Monetization Framework
+    - Scope increase to include [auth](./src/auth/) Mutual Authentication and Monetization Framework
 - [1.2.22 - 2025-01-06](#1222---2025-01-06)
 - [1.2.21 - 2025-01-03](#1221---2025-01-03)
 - [1.2.19 - 2024-12-19](#1219---2024-12-19)
@@ -101,7 +101,7 @@ All notable changes to this project will be documented in this file. The format 
 - [1.2.2 - 2024-11-26](#122---2024-11-26)
 - [1.2.1 - 2024-11-25](#121---2024-11-25)
 - [1.2.0 - 2024-11-25](#120---2024-11-25)
-  - Scope increase to include [wallet](./src/wallet/) and [overlay-tools](./src/overlay-tools/)
+    - Scope increase to include [wallet](./src/wallet/) and [overlay-tools](./src/overlay-tools/)
 - [1.1.33 - 2024-11-22](#1133---2024-11-22)
 - [1.1.32 - 2024-11-22](#1132---2024-11-22)
 - [1.1.30 - 2024-11-02](#1130---2024-11-02)
@@ -121,9 +121,9 @@ All notable changes to this project will be documented in this file. The format 
 - [1.1.5 - 2024-06-11](#115---2024-06-11)
 - [1.1.4 - 2024-05-10](#114---2024-05-10)
 - [1.1.0 - 2024-05-06](#110---2024-05-06)
-  - First changes from open source community
+    - First changes from open source community
 - [1.0.0 - 2024-02-10](#100---2024-02-10)
-  - Open Source launch
+    - Open Source launch
 - [Template for New Releases](#template-for-new-releases)
 
 ## [Unreleased]
@@ -145,6 +145,7 @@ All notable changes to this project will be documented in this file. The format 
 ## [1.6.12] - 2025-07-08
 
 ### Fixed
+
 - Fixed a bug where the WalletClient decrypt method was not first calling connectToSubstrate.
 
 ---
@@ -158,12 +159,13 @@ All notable changes to this project will be documented in this file. The format 
 ## [1.6.10] - 2025-07-02
 
 ### Added
+
 - Comprehensive documentation overhaul with new tutorials, guides, and reference materials
 - Interactive coding environment integration
 
 ### Changed
-- Reorganized documentation structure
 
+- Reorganized documentation structure
 
 ## [1.6.9] - 2025-07-02
 
@@ -209,6 +211,7 @@ To LocalKVStore:
 ## [1.6.5] - 2025-06-21
 
 ### Added
+
 - ChainTracker which relies on an instance of [Block Headers Service](https://github.com/bsv-blockchain/block-headers-service).
 
 ---
@@ -216,6 +219,7 @@ To LocalKVStore:
 ## [1.6.4] - 2025-06-20
 
 ### Change
+
 - Export the type for `ScriptChunk` properly.
 
 ---
@@ -223,6 +227,7 @@ To LocalKVStore:
 ## [1.6.3] - 2025-06-20
 
 ### Change
+
 - `SimplifiedFetchTransport`: Added more checks to ensure the connection at the transport layer is correct when sending certificates.
 
 ---
@@ -445,7 +450,6 @@ There was some slightly weird patterns in the Spend step method which. It was as
 
 - Fixed a bug in local-only broadcast mode
 
-
 ---
 
 ## [1.4.5] - 2025-03-15
@@ -498,7 +502,6 @@ There was some slightly weird patterns in the Spend step method which. It was as
 - Test coverage WIP
 
 ---
-
 
 ## [1.3.36] - 2025-03-7
 
@@ -587,7 +590,7 @@ There was some slightly weird patterns in the Spend step method which. It was as
 
 ### Fixed
 
-- Fixed a bug with AuthFetch where when responding to error 402, the derivationSuffix was not sent to the server. 
+- Fixed a bug with AuthFetch where when responding to error 402, the derivationSuffix was not sent to the server.
 - Updated used createNonce for the derivationSuffix creation to link it to the sender.
 
 ---
@@ -833,13 +836,13 @@ Changes to cleanup and normalize types in Wallet.interfaces.ts and dependent fil
 
 ### Fixed
 
-- There was a slice of the BeefTxs array in Beef which should be a splice (remove a tx) 
+- There was a slice of the BeefTxs array in Beef which should be a splice (remove a tx)
 
 ### Changed
 
 - Refactored a bunch of functions on advice from Sonar Qube which suggested they were a little to dense for most people to follow.
 - Refactored for loops into for-of loops where possible.
-- Refactored loops where the loop counter is updated within the loop which is advised against. 
+- Refactored loops where the loop counter is updated within the loop which is advised against.
 
 ---
 
@@ -861,6 +864,7 @@ Bug [#162](https://github.com/bsv-blockchain/ts-sdk/issues/162)
 ## [1.2.15] - 2024-12-16
 
 ### Added
+
 - A helper function for most commonly used output type. `tx.addP2PKHOutput(address, satoshis)`
 - Make sure to check the provided hash is 20 bytes.
 
@@ -869,8 +873,10 @@ Bug [#162](https://github.com/bsv-blockchain/ts-sdk/issues/162)
 ## [1.2.14] - 2024-12-14
 
 ### Added
+
 - fromCoinbaseTxidAndHeight method to the MerklePath class for that special case
 - added test demonstrating how to validate scripts only for one tx even when you don't have a merkle path for the previous tx.
+
   ```js
   // merklePath just has to be set to any object.
   sourceTransaction.merklePath = { assumeValid: true }
@@ -883,20 +889,24 @@ Bug [#162](https://github.com/bsv-blockchain/ts-sdk/issues/162)
 ## [1.2.13] - 2024-12-13
 
 ### Added
+
 - JSON HTTP substrate, with corresponding swagger-ui documentation.
 - Example args and responses to the swagger-ui
 
 ### Added
+
 - PrivateKey test linter errors
 
 ---
 
 ## [1.2.12] - 2024-12-12
+
 ### Added
 
 - Added optional broadcastMany to Broadcaster interface.
 
 ## [1.2.11] - 2024-12-10
+
 ### Added
 
 - Added a fix to ensure PrivateKeys as hex are always 64 chars in length ensuring 256 bit keys.
@@ -946,13 +956,16 @@ Beef sortTx fix for partially valid and txidOnly data.
 ## [1.2.6] - 2024-11-30
 
 ### Added
-- revealSpecificKeyLinkage requires a counterparty. 
+
+- revealSpecificKeyLinkage requires a counterparty.
 - ProtoWallet now correctly implements the wallet interface.
 
 ---
+
 ## [1.2.5] - 2024-11-30
 
 ### Added
+
 - Testnet capabilities & config override for node to function without error to defaultBroadcaster
 - broadcastMany function to ARCBroadcaster
 
@@ -961,6 +974,7 @@ Beef sortTx fix for partially valid and txidOnly data.
 ## [1.2.4] - 2024-11-29
 
 ### Added
+
 - A "random" distributioun mode for change allocation which approximates Benford's Law in attempt to distribute the remainder of: (inputSats - knownOutputSats - txFee) across the outputs marked "change: true".
 
 ---
@@ -968,12 +982,15 @@ Beef sortTx fix for partially valid and txidOnly data.
 ## [1.2.3] - 2024-11-26
 
 ### Added
+
 - Added support for Overlay broadcast and lookup timeouts.
+
 ---
 
 ## [1.2.2] - 2024-11-26
 
 ### Added
+
 - Updated the default ShipBroadcast config, tests, and docs.
 
 ---
@@ -981,6 +998,7 @@ Beef sortTx fix for partially valid and txidOnly data.
 ## [1.2.1] - 2024-11-25
 
 ### Added
+
 - [NPM package provenance](https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/) support
 
 ---
@@ -988,6 +1006,7 @@ Beef sortTx fix for partially valid and txidOnly data.
 ## [1.2.0] - 2024-11-25
 
 ### Added
+
 - Implement BRC-100 wallet interface
 - Add PushDrop token template
 - SHIP and SLAP overlay tooling including broadcaster and lookup
@@ -1031,52 +1050,76 @@ Transaction.fromAtomicBEEF
 ---
 
 ## [1.1.30] - 2024-11-02
+
 ### Added
+
 - Feature - Schorr class which allows ZKP creation and verification. BRC-94 and BRC-100 related.
 
 ### Changed
+
 - electrumEncrypt correctly allows fromPrivateKey to be omitted
 
 ## [1.1.29] - 2024-10-23
+
 ### Fixed
+
 - ECIES ElectrumDecrypt counterparty decryption bug
 
 ## [1.1.28] - 2024-10-23
+
 ### Added
+
 - UMD support added for use in non-standard environments.
 
 ## [1.1.26] - 2024-10-22
+
 ### Added
+
 - Atomic BEEF serializer and deserializer for `Transaction` class
 - Ability to select a TXID from a BEEF when construction a `Transaction.fromBEEF()`
 
 ## [1.1.25] - 2024-10-21
+
 ### Added
+
 - `Beef`, `BeefTx`, and `BeefParty` classes
 
 ## [1.1.24] - 2024-10-04
+
 ### Fixed
+
 - Addressed #125
 - Optimized SPV verification
 
 ## [1.1.22] - 2024-09-02
+
 ### Added
+
 - Base64 mode support for BSM
 
 ## [1.1.21] - 2024-09-02
+
 ### Added
+
 - Broadcaster types have been updated to better align with Arc
 - Added some convenience functions for toDER and fromDER on the point and pubkey classes where missing.
+
 ### Changed
+
 - In the PublicKey class pubkey.toDER() to defaults to return a number[] rather than string. If a string is desired .toString() or .toDER('hex') have equivalent functionality.
 
 ## [1.1.17] - 2024-08-21
+
 ### Added
+
 Transaction static fromReader method is now public.
 
 ## [1.1.14] - 2024-07-30
+
 ### Added
+
 Ability to split a private key into shares using Shamir's Secret Sharing Scheme. Use like this:
+
 ```javascript
 const key = PrivateKey.fromRandom()
 const recovery = key.split(2, 5)
@@ -1084,37 +1127,52 @@ const sameKey = PrivateKey.fromShares(recovery.shares, recovery.threshold)
 ```
 
 ## [1.1.13] - 2024-07-19
+
 ### Fixed
+
 Transaction SPV verification now correctly returns true for "scripts only" verification when a merkle proof is found.
 
 ## [1.1.10] - 2024-06-28
+
 ### Fixed
+
 ARC Broadcaster correctly parses status -> code, details -> description. Adds optional txid and more to error response if provided.
 
 ## [1.1.8] - 2024-06-19
+
 ### Added
+
 TOTP class which allows the generation of time based pass codes. Use varies but originally included for validating shared secrets between remote counterparties over a secure channel.
 
 ## [1.1.6] - 2024-06-12
+
 ### Added
+
 - Allow Fees in historic transaction to be validated against a FeeModel.
 
 ## [1.1.5] - 2024-06-11
+
 ### Fixed
+
 - Unnecessary `Buffer.from` in pbkdf2 function has been removed.
 
 ## [1.1.4] - 2024-05-10
+
 ### Added
+
 - MerklePath trim function which removes data if it can be calculated. Backported from go-sdk by tonesnotes. Only affects compound Merkle paths which are not yet widely used.
 
 ### Changed
+
 - The corresponding error messages associated with invalid MerklePaths which no longer check empty levels if they are above level 0.
 
 ## [1.1.0] - 2024-05-06
 
 ### Added
-- Ability to create TransactionInputs from a utxo, creating a partial sourceTransaction. 
+
+- Ability to create TransactionInputs from a utxo, creating a partial sourceTransaction.
 Use is like so:
+
 ```javascript
 const input = fromUtxo({
     txid: '434555433eaca96dff6e71a4d02febd0dd3832e5ca4e5734623ca914522e17d5',
@@ -1125,62 +1183,68 @@ const input = fromUtxo({
 
 tx.addInput(input)
 ```
+
 - Ability to create a transaction from Extended Format bytes or hex. The result being a partial sourceTransaction in each input.
+
 ```javascript
 const tx = Transaction.fromHexEF('020000000000000000ef01b2faffe1e1d3c88f4092f34646c060ea2b6a93acc3010484c747ed4c051c2555080000006a4730440220392bcec91f190ce38db9bf53d03886ab63d9bd24fcf7174e8a8df21d23382ba7022038f20c1f3f6583951d01af0be30612a6c0b46d949b4aae60f42644ce513f3e55412103ea0ff49ec6fbb9cbc942d9c1fce9c04e12a91c1209b239466e0a29147da55db1ffffffff01f45500000000001976a914de337957f543c8d1fad2cfff0b57bb5b4264d91788ac0390010000000000001976a9144d255baa50a14bef4cce1eb8012a02768e8ffaa888acd3600000000000001976a91447e22d8011bb446cc3f606179e333f64a9b6206b88ac04915500000000001976a914d24cb016397008a85c88b1278a36434fdd4e801f88ac00000000')
 ```
 
 ### Removed
+
 - Use of sourceSatoshis as a parameter of TransactionInput type.
 
 ### Fixed
-* Increase default maxNumSize to MAX_SAFE_INJTEGER to resolve OP_BIN2NUM execution failures. by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/20
-* Docs examples by @ty-everett in https://github.com/bsv-blockchain/ts-sdk/pull/21
-* Allow BigNumber constructor to accept a BigNumber. by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/22
-* Hash enc digest hex by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/27
-* [feature] helper function to allow Address => Locking Script by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/24
-* [chore] npm run doc by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/26
-* CRITICAL FIX for BigNumber fromSm by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/30
-* [feature]: Block Header Service api by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/23
-* Tone bug 31 by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/33
-* Low Level Docs by @ty-everett in https://github.com/bsv-blockchain/ts-sdk/pull/32
-* push(...x) fails for large array x values by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/36
-* [fix] length must be that of the data, not the original argument. by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/37
-* [chore] ts-standard and linter stuff by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/38
-* [feature] compact sigs by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/39
-* controversial stuff by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/40
-* Avoid requiring sourceTransaction on inputs. by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/41
-* [fix] Enforce signature length in compact sigs by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/44
-* Concept-level documentation by @ty-everett in https://github.com/bsv-blockchain/ts-sdk/pull/45
-* refactor: add more static factory methods to HD class and use them in examples by @dorzepowski in https://github.com/bsv-blockchain/ts-sdk/pull/48
-* refactor: replace returned type union with method overloading for transaction id. by @dorzepowski in https://github.com/bsv-blockchain/ts-sdk/pull/50
-* [docs] HOW_TX.md review and edits. Note: A topic worth discussing is c… by @jonesjBSV in https://github.com/bsv-blockchain/ts-sdk/pull/53
-* [chore] remove redundant line by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/56
-* I suspect it should be this - see ts-paymail for more suggestions by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/60
-* [fix] adding startsWith OP_ seems to fix the ASM parsing bug by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/58
-* Add Transaction.parseScriptOffsets by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/59
-* [fix] Compact SIgnatures Pubkey Recovery function precision. by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/63
-* feat(#65): configure ARC with custom http client by @dorzepowski in https://github.com/bsv-blockchain/ts-sdk/pull/66
-* feat: default broadcaster and chain tracker by @dorzepowski in https://github.com/bsv-blockchain/ts-sdk/pull/67
-* Fixed fee model by @tiagolr in https://github.com/bsv-blockchain/ts-sdk/pull/70
-* toAddress() string prefix support by @tiagolr in https://github.com/bsv-blockchain/ts-sdk/pull/72
-* Addional input field sourceSatoshis to be used in fee calculation by @tiagolr in https://github.com/bsv-blockchain/ts-sdk/pull/71
-* Tone key length by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/79
-* Improve JSON content type detection by @oskarszoon in https://github.com/bsv-blockchain/ts-sdk/pull/80
-* example-utxos-tx.md by @tiagolr in https://github.com/bsv-blockchain/ts-sdk/pull/75
-* Allow ARC config to set CallbackURL and other headers as required by @sirdeggen in https://github.com/bsv-blockchain/ts-sdk/pull/81
-* Tone overlay1 by @tonesnotes in https://github.com/bsv-blockchain/ts-sdk/pull/82
+
+- Increase default maxNumSize to MAX_SAFE_INJTEGER to resolve OP_BIN2NUM execution failures. by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/20>
+- Docs examples by @ty-everett in <https://github.com/bsv-blockchain/ts-sdk/pull/21>
+- Allow BigNumber constructor to accept a BigNumber. by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/22>
+- Hash enc digest hex by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/27>
+- [feature] helper function to allow Address => Locking Script by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/24>
+- [chore] npm run doc by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/26>
+- CRITICAL FIX for BigNumber fromSm by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/30>
+- [feature]: Block Header Service api by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/23>
+- Tone bug 31 by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/33>
+- Low Level Docs by @ty-everett in <https://github.com/bsv-blockchain/ts-sdk/pull/32>
+- push(...x) fails for large array x values by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/36>
+- [fix] length must be that of the data, not the original argument. by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/37>
+- [chore] ts-standard and linter stuff by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/38>
+- [feature] compact sigs by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/39>
+- controversial stuff by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/40>
+- Avoid requiring sourceTransaction on inputs. by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/41>
+- [fix] Enforce signature length in compact sigs by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/44>
+- Concept-level documentation by @ty-everett in <https://github.com/bsv-blockchain/ts-sdk/pull/45>
+- refactor: add more static factory methods to HD class and use them in examples by @dorzepowski in <https://github.com/bsv-blockchain/ts-sdk/pull/48>
+- refactor: replace returned type union with method overloading for transaction id. by @dorzepowski in <https://github.com/bsv-blockchain/ts-sdk/pull/50>
+- [docs] HOW_TX.md review and edits. Note: A topic worth discussing is c… by @jonesjBSV in <https://github.com/bsv-blockchain/ts-sdk/pull/53>
+- [chore] remove redundant line by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/56>
+- I suspect it should be this - see ts-paymail for more suggestions by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/60>
+- [fix] adding startsWith OP_ seems to fix the ASM parsing bug by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/58>
+- Add Transaction.parseScriptOffsets by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/59>
+- [fix] Compact SIgnatures Pubkey Recovery function precision. by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/63>
+- feat(#65): configure ARC with custom http client by @dorzepowski in <https://github.com/bsv-blockchain/ts-sdk/pull/66>
+- feat: default broadcaster and chain tracker by @dorzepowski in <https://github.com/bsv-blockchain/ts-sdk/pull/67>
+- Fixed fee model by @tiagolr in <https://github.com/bsv-blockchain/ts-sdk/pull/70>
+- toAddress() string prefix support by @tiagolr in <https://github.com/bsv-blockchain/ts-sdk/pull/72>
+- Addional input field sourceSatoshis to be used in fee calculation by @tiagolr in <https://github.com/bsv-blockchain/ts-sdk/pull/71>
+- Tone key length by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/79>
+- Improve JSON content type detection by @oskarszoon in <https://github.com/bsv-blockchain/ts-sdk/pull/80>
+- example-utxos-tx.md by @tiagolr in <https://github.com/bsv-blockchain/ts-sdk/pull/75>
+- Allow ARC config to set CallbackURL and other headers as required by @sirdeggen in <https://github.com/bsv-blockchain/ts-sdk/pull/81>
+- Tone overlay1 by @tonesnotes in <https://github.com/bsv-blockchain/ts-sdk/pull/82>
 
 ### New Contributors
-* @tonesnotes made their first contribution in https://github.com/bsv-blockchain/ts-sdk/pull/20
-* @dorzepowski made their first contribution in https://github.com/bsv-blockchain/ts-sdk/pull/48
-* @jonesjBSV made their first contribution in https://github.com/bsv-blockchain/ts-sdk/pull/53
-* @tiagolr made their first contribution in https://github.com/bsv-blockchain/ts-sdk/pull/70
-* @oskarszoon made their first contribution in https://github.com/bsv-blockchain/ts-sdk/pull/80
+
+- @tonesnotes made their first contribution in <https://github.com/bsv-blockchain/ts-sdk/pull/20>
+- @dorzepowski made their first contribution in <https://github.com/bsv-blockchain/ts-sdk/pull/48>
+- @jonesjBSV made their first contribution in <https://github.com/bsv-blockchain/ts-sdk/pull/53>
+- @tiagolr made their first contribution in <https://github.com/bsv-blockchain/ts-sdk/pull/70>
+- @oskarszoon made their first contribution in <https://github.com/bsv-blockchain/ts-sdk/pull/80>
 
 ## [1.0.0] - 2024-02-10
 
 ### Added
+
 - Initial release of the BSV Blockchain Libraries Project SDK.
 - Sound Cryptographic Primitives for key management, signature computations, and encryption protocols.
 - Script Level Constructs with network-compliant script interpreter.
@@ -1192,7 +1256,7 @@ const tx = Transaction.fromHexEF('020000000000000000ef01b2faffe1e1d3c88f4092f346
 
 ---
 
-### Template for New Releases:
+### Template for New Releases
 
 Replace `X.X.X` with the new version number and `YYYY-MM-DD` with the release date:
 

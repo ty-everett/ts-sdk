@@ -3,6 +3,7 @@
 **Duration**: 75 minutes  
 **Prerequisites**: Node.js, basic TypeScript knowledge, understanding of decentralized storage and `WalletClient` usage  
 **Learning Goals**:
+
 - Understand UHRP (Universal Hash Resource Protocol)
 - Upload and download files using StorageUploader/StorageDownloader
 - Implement decentralized file management systems
@@ -15,17 +16,21 @@ UHRP (Universal Hash Resource Protocol) is a decentralized file storage system t
 ## Prerequisites
 
 ### For Upload Operations
+
 - **BRC-100 compliant wallet** (such as MetaNet Desktop Wallet) must be installed and running
-- **Wallet connection** accessible via JSON API (typically http://localhost:3321)
+- **Wallet connection** accessible via JSON API (typically <http://localhost:3321>)
 - **Sufficient wallet balance** for transaction fees and storage costs
 - **UHRP storage service** - This tutorial uses `https://nanostore.babbage.systems`
 
 ### For Download Operations Only
+
 - **No wallet connection required** - downloads work independently
 - **Network access** to resolve UHRP URLs via lookup services
 
 ### Service Availability
+
 **Important Note**: This tutorial uses `https://nanostore.babbage.systems`, which is a working UHRP storage service. The examples demonstrate correct SDK usage patterns and will work with:
+
 - A running BRC-100 compliant wallet (such as MetaNet Desktop Wallet)
 - Sufficient wallet balance for storage fees
 
@@ -492,6 +497,7 @@ demonstrateBatchOperations().catch(console.error)
 #### "No wallet available" Error
 **Problem**: StorageUploader fails with "No wallet available over any communication substrate"
 **Solution**: 
+
 - Install and run a BRC-100 compliant wallet (e.g., MetaNet Desktop Wallet)
 - Ensure wallet is accessible at http://localhost:3321
 - Verify wallet is fully synced and has sufficient balance
@@ -499,6 +505,7 @@ demonstrateBatchOperations().catch(console.error)
 #### "401 Unauthorized" Error
 **Problem**: Upload operations fail with HTTP 401 errors
 **Solution**:
+
 - Verify your wallet is properly authenticated
 - Check that the UHRP storage service is available
 - Ensure your wallet has sufficient balance for storage fees
@@ -506,6 +513,7 @@ demonstrateBatchOperations().catch(console.error)
 #### "Invalid parameter UHRP url" Error
 **Problem**: Download operations fail with invalid URL error
 **Solution**:
+
 - Verify the UHRP URL format (should start with `uhrp://`)
 - Check that the file hasn’t expired
 - Ensure network connectivity for UHRP lookup services
@@ -517,6 +525,7 @@ demonstrateBatchOperations().catch(console.error)
 #### Service Unavailable
 **Problem**: UHRP storage service returns errors or is unreachable
 **Solution**:
+
 - Try alternative UHRP storage services
 - Check service status and availability
 - Consider setting up your own UHRP storage infrastructure

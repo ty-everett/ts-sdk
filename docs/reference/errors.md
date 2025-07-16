@@ -7,40 +7,48 @@ Complete reference for error codes, messages, and troubleshooting in the BSV Typ
 ### Transaction Errors
 
 #### INSUFFICIENT_FUNDS
+
 **Code**: `INSUFFICIENT_FUNDS`  
 **Message**: "Insufficient funds to create transaction"  
 **Cause**: Wallet doesn't have enough UTXOs to cover transaction outputs and fees  
 **Solutions**:
+
 - Check wallet balance with `listOutputs()`
 - Reduce transaction amount
 - Wait for pending transactions to confirm
 - Use smaller fee rates
 
 #### INVALID_TRANSACTION
+
 **Code**: `INVALID_TRANSACTION`  
 **Message**: "Transaction validation failed"  
 **Cause**: Transaction structure or signatures are invalid  
 **Solutions**:
+
 - Verify all inputs are properly signed
 - Check script templates are correct
 - Ensure transaction format is valid
 - Validate all output amounts are positive
 
 #### TRANSACTION_TOO_LARGE
+
 **Code**: `TRANSACTION_TOO_LARGE`  
 **Message**: "Transaction exceeds maximum size limit"  
 **Cause**: Transaction size exceeds network limits  
 **Solutions**:
+
 - Reduce number of inputs/outputs
 - Use more efficient script templates
 - Split into multiple transactions
 - Optimize data storage methods
 
 #### INVALID_SCRIPT
+
 **Code**: `INVALID_SCRIPT`  
 **Message**: "Script execution failed"  
 **Cause**: Locking or unlocking script contains errors  
 **Solutions**:
+
 - Validate script syntax with `Script.fromASM()`
 - Check opcode usage and limits
 - Verify script template implementation
@@ -49,40 +57,48 @@ Complete reference for error codes, messages, and troubleshooting in the BSV Typ
 ### Wallet Errors
 
 #### WALLET_NOT_CONNECTED
+
 **Code**: `WALLET_NOT_CONNECTED`  
 **Message**: "Wallet connection not established"  
 **Cause**: WalletClient not connected to substrate  
 **Solutions**:
+
 - Call `await wallet.connectToSubstrate()`
 - Check wallet application is running
 - Verify network connectivity
 - Restart wallet application if needed
 
 #### AUTHENTICATION_FAILED
+
 **Code**: `AUTHENTICATION_FAILED`  
 **Message**: "Wallet authentication failed"  
 **Cause**: User denied access or authentication expired  
 **Solutions**:
+
 - Re-authenticate with wallet
 - Check originator domain permissions
 - Verify wallet trust settings
 - Clear cached authentication state
 
 #### WALLET_LOCKED
+
 **Code**: `WALLET_LOCKED`  
 **Message**: "Wallet is locked or requires password"  
 **Cause**: Wallet requires user authentication  
 **Solutions**:
+
 - Unlock wallet application
 - Enter wallet password
 - Check wallet auto-lock settings
 - Verify user session is active
 
 #### ACTION_REJECTED
+
 **Code**: `ACTION_REJECTED`  
 **Message**: "User rejected the transaction"  
 **Cause**: User declined transaction in wallet UI  
 **Solutions**:
+
 - Retry transaction with user consent
 - Adjust transaction parameters
 - Provide clearer transaction description
@@ -91,40 +107,48 @@ Complete reference for error codes, messages, and troubleshooting in the BSV Typ
 ### Network Errors
 
 #### NETWORK_ERROR
+
 **Code**: `NETWORK_ERROR`  
 **Message**: "Network request failed"  
 **Cause**: Connection issues with blockchain nodes  
 **Solutions**:
+
 - Check internet connectivity
 - Verify node endpoints are accessible
 - Try alternative chain trackers
 - Implement retry logic with exponential backoff
 
 #### NODE_UNAVAILABLE
+
 **Code**: `NODE_UNAVAILABLE`  
 **Message**: "Blockchain node is unavailable"  
 **Cause**: Target node is down or unreachable  
 **Solutions**:
+
 - Switch to backup node endpoints
 - Check node status and health
 - Use multiple chain tracker instances
 - Implement failover mechanisms
 
 #### BROADCAST_FAILED
+
 **Code**: `BROADCAST_FAILED`  
 **Message**: "Transaction broadcast failed"  
 **Cause**: Network rejected transaction or broadcast error  
 **Solutions**:
+
 - Verify transaction is valid
 - Check network fees are adequate
 - Retry broadcast after delay
 - Use alternative broadcast endpoints
 
 #### TIMEOUT_ERROR
+
 **Code**: `TIMEOUT_ERROR`  
 **Message**: "Request timeout exceeded"  
 **Cause**: Network request took too long  
 **Solutions**:
+
 - Increase timeout values
 - Check network latency
 - Use faster endpoints
@@ -133,40 +157,48 @@ Complete reference for error codes, messages, and troubleshooting in the BSV Typ
 ### Cryptographic Errors
 
 #### INVALID_PRIVATE_KEY
+
 **Code**: `INVALID_PRIVATE_KEY`  
 **Message**: "Private key is invalid or out of range"  
 **Cause**: Private key doesn't meet secp256k1 requirements  
 **Solutions**:
+
 - Generate new key with `PrivateKey.fromRandom()`
 - Validate key is within curve order
 - Check key format and encoding
 - Use proper key derivation methods
 
 #### INVALID_PUBLIC_KEY
+
 **Code**: `INVALID_PUBLIC_KEY`  
 **Message**: "Public key is invalid or not on curve"  
 **Cause**: Public key point is invalid  
 **Solutions**:
+
 - Verify key derivation from private key
 - Check point coordinates are valid
 - Validate key format (compressed/uncompressed)
 - Use `PublicKey.fromPrivateKey()` for generation
 
 #### SIGNATURE_VERIFICATION_FAILED
+
 **Code**: `SIGNATURE_VERIFICATION_FAILED`  
 **Message**: "Digital signature verification failed"  
 **Cause**: Signature doesn't match message and public key  
 **Solutions**:
+
 - Verify message hash is correct
 - Check signature format (DER encoding)
 - Ensure correct public key is used
 - Validate signature components (r, s values)
 
 #### ENCRYPTION_FAILED
+
 **Code**: `ENCRYPTION_FAILED`  
 **Message**: "Symmetric encryption operation failed"  
 **Cause**: AES encryption/decryption error  
 **Solutions**:
+
 - Verify encryption key is valid
 - Check data format and encoding
 - Ensure proper IV/nonce usage
@@ -175,30 +207,36 @@ Complete reference for error codes, messages, and troubleshooting in the BSV Typ
 ### SPV Verification Errors
 
 #### INVALID_MERKLE_PROOF
+
 **Code**: `INVALID_MERKLE_PROOF`  
 **Message**: "Merkle proof verification failed"  
 **Cause**: Merkle path doesn't lead to valid root  
 **Solutions**:
+
 - Verify merkle path structure
 - Check transaction hash calculation
 - Validate block header merkle root
 - Ensure proof completeness
 
 #### BLOCK_HEADER_INVALID
+
 **Code**: `BLOCK_HEADER_INVALID`  
 **Message**: "Block header validation failed"  
 **Cause**: Block header doesn't meet consensus rules  
 **Solutions**:
+
 - Verify header hash and difficulty
 - Check timestamp validity
 - Validate previous block hash
 - Ensure proper header format
 
 #### CHAIN_VALIDATION_FAILED
+
 **Code**: `CHAIN_VALIDATION_FAILED`  
 **Message**: "Blockchain validation failed"  
 **Cause**: Chain doesn't follow consensus rules  
 **Solutions**:
+
 - Verify chain continuity
 - Check difficulty adjustments
 - Validate block timestamps
@@ -207,20 +245,24 @@ Complete reference for error codes, messages, and troubleshooting in the BSV Typ
 ### Configuration Errors
 
 #### INVALID_CONFIG
+
 **Code**: `INVALID_CONFIG`  
 **Message**: "SDK configuration is invalid"  
 **Cause**: Configuration parameters are incorrect  
 **Solutions**:
+
 - Validate configuration schema
 - Check required parameters are present
 - Verify network settings
 - Use default configuration as baseline
 
 #### UNSUPPORTED_NETWORK
+
 **Code**: `UNSUPPORTED_NETWORK`  
 **Message**: "Network type is not supported"  
 **Cause**: Invalid network specification  
 **Solutions**:
+
 - Use supported networks: mainnet, testnet, regtest
 - Check network configuration
 - Verify chain parameters
@@ -315,9 +357,11 @@ function categorizeError(error: WalletErrorObject): 'user' | 'network' | 'system
 ### Common Issues and Solutions
 
 #### "RPC Error: no header should have returned false"
+
 **Symptoms**: Error during `createAction` calls  
 **Cause**: Wallet input selection issues  
 **Solutions**:
+
 1. Restart wallet application
 2. Ensure wallet is fully synced
 3. Use slightly larger amounts (200-500 satoshis)
@@ -325,27 +369,33 @@ function categorizeError(error: WalletErrorObject): 'user' | 'network' | 'system
 5. Check for sufficient confirmed UTXOs
 
 #### "Insufficient funds" with Available Balance
+
 **Symptoms**: Error despite wallet showing balance  
 **Cause**: UTXOs not properly selected by wallet  
 **Solutions**:
+
 1. Check UTXO status with `listOutputs()`
 2. Verify UTXOs are confirmed
 3. Restart wallet to refresh UTXO cache
 4. Use manual input selection if supported
 
 #### Transaction Broadcast Failures
+
 **Symptoms**: Valid transactions rejected by network  
 **Cause**: Various network or validation issues  
 **Solutions**:
+
 1. Verify transaction format and signatures
 2. Check fee rates are adequate
 3. Ensure inputs are unspent
 4. Try alternative broadcast endpoints
 
 #### Wallet Connection Issues
+
 **Symptoms**: Cannot connect to wallet substrate  
 **Cause**: Wallet not running or permission issues  
 **Solutions**:
+
 1. Ensure wallet application is running
 2. Check originator domain permissions
 3. Clear browser cache and cookies

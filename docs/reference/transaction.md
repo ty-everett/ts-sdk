@@ -83,11 +83,13 @@ The HTTP client used to make requests to the ARC API.
 ```ts
 httpClient?: HttpClient
 ```
+
 See also: [HttpClient](./transaction.md#interface-httpclient)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: BroadcastFailure
 
 Defines the structure of a failed broadcast response.
@@ -105,6 +107,7 @@ export interface BroadcastFailure {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: BroadcastResponse
 
 Defines the structure of a successful broadcast response.
@@ -121,6 +124,7 @@ export interface BroadcastResponse {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: Broadcaster
 
 Represents the interface for a transaction broadcaster.
@@ -138,6 +142,7 @@ See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [Broa
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: ChainTracker
 
 The Chain Tracker is responsible for verifying the validity of a given Merkle root
@@ -170,6 +175,7 @@ export default interface ChainTracker {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: FeeModel
 
 Represents the interface for a transaction fee model.
@@ -186,6 +192,7 @@ See also: [Transaction](./transaction.md#class-transaction)
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: FetchOptions
 
 An interface for configuration of the request to be passed to the fetch method
@@ -226,6 +233,7 @@ method?: string
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: HttpClient
 
 An interface for HTTP client used to make HTTP requests.
@@ -245,11 +253,13 @@ Makes a request to the server.
 ```ts
 request: <T = any, D = any>(url: string, options: HttpClientRequestOptions<D>) => Promise<HttpClientResponse<T>>
 ```
+
 See also: [HttpClientRequestOptions](./transaction.md#interface-httpclientrequestoptions), [HttpClientResponse](./transaction.md#type-httpclientresponse)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: HttpClientRequestOptions
 
 An interface for configuration of the request to be passed to the request method.
@@ -289,6 +299,7 @@ method?: string
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: HttpsNodejs
 
 Node Https module interface limited to options needed by ts-sdk
@@ -304,6 +315,7 @@ See also: [HttpClientRequestOptions](./transaction.md#interface-httpclientreques
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: MerklePathLeaf
 
 ```ts
@@ -318,6 +330,7 @@ export interface MerklePathLeaf {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: NodejsHttpClientRequest
 
 Nodejs result of the Node https.request call limited to options needed by ts-sdk
@@ -333,6 +346,7 @@ export interface NodejsHttpClientRequest {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: TransactionInput
 
 Represents an input to a Bitcoin transaction.
@@ -375,6 +389,7 @@ See also: [Transaction](./transaction.md#class-transaction), [UnlockingScript](.
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: TransactionOutput
 
 Represents an output in a Bitcoin transaction.
@@ -405,6 +420,7 @@ See also: [LockingScript](./script.md#class-lockingscript)
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Interface: WhatsOnChainConfig
 
 Configuration options for the WhatsOnChain ChainTracker.
@@ -433,11 +449,13 @@ The HTTP client used to make requests to the API.
 ```ts
 httpClient?: HttpClient
 ```
+
 See also: [HttpClient](./transaction.md#interface-httpclient)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ## Classes
 
 | |
@@ -486,14 +504,15 @@ Constructs an instance of the ARC broadcaster.
 ```ts
 constructor(URL: string, config?: ArcConfig)
 ```
+
 See also: [ArcConfig](./transaction.md#interface-arcconfig)
 
 Argument Details
 
-+ **URL**
-  + The URL endpoint for the ARC API.
-+ **config**
-  + Configuration options for the ARC broadcaster.
+- **URL**
+    - The URL endpoint for the ARC API.
+- **config**
+    - Configuration options for the ARC broadcaster.
 
 #### Constructor
 
@@ -505,10 +524,10 @@ constructor(URL: string, apiKey?: string)
 
 Argument Details
 
-+ **URL**
-  + The URL endpoint for the ARC API.
-+ **apiKey**
-  + The API key used for authorization with the ARC API.
+- **URL**
+    - The URL endpoint for the ARC API.
+- **apiKey**
+    - The API key used for authorization with the ARC API.
 
 #### Method broadcast
 
@@ -517,6 +536,7 @@ Broadcasts a transaction via ARC.
 ```ts
 async broadcast(tx: Transaction): Promise<BroadcastResponse | BroadcastFailure> 
 ```
+
 See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -525,8 +545,8 @@ A promise that resolves to either a success or failure response.
 
 Argument Details
 
-+ **tx**
-  + The transaction to be broadcasted.
+- **tx**
+    - The transaction to be broadcasted.
 
 #### Method broadcastMany
 
@@ -536,6 +556,7 @@ Handles mixed responses where some transactions succeed and others fail.
 ```ts
 async broadcastMany(txs: Transaction[]): Promise<object[]> 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -544,12 +565,13 @@ A promise that resolves to an array of objects.
 
 Argument Details
 
-+ **txs**
-  + Array of transactions to be broadcasted.
+- **txs**
+    - Array of transactions to be broadcasted.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: Beef
 
 ```ts
@@ -615,6 +637,7 @@ addComputedLeaves(): void
 ```ts
 clone(): Beef 
 ```
+
 See also: [Beef](./transaction.md#class-beef)
 
 Returns
@@ -630,6 +653,7 @@ To succeed, the Beef must contain all the required transaction and merkle path d
 ```ts
 findAtomicTransaction(txid: string): Transaction | undefined 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -638,14 +662,15 @@ Transaction with input `SourceTransaction` and `MerklePath` populated from this 
 
 Argument Details
 
-+ **txid**
-  + The id of the target transaction.
+- **txid**
+    - The id of the target transaction.
 
 #### Method findBump
 
 ```ts
 findBump(txid: string): MerklePath | undefined 
 ```
+
 See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
@@ -662,6 +687,7 @@ The result is suitable for signing.
 ```ts
 findTransactionForSigning(txid: string): Transaction | undefined 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -670,14 +696,15 @@ Transaction with all available input `SourceTransaction`s from this Beef.
 
 Argument Details
 
-+ **txid**
-  + The id of the target transaction.
+- **txid**
+    - The id of the target transaction.
 
 #### Method findTxid
 
 ```ts
 findTxid(txid: string): BeefTx | undefined 
 ```
+
 See also: [BeefTx](./transaction.md#class-beeftx)
 
 Returns
@@ -686,8 +713,8 @@ Returns
 
 Argument Details
 
-+ **txid**
-  + of `beefTx` to find
+- **txid**
+    - of `beefTx` to find
 
 #### Method fromBinary
 
@@ -696,6 +723,7 @@ Constructs an instance of the Beef class based on the provided binary array
 ```ts
 static fromBinary(bin: number[]): Beef 
 ```
+
 See also: [Beef](./transaction.md#class-beef)
 
 Returns
@@ -704,8 +732,8 @@ An instance of the Beef class constructed from the binary data
 
 Argument Details
 
-+ **bin**
-  + The binary array from which to construct BEEF
+- **bin**
+    - The binary array from which to construct BEEF
 
 #### Method fromString
 
@@ -714,6 +742,7 @@ Constructs an instance of the Beef class based on the provided string
 ```ts
 static fromString(s: string, enc: "hex" | "utf8" | "base64" = "hex"): Beef 
 ```
+
 See also: [Beef](./transaction.md#class-beef)
 
 Returns
@@ -722,10 +751,10 @@ An instance of the Beef class constructed from the string
 
 Argument Details
 
-+ **s**
-  + The string value from which to construct BEEF
-+ **enc**
-  + The encoding of the string value from which BEEF should be constructed
+- **s**
+    - The string value from which to construct BEEF
+- **enc**
+    - The encoding of the string value from which BEEF should be constructed
 
 #### Method getValidTxids
 
@@ -744,6 +773,7 @@ Sorts `txs` and checks structural validity of beef.
 Does NOT verify merkle roots.
 
 Validity requirements:
+
 1. No 'known' txids, unless `allowTxidOnly` is true.
 2. All transactions have bumps or their inputs chain back to bumps (or are known).
 3. Order of transactions satisfies dependencies before dependents.
@@ -755,8 +785,8 @@ isValid(allowTxidOnly?: boolean): boolean
 
 Argument Details
 
-+ **allowTxidOnly**
-  + optional. If true, transaction txid only is assumed valid
+- **allowTxidOnly**
+    - optional. If true, transaction txid only is assumed valid
 
 #### Method makeTxidOnly
 
@@ -769,6 +799,7 @@ original.
 ```ts
 makeTxidOnly(txid: string): BeefTx | undefined 
 ```
+
 See also: [BeefTx](./transaction.md#class-beeftx)
 
 Returns
@@ -782,6 +813,7 @@ Merge a MerklePath that is assumed to be fully valid.
 ```ts
 mergeBump(bump: MerklePath): number 
 ```
+
 See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
@@ -799,6 +831,7 @@ Replaces existing transaction with same txid.
 ```ts
 mergeRawTx(rawTx: number[], bumpIndex?: number): BeefTx 
 ```
+
 See also: [BeefTx](./transaction.md#class-beeftx)
 
 Returns
@@ -807,8 +840,8 @@ txid of rawTx
 
 Argument Details
 
-+ **bumpIndex**
-  + Optional. If a number, must be valid index into bumps array.
+- **bumpIndex**
+    - Optional. If a number, must be valid index into bumps array.
 
 #### Method mergeTransaction
 
@@ -821,6 +854,7 @@ Attempts to match an existing bump to the new transaction.
 ```ts
 mergeTransaction(tx: Transaction): BeefTx 
 ```
+
 See also: [BeefTx](./transaction.md#class-beeftx), [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -837,12 +871,13 @@ removeExistingTxid(txid: string): void
 
 Argument Details
 
-+ **txid**
-  + TXID of the transaction to remove
+- **txid**
+    - TXID of the transaction to remove
 
 #### Method sortTxs
 
 Sort the `txs` by input txid dependency order:
+
 - Oldest Tx Anchored by Path or txid only
 - Newer Txs depending on Older parents
 - Newest Tx
@@ -920,6 +955,7 @@ Serializes this data to `writer`
 ```ts
 toWriter(writer: Writer): void 
 ```
+
 See also: [Writer](./primitives.md#class-writer)
 
 #### Method trimKnownTxids
@@ -937,6 +973,7 @@ by validating structure of this beef and confirming computed merkle roots
 using `chainTracker`.
 
 Validity requirements:
+
 1. No 'known' txids, unless `allowTxidOnly` is true.
 2. All transactions have bumps or their inputs chain back to bumps (or are known).
 3. Order of transactions satisfies dependencies before dependents.
@@ -945,14 +982,15 @@ Validity requirements:
 ```ts
 async verify(chainTracker: ChainTracker, allowTxidOnly?: boolean): Promise<boolean> 
 ```
+
 See also: [ChainTracker](./transaction.md#interface-chaintracker)
 
 Argument Details
 
-+ **chainTracker**
-  + Used to verify computed merkle path roots for all bump txids.
-+ **allowTxidOnly**
-  + optional. If true, transaction txid is assumed valid
+- **chainTracker**
+    - Used to verify computed merkle path roots for all bump txids.
+- **allowTxidOnly**
+    - optional. If true, transaction txid is assumed valid
 
 #### Method verifyValid
 
@@ -962,6 +1000,7 @@ by validating structure of this beef.
 Returns block heights and merkle root values to be confirmed by a chaintracker.
 
 Validity requirements:
+
 1. No 'known' txids, unless `allowTxidOnly` is true.
 2. All transactions have bumps or their inputs chain back to bumps (or are known).
 3. Order of transactions satisfies dependencies before dependents.
@@ -981,12 +1020,13 @@ Returns
 
 Argument Details
 
-+ **allowTxidOnly**
-  + optional. If true, transaction txid is assumed valid
+- **allowTxidOnly**
+    - optional. If true, transaction txid is assumed valid
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: BeefParty
 
 Extends `Beef` that is used to exchange transaction validity data with more than one external party.
@@ -1031,8 +1071,8 @@ constructor(parties?: string[])
 
 Argument Details
 
-+ **parties**
-  + Optional array of initial unique party identifiers.
+- **parties**
+    - Optional array of initial unique party identifiers.
 
 #### Property knownTo
 
@@ -1053,8 +1093,8 @@ addKnownTxidsForParty(party: string, knownTxids: string[]): void
 
 Argument Details
 
-+ **party**
-  + unique identifier, added if new.
+- **party**
+    - unique identifier, added if new.
 
 #### Method addParty
 
@@ -1079,6 +1119,7 @@ Array of txids "known" to `party`.
 ```ts
 getTrimmedBeefForParty(party: string): Beef 
 ```
+
 See also: [Beef](./transaction.md#class-beef)
 
 Returns
@@ -1106,11 +1147,13 @@ has raw transaction and validity proof data.
 ```ts
 mergeBeefFromParty(party: string, beef: number[] | Beef): void 
 ```
+
 See also: [Beef](./transaction.md#class-beef)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: BeefTx
 
 A single bitcoin transaction associated with a `Beef` validity proof set.
@@ -1152,14 +1195,15 @@ See also: [Reader](./primitives.md#class-reader), [Transaction](./transaction.md
 ```ts
 constructor(tx: Transaction | number[] | string, bumpIndex?: number) 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Argument Details
 
-+ **tx**
-  + If string, must be a valid txid. If `number[]` must be a valid serialized transaction.
-+ **bumpIndex**
-  + If transaction already has a proof in the beef to which it will be added.
+- **tx**
+    - If string, must be a valid txid. If `number[]` must be a valid serialized transaction.
+- **bumpIndex**
+    - If transaction already has a proof in the beef to which it will be added.
 
 #### Property isValid
 
@@ -1174,6 +1218,7 @@ isValid?: boolean = undefined
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: FetchHttpClient
 
 Adapter for Node Https module to be used as HttpClient
@@ -1190,6 +1235,7 @@ See also: [Fetch](./transaction.md#type-fetch), [HttpClient](./transaction.md#in
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: MerklePath
 
 Represents a Merkle Path, which is used to provide a compact proof of inclusion for a
@@ -1242,12 +1288,13 @@ Combines this MerklePath with another to create a compound proof.
 ```ts
 combine(other: MerklePath): void 
 ```
+
 See also: [MerklePath](./transaction.md#class-merklepath)
 
 Argument Details
 
-+ **other**
-  + Another MerklePath to combine with this path.
+- **other**
+    - Another MerklePath to combine with this path.
 
 Throws
 
@@ -1267,8 +1314,8 @@ Returns
 
 Argument Details
 
-+ **txid**
-  + The transaction ID to compute the Merkle root for. If not provided, the root will be computed from an unspecified branch, and not all branches will be validated!
+- **txid**
+    - The transaction ID to compute the Merkle root for. If not provided, the root will be computed from an unspecified branch, and not all branches will be validated!
 
 Throws
 
@@ -1283,6 +1330,7 @@ Does not add computed leaves to path.
 ```ts
 findOrComputeLeaf(height: number, offset: number): MerklePathLeaf | undefined 
 ```
+
 See also: [MerklePathLeaf](./transaction.md#interface-merklepathleaf)
 
 #### Method fromBinary
@@ -1292,6 +1340,7 @@ Creates a MerklePath instance from a binary array.
 ```ts
 static fromBinary(bump: number[]): MerklePath 
 ```
+
 See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
@@ -1300,14 +1349,15 @@ Returns
 
 Argument Details
 
-+ **bump**
-  + The binary array representation of the Merkle Path.
+- **bump**
+    - The binary array representation of the Merkle Path.
 
 #### Method fromCoinbaseTxidAndHeight
 
 ```ts
 static fromCoinbaseTxidAndHeight(txid: string, height: number): MerklePath 
 ```
+
 See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
@@ -1316,10 +1366,10 @@ Returns
 
 Argument Details
 
-+ **txid**
-  + The coinbase txid.
-+ **height**
-  + The height of the block.
+- **txid**
+    - The coinbase txid.
+- **height**
+    - The height of the block.
 
 #### Method fromHex
 
@@ -1328,6 +1378,7 @@ Creates a MerklePath instance from a hexadecimal string.
 ```ts
 static fromHex(hex: string): MerklePath 
 ```
+
 See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
@@ -1336,8 +1387,8 @@ Returns
 
 Argument Details
 
-+ **hex**
-  + The hexadecimal string representation of the Merkle Path.
+- **hex**
+    - The hexadecimal string representation of the Merkle Path.
 
 #### Method toBinary
 
@@ -1380,6 +1431,7 @@ Verifies if the given transaction ID is part of the Merkle tree at the specified
 ```ts
 async verify(txid: string, chainTracker: ChainTracker): Promise<boolean> 
 ```
+
 See also: [ChainTracker](./transaction.md#interface-chaintracker)
 
 Returns
@@ -1388,14 +1440,15 @@ Returns
 
 Argument Details
 
-+ **txid**
-  + The transaction ID to verify.
-+ **chainTracker**
-  + The ChainTracker instance used to verify the Merkle root.
+- **txid**
+    - The transaction ID to verify.
+- **chainTracker**
+    - The ChainTracker instance used to verify the Merkle root.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: NodejsHttpClient
 
 Adapter for Node Https module to be used as HttpClient
@@ -1412,6 +1465,7 @@ See also: [HttpClient](./transaction.md#interface-httpclient), [HttpClientReques
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: SatoshisPerKilobyte
 
 Represents the "satoshis per kilobyte" transaction fee model.
@@ -1436,8 +1490,8 @@ constructor(value: number)
 
 Argument Details
 
-+ **value**
-  + The number of satoshis per kilobyte to charge as a fee.
+- **value**
+    - The number of satoshis per kilobyte to charge as a fee.
 
 #### Method computeFee
 
@@ -1446,6 +1500,7 @@ Computes the fee for a given transaction.
 ```ts
 async computeFee(tx: Transaction): Promise<number> 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1454,12 +1509,13 @@ The fee in satoshis for the transaction, as a BigNumber.
 
 Argument Details
 
-+ **tx**
-  + The transaction for which a fee is to be computed.
+- **tx**
+    - The transaction for which a fee is to be computed.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: Transaction
 
 Represents a complete Bitcoin transaction. This class encapsulates all the details
@@ -1540,12 +1596,13 @@ Adds a new input to the transaction.
 ```ts
 addInput(input: TransactionInput): void 
 ```
+
 See also: [TransactionInput](./transaction.md#interface-transactioninput)
 
 Argument Details
 
-+ **input**
-  + The TransactionInput object to add to the transaction.
+- **input**
+    - The TransactionInput object to add to the transaction.
 
 Throws
 
@@ -1558,12 +1615,13 @@ Adds a new output to the transaction.
 ```ts
 addOutput(output: TransactionOutput): void 
 ```
+
 See also: [TransactionOutput](./transaction.md#interface-transactionoutput)
 
 Argument Details
 
-+ **output**
-  + The TransactionOutput object to add to the transaction.
+- **output**
+    - The TransactionOutput object to add to the transaction.
 
 #### Method addP2PKHOutput
 
@@ -1575,10 +1633,10 @@ addP2PKHOutput(address: number[] | string, satoshis?: number): void
 
 Argument Details
 
-+ **address**
-  + The P2PKH address of the output.
-+ **satoshis**
-  + The number of satoshis to send to the address - if not provided, the output is considered a change output.
+- **address**
+    - The P2PKH address of the output.
+- **satoshis**
+    - The number of satoshis to send to the address - if not provided, the output is considered a change output.
 
 #### Method broadcast
 
@@ -1587,6 +1645,7 @@ Broadcasts a transaction.
 ```ts
 async broadcast(broadcaster: Broadcaster = defaultBroadcaster()): Promise<BroadcastResponse | BroadcastFailure> 
 ```
+
 See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [Broadcaster](./transaction.md#interface-broadcaster), [defaultBroadcaster](./transaction.md#function-defaultbroadcaster)
 
 Returns
@@ -1595,8 +1654,8 @@ A BroadcastResponse or BroadcastFailure from the Broadcaster
 
 Argument Details
 
-+ **broadcaster**
-  + The Broadcaster instance wwhere the transaction will be sent
+- **broadcaster**
+    - The Broadcaster instance wwhere the transaction will be sent
 
 #### Method fee
 
@@ -1607,14 +1666,15 @@ If fee is a number, the transaction uses that value as fee.
 ```ts
 async fee(modelOrFee: FeeModel | number = new SatoshisPerKilobyte(1), changeDistribution: "equal" | "random" = "equal"): Promise<void> 
 ```
+
 See also: [FeeModel](./transaction.md#interface-feemodel), [SatoshisPerKilobyte](./transaction.md#class-satoshisperkilobyte)
 
 Argument Details
 
-+ **modelOrFee**
-  + The initialized fee model to use or fixed fee for the transaction
-+ **changeDistribution**
-  + Specifies how the change should be distributed
+- **modelOrFee**
+    - The initialized fee model to use or fixed fee for the transaction
+- **changeDistribution**
+    - Specifies how the change should be distributed
 amongst the change outputs
 
 #### Method fromAtomicBEEF
@@ -1625,6 +1685,7 @@ Extracts the subject transaction and supporting merkle path and source transacti
 ```ts
 static fromAtomicBEEF(beef: number[]): Transaction 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1633,8 +1694,8 @@ The subject transaction, linked to its associated inputs populated with merkle p
 
 Argument Details
 
-+ **beef**
-  + A binary representation of an Atomic BEEF structure.
+- **beef**
+    - A binary representation of an Atomic BEEF structure.
 
 #### Method fromBEEF
 
@@ -1646,6 +1707,7 @@ If no TXID is provided, the last transaction in the BEEF data is returned, or th
 ```ts
 static fromBEEF(beef: number[], txid?: string): Transaction 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1654,10 +1716,10 @@ An anchored transaction, linked to its associated inputs populated with merkle p
 
 Argument Details
 
-+ **beef**
-  + A binary representation of transactions in BEEF format.
-+ **txid**
-  + Optional TXID of the transaction to retrieve from the BEEF data.
+- **beef**
+    - A binary representation of transactions in BEEF format.
+- **txid**
+    - Optional TXID of the transaction to retrieve from the BEEF data.
 
 #### Method fromBinary
 
@@ -1666,6 +1728,7 @@ Creates a Transaction instance from a binary array.
 ```ts
 static fromBinary(bin: number[]): Transaction 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1674,8 +1737,8 @@ Returns
 
 Argument Details
 
-+ **bin**
-  + The binary array representation of the transaction.
+- **bin**
+    - The binary array representation of the transaction.
 
 #### Method fromEF
 
@@ -1684,6 +1747,7 @@ Creates a new transaction, linked to its inputs and their associated merkle path
 ```ts
 static fromEF(ef: number[]): Transaction 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1692,8 +1756,8 @@ An extended transaction, linked to its associated inputs by locking script and s
 
 Argument Details
 
-+ **ef**
-  + A binary representation of a transaction in EF format.
+- **ef**
+    - A binary representation of a transaction in EF format.
 
 #### Method fromHex
 
@@ -1702,6 +1766,7 @@ Creates a Transaction instance from a hexadecimal string.
 ```ts
 static fromHex(hex: string): Transaction 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1710,8 +1775,8 @@ Returns
 
 Argument Details
 
-+ **hex**
-  + The hexadecimal string representation of the transaction.
+- **hex**
+    - The hexadecimal string representation of the transaction.
 
 #### Method fromHexBEEF
 
@@ -1723,6 +1788,7 @@ If no TXID is provided, the last transaction in the BEEF data is returned.
 ```ts
 static fromHexBEEF(hex: string, txid?: string): Transaction 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1731,10 +1797,10 @@ Returns
 
 Argument Details
 
-+ **hex**
-  + The hexadecimal string representation of the transaction BEEF.
-+ **txid**
-  + Optional TXID of the transaction to retrieve from the BEEF data.
+- **hex**
+    - The hexadecimal string representation of the transaction BEEF.
+- **txid**
+    - Optional TXID of the transaction to retrieve from the BEEF data.
 
 #### Method fromHexEF
 
@@ -1743,6 +1809,7 @@ Creates a Transaction instance from a hexadecimal string encoded EF.
 ```ts
 static fromHexEF(hex: string): Transaction 
 ```
+
 See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
@@ -1751,8 +1818,8 @@ Returns
 
 Argument Details
 
-+ **hex**
-  + The hexadecimal string representation of the transaction EF.
+- **hex**
+    - The hexadecimal string representation of the transaction EF.
 
 #### Method getFee
 
@@ -1780,8 +1847,8 @@ Returns
 
 Argument Details
 
-+ **enc**
-  + The encoding to use for the hash. If 'hex', returns a hexadecimal string; otherwise returns a binary array.
+- **enc**
+    - The encoding to use for the hash. If 'hex', returns a hexadecimal string; otherwise returns a binary array.
 
 #### Method id
 
@@ -1809,8 +1876,8 @@ Returns
 
 Argument Details
 
-+ **enc**
-  + The encoding to use for the ID. If 'hex', returns a hexadecimal string.
+- **enc**
+    - The encoding to use for the ID. If 'hex', returns a hexadecimal string.
 
 #### Method id
 
@@ -1826,8 +1893,8 @@ Returns
 
 Argument Details
 
-+ **enc**
-  + The encoding to use for the ID. If 'hex', returns a hexadecimal string; otherwise returns a binary array.
+- **enc**
+    - The encoding to use for the ID. If 'hex', returns a hexadecimal string; otherwise returns a binary array.
 
 #### Method parseScriptOffsets
 
@@ -1862,8 +1929,8 @@ outputs: { vout: number, offset: number, length: number }[]
 
 Argument Details
 
-+ **bin**
-  + binary transaction data
+- **bin**
+    - binary transaction data
 
 #### Method sign
 
@@ -1890,8 +1957,8 @@ Returns
 
 Argument Details
 
-+ **allowPartial**
-  + If true, error will not be thrown if there are any missing sourceTransactions.
+- **allowPartial**
+    - If true, error will not be thrown if there are any missing sourceTransactions.
 
 Throws
 
@@ -1911,8 +1978,8 @@ The serialized BEEF structure
 
 Argument Details
 
-+ **allowPartial**
-  + If true, error will not be thrown if there are any missing sourceTransactions.
+- **allowPartial**
+    - If true, error will not be thrown if there are any missing sourceTransactions.
 
 Throws
 
@@ -2000,8 +2067,8 @@ updateMetadata(metadata: Record<string, any>): void
 
 Argument Details
 
-+ **metadata**
-  + The metadata object to merge into the existing metadata.
+- **metadata**
+    - The metadata object to merge into the existing metadata.
 
 #### Method verify
 
@@ -2010,6 +2077,7 @@ Verifies the legitimacy of the Bitcoin transaction according to the rules of SPV
 ```ts
 async verify(chainTracker: ChainTracker | "scripts only" = defaultChainTracker(), feeModel?: FeeModel, memoryLimit?: number): Promise<boolean> 
 ```
+
 See also: [ChainTracker](./transaction.md#interface-chaintracker), [FeeModel](./transaction.md#interface-feemodel), [defaultChainTracker](./transaction.md#function-defaultchaintracker)
 
 Returns
@@ -2018,12 +2086,12 @@ Whether the transaction is valid according to the rules of SPV.
 
 Argument Details
 
-+ **chainTracker**
-  + An instance of ChainTracker, a Bitcoin block header tracker. If the value is set to 'scripts only', headers will not be verified. If not provided then the default chain tracker will be used.
-+ **feeModel**
-  + An instance of FeeModel, a fee model to use for fee calculation. If not provided then the default fee model will be used.
-+ **memoryLimit**
-  + The maximum memory in bytes usage allowed for script evaluation. If not provided then the default memory limit will be used.
+- **chainTracker**
+    - An instance of ChainTracker, a Bitcoin block header tracker. If the value is set to 'scripts only', headers will not be verified. If not provided then the default chain tracker will be used.
+- **feeModel**
+    - An instance of FeeModel, a fee model to use for fee calculation. If not provided then the default fee model will be used.
+- **memoryLimit**
+    - The maximum memory in bytes usage allowed for script evaluation. If not provided then the default memory limit will be used.
 
 Example
 
@@ -2034,6 +2102,7 @@ tx.verify(new WhatsOnChain(), new SatoshisPerKilobyte(1))
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Class: WhatsOnChain
 
 Represents a chain tracker based on What's On Chain .
@@ -2060,18 +2129,20 @@ Constructs an instance of the WhatsOnChain ChainTracker.
 ```ts
 constructor(network: "main" | "test" | "stn" = "main", config: WhatsOnChainConfig = {}) 
 ```
+
 See also: [WhatsOnChainConfig](./transaction.md#interface-whatsonchainconfig)
 
 Argument Details
 
-+ **network**
-  + The BSV network to use when calling the WhatsOnChain API.
-+ **config**
-  + Configuration options for the WhatsOnChain ChainTracker.
+- **network**
+    - The BSV network to use when calling the WhatsOnChain API.
+- **config**
+    - Configuration options for the WhatsOnChain ChainTracker.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ## Functions
 
 | |
@@ -2097,6 +2168,7 @@ See also: [ArcConfig](./transaction.md#interface-arcconfig), [Broadcaster](./tra
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Function: defaultChainTracker
 
 ```ts
@@ -2108,6 +2180,7 @@ See also: [ChainTracker](./transaction.md#interface-chaintracker)
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Function: defaultHttpClient
 
 Returns a default HttpClient implementation based on the environment that it is run on.
@@ -2123,6 +2196,7 @@ See also: [HttpClient](./transaction.md#interface-httpclient)
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Function: isBroadcastFailure
 
 Convenience type guard for response from `Broadcaster.broadcast`
@@ -2136,6 +2210,7 @@ See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [Broa
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Function: isBroadcastResponse
 
 Convenience type guard for response from `Broadcaster.broadcast`
@@ -2149,6 +2224,7 @@ See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [Broa
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ## Types
 
 | |
@@ -2175,6 +2251,7 @@ See also: [FetchOptions](./transaction.md#interface-fetchoptions)
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Type: HttpClientResponse
 
 An interface for the response returned by the request method.
@@ -2196,6 +2273,7 @@ export type HttpClientResponse<T = any> = {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ## Enums
 
 ### Enum: TX_DATA_FORMAT
@@ -2211,6 +2289,7 @@ export enum TX_DATA_FORMAT {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ## Variables
 
 | |
@@ -2232,6 +2311,7 @@ ATOMIC_BEEF = 16843009
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Variable: BEEF_V1
 
 ```ts
@@ -2241,6 +2321,7 @@ BEEF_V1 = 4022206465
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+
 ### Variable: BEEF_V2
 
 ```ts

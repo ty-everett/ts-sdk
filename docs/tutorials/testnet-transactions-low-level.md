@@ -4,6 +4,7 @@
 **Prerequisites**: Completed "Your First BSV Transaction" tutorial, Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Set up a BSV testnet environment
 - Obtain and manage testnet coins
 - Create and broadcast real transactions on the testnet
@@ -136,14 +137,17 @@ After requesting coins from a faucet, you'll need to verify that you received th
 6. Click on the transaction ID (txid) to view the full transaction details
 
 7. On the transaction details page, find the following information:
+
    - **Transaction ID (txid)**: This is the long hexadecimal string at the top of the page (e.g., `7f4e6ea49a847f557fccd9bf99d4a07ac103e5e8cb3464abb852af552516317e`)
    - **Output Index**: In the "Outputs" section, find your address and note its index number (0-based). If your address is the first output, the index is 0.
    - **Output Amount**: Note the amount sent to your address in this specific output. WhatsOnChain displays amounts in BSV (e.g., 0.00010000 BSV), but our code needs satoshis. To convert:
-     * 1 BSV = 100,000,000 satoshis
-     * Example: 0.00010000 BSV = 10,000 satoshis (multiply by 100,000,000)
-     * You can use a calculator or simply move the decimal point 8 places to the right
+
+     - 1 BSV = 100,000,000 satoshis
+     - Example: 0.00010000 BSV = 10,000 satoshis (multiply by 100,000,000)
+     - You can use a calculator or simply move the decimal point 8 places to the right
 
 8. Write down or copy these three pieces of information:
+
    ```
    Transaction ID (txid): [your transaction id]
    Output Index: [your output index, usually 0]
@@ -165,9 +169,10 @@ In the same way, when creating a Bitcoin transaction:
 
 1. **You spend the entire UTXO** (even if you only want to send a portion of it)
 2. **You specify how to distribute those funds**:
-   - Some goes to the recipient (the payment)
-   - Some goes to the miners (the transaction fee)
-   - The remainder comes back to you (the change)
+
+    - Some goes to the recipient (the payment)
+    - Some goes to the miners (the transaction fee)
+    - The remainder comes back to you (the change)
 
 ### Prerequisites
 
@@ -295,11 +300,13 @@ await tx.fee()
 ```
 
 This method automatically calculates the appropriate fee based on:
+
 - The size of your transaction (in bytes)
 - Current network fee rates
 - Number of inputs and outputs
 
 The `change: true` parameter in our change output works with the fee calculation to:
+
 1. Calculate the appropriate fee amount
 2. Subtract that fee from the total input amount
 3. Allocate the remaining balance to the change address

@@ -4,6 +4,7 @@
 **Prerequisites**: Completed "Your First BSV Transaction" tutorial, Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Create transactions with multiple outputs
 - Add data to transactions
 - Work with different output types
@@ -314,10 +315,10 @@ In the BSV SDK, "baskets" are a powerful UTXO management concept that allows you
 
 Baskets help with:
 
-* **UTXO organization**: Group outputs for different purposes or applications
-* **Transaction optimization**: Control which UTXOs are used for specific transaction types
-* **Privacy enhancement**: Segregate UTXOs from different sources or uses
-* **Application-specific management**: Maintain dedicated UTXOs for particular applications
+- **UTXO organization**: Group outputs for different purposes or applications
+- **Transaction optimization**: Control which UTXOs are used for specific transaction types
+- **Privacy enhancement**: Segregate UTXOs from different sources or uses
+- **Application-specific management**: Maintain dedicated UTXOs for particular applications
 
 The `WalletClient` provides methods for working with baskets to give you fine-grained control over your UTXO management:
 

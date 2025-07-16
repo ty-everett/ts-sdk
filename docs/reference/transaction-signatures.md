@@ -1,5 +1,6 @@
 # Transaction Signatures Reference
-** SKELETON PLACEHOLDER - check  https://docs.bsvblockchain.org/guides/sdks/ts/low-level/tx_sig ***
+
+** SKELETON PLACEHOLDER - check  <https://docs.bsvblockchain.org/guides/sdks/ts/low-level/tx_sig> ***
 *This is a technical reference document for transaction signatures in the BSV TypeScript SDK.*
 
 ## Introduction

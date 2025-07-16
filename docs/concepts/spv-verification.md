@@ -5,6 +5,7 @@ Understanding Simplified Payment Verification and how it enables lightweight Bit
 ## What is SPV?
 
 SPV allows verification of Bitcoin transactions without downloading the entire blockchain:
+
 - **Lightweight**: Only requires block headers and merkle proofs
 - **Secure**: Cryptographically verifiable using merkle trees
 - **Efficient**: Scales to millions of transactions
@@ -13,14 +14,18 @@ SPV allows verification of Bitcoin transactions without downloading the entire b
 ## How SPV Works
 
 ### 1. Block Headers
+
 Download only block headers (80 bytes each) instead of full blocks:
+
 ```typescript
 // Block header contains merkle root
 const header = await chainTracker.getBlockHeader(blockHash)
 ```
 
 ### 2. Merkle Proofs
+
 Verify transaction inclusion using merkle proofs:
+
 ```typescript
 import { MerklePath } from '@bsv/sdk'
 
@@ -30,7 +35,9 @@ const isValid = proof.verify(txid, merkleRoot)
 ```
 
 ### 3. Transaction Verification
+
 Combine proofs with block headers for full verification:
+
 ```typescript
 import { Transaction } from '@bsv/sdk'
 
@@ -45,6 +52,7 @@ const isValid = await Transaction.verify(
 ## Merkle Trees
 
 Bitcoin uses merkle trees to efficiently prove transaction inclusion:
+
 - **Binary Tree**: Each leaf is a transaction ID
 - **Hash Pairs**: Parent nodes are hashes of child pairs
 - **Root Hash**: Single hash representing all transactions
@@ -53,6 +61,7 @@ Bitcoin uses merkle trees to efficiently prove transaction inclusion:
 ## Security Model
 
 SPV provides strong security guarantees:
+
 - **Proof of Work**: Block headers contain proof of work
 - **Cryptographic Hashes**: Merkle proofs use SHA-256
 - **Chain Validation**: Verify header chain integrity
@@ -61,12 +70,14 @@ SPV provides strong security guarantees:
 ## Trade-offs
 
 ### Advantages
+
 - **Low Resource Usage**: Minimal storage and bandwidth
 - **Fast Synchronization**: Quick startup time
 - **Scalability**: Works with any blockchain size
 - **Privacy**: No need to reveal which transactions you care about
 
 ### Limitations
+
 - **Trust Assumptions**: Relies on honest majority of miners
 - **Network Dependency**: Requires connection to full nodes
 - **Delayed Detection**: May not immediately detect invalid blocks
@@ -95,6 +106,7 @@ const result = await transaction.verify(chainTracker, {
 ## BEEF Integration
 
 SPV works seamlessly with BEEF format:
+
 - **Efficient Encoding**: BEEF includes merkle proofs
 - **Batch Verification**: Verify multiple transactions together
 - **Standardized Format**: Consistent across applications

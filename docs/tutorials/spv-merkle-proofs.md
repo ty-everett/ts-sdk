@@ -5,6 +5,7 @@
 Simplified Payment Verification (SPV) is a method for verifying Bitcoin transactions without downloading the entire blockchain. Instead of storing all transaction data, SPV clients only need block headers and merkle proofs to verify that specific transactions are included in the blockchain.
 
 This tutorial covers:
+
 - Understanding SPV principles and merkle trees
 - Working with merkle proofs using the `MerklePath` class
 - Verifying transactions with the `Transaction.verify()` method
@@ -85,6 +86,7 @@ runMerkleExample().catch(console.error)
 The example above demonstrates the fundamental concepts using a simplified 2-transaction block. In real BSV blockchain scenarios, blocks contain hundreds or thousands of transactions, creating much deeper merkle trees.
 
 **Our Working Example:**
+
 - **Block Height**: 850000 (arbitrary example height)
 - **Transaction ID**: `ffeff11c25cde7c06d407490d81ef4d0db64aad6ab3d14393530701561a465ef` (from BSV Technical Standards)
 - **Sibling Hash**: `b9ef07a62553ef8b0898a79c291b92c60f7932260888bde0dab2dd2610d8668e` (from BSV Technical Standards)
@@ -92,6 +94,7 @@ The example above demonstrates the fundamental concepts using a simplified 2-tra
 
 **Real-World Complexity:**
 In actual BSV blocks, a transaction at index 12 (like in the BSV Technical Standards example) would require a merkle path with multiple levels:
+
 - **5 proof levels** for a block with ~32 transactions
 - **10 proof levels** for a block with ~1024 transactions  
 - **20 proof levels** for a block with ~1 million transactions
@@ -116,10 +119,12 @@ The SDK handles the complex offset calculations automatically when parsing from 
 The BSV TypeScript SDK uses an internal object format for MerklePath construction, while the [BSV Technical Standards](https://tsc.bsvblockchain.org/standards/merkle-proof-standardised-format/) define a binary serialization format. The SDK handles the conversion between these formats internally.
 
 **Internal Format (used above):**
+
 - Array of levels, each containing leaf objects with `offset`, `hash`, `txid`, and `duplicate` properties
 - Direct construction allows for clear understanding of the merkle tree structure
 
 **Binary Format (from standards):**
+
 - Compact binary representation for network transmission and storage
 - Can be parsed using `MerklePath.fromHex()` when properly formatted
 
@@ -149,6 +154,7 @@ console.log('Merkle root matches expected:', merkleRoot === '6f0a2a566d54512576b
 The merkle root computation follows a specific mathematical process:
 
 **For a 2-transaction block (our example):**
+
 ```
 Level 0 (Leaves):    [Transaction A]  [Transaction B]
                            |              |
@@ -156,12 +162,14 @@ Level 1 (Root):           [Hash(A + B)]
 ```
 
 **Step-by-step process:**
+
 1. **Start with transaction IDs** (already hashed)
 2. **Concatenate them**: `ffeff11c...465ef` + `b9ef07a6...8668e`
 3. **Double SHA256**: `SHA256(SHA256(concatenated_data))`
 4. **Result**: The merkle root that represents the entire block
 
 **For larger blocks (e.g., 4 transactions):**
+
 ```
 Level 0:    [Tx A]  [Tx B]  [Tx C]  [Tx D]
               |       |       |       |
@@ -653,6 +661,7 @@ SPV and merkle proof verification enable lightweight Bitcoin clients to verify t
 - **BEEF**: Efficient SPV data structures
 
 Key takeaways:
+
 - SPV trades storage for bandwidth and computation
 - Merkle proofs provide cryptographic inclusion proofs
 - Chain trackers ensure merkle roots are valid

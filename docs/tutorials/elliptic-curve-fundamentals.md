@@ -6,6 +6,7 @@
 ## Learning Goals
 
 By the end of this tutorial, you will:
+
 - Understand the mathematical foundations of elliptic curves used in Bitcoin
 - Work with BigNumber for handling large integers in cryptographic operations
 - Manipulate elliptic curve points using the SDK
@@ -590,6 +591,7 @@ In this tutorial, you've learned:
 ### Next Steps
 
 Now that you understand elliptic curve fundamentals, you can explore:
+
 - **[ECDH Key Exchange](./ecdh-key-exchange.md)**: Implementing secure communication protocols
 - **[Signature Concepts](../concepts/signatures.md)**: Creating and verifying ECDSA signatures
 - **[Key Management](./key-management.md)**: Generating multiple keys from a master key
@@ -600,4 +602,5 @@ Understanding of `WalletClient` usage (for practical applications)
 While the `WalletClient` abstracts these operations for convenience, understanding the underlying mathematics helps you make informed decisions about security and implementation.
 
 ## Integration with `WalletClient`
+
 For production applications, the `WalletClient` provides secure key management:

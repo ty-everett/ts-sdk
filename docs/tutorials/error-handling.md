@@ -439,6 +439,7 @@ robustTransactionCreation().catch(console.error)
 ```
 
 This example demonstrates:
+
 - **Specific error pattern matching** for different error types
 - **Dynamic amount adjustment** for insufficient funds
 - **Wallet synchronization handling** with appropriate delays

@@ -1,10 +1,10 @@
 # Creating Transactions with Direct Interfaces
 
-This guide demonstrates how to create Bitcoin SV transactions using the lower-level direct interfaces provided by the BSV TypeScript SDK. This approach gives you more control over transaction construction and is useful for specialized use cases where the WalletClient abstraction isn't suitable.
+This guide demonstrates how to create Bitcoin SV transactions using the lower-level direct interfaces provided by the BSV TypeScript SDK. This approach gives you more control over transaction construction and is useful for specialized use cases where the `WalletClient` abstraction isn't suitable.
 
 ## When to Use Direct Interfaces
 
-- When creating custom transaction types not supported by WalletClient
+- When creating custom transaction types not supported by `WalletClient`
 - When you need precise control over UTXO selection
 - When building specialized applications like data storage services that require custom optimization
 - When integrating with systems that require direct management of transactions
@@ -129,6 +129,16 @@ When working with direct interfaces, remember these important details:
 3. Transaction IDs need to be converted from byte arrays: `Buffer.from(tx.id()).toString('hex')`
 4. For script objects, use `toHex()` or `toASM()` rather than `toString()`
 5. Method chaining doesn't work well with current API - use separate method calls
+
+## Direct Creation vs `WalletClient` Approach
+
+| Feature | Direct Creation | `WalletClient` |
+| --- | --- | --- |
+| Control over transaction structure | High | Low |
+| Complexity | High | Low |
+| Recommended use case | Specialized applications | Production applications |
+
+This guide focuses on direct transaction creation using low-level APIs, which gives you complete control over every aspect of the transaction. For simpler applications, consider using the `WalletClient` approach covered in other tutorials.
 
 ## Related Resources
 

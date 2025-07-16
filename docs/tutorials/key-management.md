@@ -4,6 +4,7 @@
 **Prerequisites**: Completed "Your First BSV Transaction" tutorial, Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Generate and manage private/public keys
 - Understand ECDSA signatures
 - Create and verify digital signatures
@@ -373,7 +374,6 @@ Run the script:
 npx ts-node signatures-low-level.ts
 ```
 
-
 ### Key Benefits of `WalletClient` for Signatures
 
 1. **Enhanced Security**: Private keys never leave the wallet environment
@@ -383,7 +383,7 @@ npx ts-node signatures-low-level.ts
 
 ## Step 5: Practical Application: Signing Transactions with `WalletClient`
 
-Let's put our knowledge to practical use by creating and signing a Bitcoin transaction using the `WalletClient`. 
+Let's put our knowledge to practical use by creating and signing a Bitcoin transaction using the `WalletClient`.
 
 Create a file called `wallet-transaction-signing.ts`:
 
