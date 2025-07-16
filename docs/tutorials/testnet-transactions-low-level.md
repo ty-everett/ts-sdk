@@ -195,21 +195,21 @@ import https from 'https'
 
 async function main() {
   try {
-    // 1. Set up your wallet
+    // Step 1: Set up your wallet
     const privateKey = PrivateKey.fromWif('your_testnet_private_key_here')
     const myAddress = privateKey.toAddress([0x6f]) // 0x6f is the testnet prefix
     const recipientAddress = 'testnet_address_to_send_coins_to'
 
-    // 2. Fetch the full transaction hex
+    // Step 2: Fetch the full transaction hex
     const txid = 'source_transaction_id_here'
     const response = await fetch(`https://api.whatsonchain.com/v1/bsv/test/tx/${txid}/hex`)
     const sourceTxHex = await response.text()
     console.log(`Retrieved transaction hex (first 50 chars): ${sourceTxHex.substring(0, 50)}...`)
     
-    // 3. Create a transaction
+    // Step 3: Create a transaction
     const tx = new Transaction()
     
-    // 4. Add the input
+    // Step 4: Add the input
     // For testnet, we need the hex of the transaction that contains our UTXO
     tx.addInput({
       sourceTransaction: Transaction.fromHex(sourceTxHex),
@@ -217,23 +217,23 @@ async function main() {
       unlockingScriptTemplate: new P2PKH().unlock(privateKey)
     })
     
-    // 5. Add the recipient output
+    // Step 5: Add the recipient output
     tx.addOutput({
       lockingScript: new P2PKH().lock(recipientAddress),
       satoshis: 100 // Amount to send (must be less than input amount)
     })
     
-    // 6. Add the change output back to our address
+    // Step 6: Add the change output back to our address
       tx.addOutput({
         lockingScript: new P2PKH().lock(myAddress),
       change: true // SDK will automatically calculate the change amount
       })
     
-    // 7. Calculate fee and sign the transaction
+    // Step 7: Calculate fee and sign the transaction
     await tx.fee()
     await tx.sign()
     
-    // 8. Broadcast the transaction to the testnet using ARC
+    // Step 8: Broadcast the transaction to the testnet using ARC
     // You need to provide your Taal API key here
     // Get it by signing up at https://console.taal.com
     const apiKey = 'your_taal_api_key_here' // Replace with your actual API key
@@ -251,7 +251,7 @@ async function main() {
     const result = await tx.broadcast(arc)
     console.log('ARC Response:', JSON.stringify(result, null, 2)) // Log the full response for debugging
     
-    // 9. Display the transaction ID
+    // Step 9: Display the transaction ID
     console.log(`Transaction ID: ${Buffer.from(tx.id()).toString('hex')}`)
     console.log(`View on explorer: https://test.whatsonchain.com/tx/${Buffer.from(tx.id()).toString('hex')}`)
     console.log('Transaction broadcast successfully!')
