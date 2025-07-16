@@ -333,6 +333,7 @@ async function demonstrateFileManager() {
 }
 
 demonstrateFileManager().catch(console.error)
+```
 
 ## Advanced Features
 
@@ -489,20 +490,23 @@ async function demonstrateBatchOperations() {
 }
 
 demonstrateBatchOperations().catch(console.error)
+```
 
 ## Troubleshooting
 
 ### Common Issues and Solutions
 
 #### "No wallet available" Error
+
 **Problem**: StorageUploader fails with "No wallet available over any communication substrate"
-**Solution**: 
+**Solution**:
 
 - Install and run a BRC-100 compliant wallet (e.g., MetaNet Desktop Wallet)
-- Ensure wallet is accessible at http://localhost:3321
+- Ensure wallet is accessible at <http://localhost:3321>
 - Verify wallet is fully synced and has sufficient balance
 
 #### "401 Unauthorized" Error
+
 **Problem**: Upload operations fail with HTTP 401 errors
 **Solution**:
 
@@ -511,6 +515,7 @@ demonstrateBatchOperations().catch(console.error)
 - Ensure your wallet has sufficient balance for storage fees
 
 #### "Invalid parameter UHRP url" Error
+
 **Problem**: Download operations fail with invalid URL error
 **Solution**:
 
@@ -519,10 +524,12 @@ demonstrateBatchOperations().catch(console.error)
 - Ensure network connectivity for UHRP lookup services
 
 #### Download Works but Upload Fails
+
 **Problem**: StorageDownloader works but StorageUploader fails
 **Solution**: This is expected behavior without a wallet connection. StorageDownloader works independently, while StorageUploader requires wallet authentication.
 
 #### Service Unavailable
+
 **Problem**: UHRP storage service returns errors or is unreachable
 **Solution**:
 
@@ -533,21 +540,25 @@ demonstrateBatchOperations().catch(console.error)
 ## Best Practices
 
 ### 1. File Management
+
 - Use meaningful file names and metadata
 - Implement proper retention policies
 - Tag files for easy organization and retrieval
 
 ### 2. Error Handling
+
 - Always validate file integrity after download
 - Implement retry logic for network failures
 - Handle storage quota and payment requirements
 
 ### 3. Performance
+
 - Use batch operations for multiple files
 - Implement caching for frequently accessed files
 - Monitor file expiration and renewal needs
 
 ### 4. Security
+
 - Encrypt sensitive files before upload
 - Use authenticated storage endpoints
 - Validate file types and sizes

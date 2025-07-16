@@ -683,9 +683,3 @@ Understanding of `WalletClient` usage is also important for building robust appl
 | **Security** | High | High | High |
 
 The `WalletClient` approach is recommended for most applications, while SPV verification is valuable for specialized lightweight applications.
-
-```typescript
-// Example usage
-const walletClient = new WalletClient('main')
-const isValid = await walletClient.verifyTransaction(beefHex)
-console.log('Transaction valid:', isValid)
