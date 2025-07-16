@@ -138,13 +138,13 @@ After requesting coins from a faucet, you'll need to verify that you received th
 
 7. On the transaction details page, find the following information:
 
-   - **Transaction ID (txid)**: This is the long hexadecimal string at the top of the page (e.g., `7f4e6ea49a847f557fccd9bf99d4a07ac103e5e8cb3464abb852af552516317e`)
-   - **Output Index**: In the "Outputs" section, find your address and note its index number (0-based). If your address is the first output, the index is 0.
-   - **Output Amount**: Note the amount sent to your address in this specific output. WhatsOnChain displays amounts in BSV (e.g., 0.00010000 BSV), but our code needs satoshis. To convert:
+    - **Transaction ID (txid)**: This is the long hexadecimal string at the top of the page (e.g., `7f4e6ea49a847f557fccd9bf99d4a07ac103e5e8cb3464abb852af552516317e`)
+    - **Output Index**: In the "Outputs" section, find your address and note its index number (0-based). If your address is the first output, the index is 0.
+    - **Output Amount**: Note the amount sent to your address in this specific output. WhatsOnChain displays amounts in BSV (e.g., 0.00010000 BSV), but our code needs satoshis. To convert:
 
-     - 1 BSV = 100,000,000 satoshis
-     - Example: 0.00010000 BSV = 10,000 satoshis (multiply by 100,000,000)
-     - You can use a calculator or simply move the decimal point 8 places to the right
+        - 1 BSV = 100,000,000 satoshis
+        - Example: 0.00010000 BSV = 10,000 satoshis (multiply by 100,000,000)
+        - You can use a calculator or simply move the decimal point 8 places to the right
 
 8. Write down or copy these three pieces of information:
 
