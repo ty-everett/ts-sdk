@@ -786,35 +786,3 @@ This tutorial covered comprehensive usage of cryptographic hashing and HMACs in 
 The Hash module in the BSV TypeScript SDK provides both low-level control through classes and high-level convenience through helper functions, enabling developers to implement robust cryptographic solutions for Bitcoin applications.
 
 Continue exploring advanced cryptographic topics with the [ECDH Key Exchange](./ecdh-key-exchange.md) and [AES Symmetric Encryption](./aes-encryption.md) tutorials to build complete cryptographic systems.
-
-```typescript
-// Example usage
-const metadataProtector = new SecureTransactionMetadata('user_password_123')
-
-const originalMetadata: TransactionMetadata = {
-  description: 'Payment for services',
-  category: 'business',
-  tags: ['consulting', 'development'],
-  amount: 100
-}
-
-const protectedData = metadataProtector.protectMetadata(originalMetadata)
-console.log('Protected metadata:', protectedData)
-
-const extracted = metadataProtector.verifyAndExtract(protectedData)
-console.log('Extracted metadata:', extracted)
-console.log('Metadata matches:', JSON.stringify(originalMetadata) === JSON.stringify(extracted))
-```
-
-Follow these instructions to make the following change to my code document.
-
-Instruction: Update all occurrences of "WalletClient" to be formatted as inline code `WalletClient`, except in headers and when it appears in actual code blocks.
-
-Code Edit:
-
-```typescript
-// Understanding of `WalletClient` usage (for practical applications)
-While the `WalletClient` provides high-level transaction operations, understanding hashes and HMACs enables you to build sophisticated cryptographic applications and secure data verification systems.
-
-## Integration with `WalletClient`
-For production applications, the `WalletClient` provides secure hash operations:
