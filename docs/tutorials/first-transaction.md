@@ -120,6 +120,7 @@ npx ts-node step1-simple-transaction.ts
 
 
 **What's happening here:**
+
 - We connect to your BRC-100 wallet (like MetaNet Desktop)
 - Create a transaction with one output containing "Hello BSV!" data
 - The wallet automatically handles inputs, change, and fees
@@ -171,6 +172,7 @@ npx ts-node step2-create-token.ts
 
 
 **What's happening here:**
+
 - We create a minimal token (1 satoshi with OP_NOP script)
 - Store it in a wallet basket called 'my-tokens' for organization
 - This creates a spendable output we can use later
@@ -235,6 +237,7 @@ npx ts-node step3-spend-token.ts
 
 
 **What's happening here:**
+
 - We list tokens from our 'my-tokens' basket
 - Spend the first available token by providing its outpoint
 - Create a new output with proof that we spent the token

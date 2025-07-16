@@ -502,6 +502,7 @@ npx ts-node wallet-transaction-signing.ts
 ```
 
 This example demonstrates:
+
 1. Creating a transaction with inputs and outputs
 2. Getting the transaction hash that needs to be signed
 3. How the `WalletClient` would sign this hash securely
@@ -525,7 +526,8 @@ Congratulations! You've learned the fundamentals of key management and cryptogra
 
 These cryptographic concepts form the foundation of Bitcoin and blockchain technology. By understanding how keys and signatures work, you're well-equipped to build secure and robust applications using the BSV TypeScript SDK.
 
-For more advanced techniques like different signature hash types (SIGHASH flags), manual signature creation, and multi-signature transactions, refer to the [Advanced Transaction Signing guide](../guides/advanced-transaction-signing.md).
+For more advanced techniques like different signature hash types (SIGHASH flags), manual signature creation, and multi-signature transactions, refer to the following documents:
+
 - [Advanced Transaction Signing](../guides/advanced-transaction-signing.md) (How-To Guide)
 - [Transaction Signatures Reference](../reference/transaction-signatures.md) (Technical Reference)
 
