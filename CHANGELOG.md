@@ -144,6 +144,18 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+## [1.6.15] - 2025-07-17
+
+### Added
+
+- `signal` property to HttpClientRequestOptions for request aborting including timeouts.
+
+### Fixed
+
+- SymmetricKeyCompatibility.test.ts failed to compile with extra toBe argument.
+
+---
+
 ## [1.6.14] - 2025-07-17
 
 ### Changed
