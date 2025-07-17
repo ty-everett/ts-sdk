@@ -44,7 +44,7 @@ describe('Cross-SDK Compatibility Tests', () => {
         const decrypted = symKey.decrypt(ciphertext, 'utf8')
         expect(decrypted).toBe(expectedPlaintext)
 
-        console.log(`✓ ${name}: TypeScript SDK successfully decrypted Go ciphertext`)
+        expect(decrypted).toBe(expectedPlaintext, `${name}: TypeScript SDK successfully decrypted Go ciphertext`)
       })
     })
   })
