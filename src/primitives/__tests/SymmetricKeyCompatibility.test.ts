@@ -83,7 +83,7 @@ describe('Cross-SDK Compatibility Tests', () => {
         // Convert hex to byte array
         const ciphertext: number[] = []
         for (let i = 0; i < ciphertextHex.length; i += 2) {
-          ciphertext.push(parseInt(ciphertextHex.substr(i, 2), 16))
+          ciphertext.push(parseInt(ciphertextHex.slice(i, i + 2), 16))
         }
 
         // Decrypt using TypeScript SDK
