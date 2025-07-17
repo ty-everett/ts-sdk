@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.14 - 2025-07-17](#1614---2025-07-17)
+- [1.6.13 - 2025-07-17](#1613---2025-07-17)
 - [1.6.12 - 2025-07-08](#1612---2025-07-08)
 - [1.6.11 - 2025-07-05](#1611---2025-07-05)
 - [1.6.10 - 2025-07-02](#1610---2025-07-02)
@@ -142,7 +144,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
-## [1.6.14] - 2025-07-17
+## [1.6.15] - 2025-07-17
 
 ### Added
 
@@ -153,6 +155,12 @@ All notable changes to this project will be documented in this file. The format 
 - SymmetricKeyCompatibility.test.ts failed to compile with extra toBe argument.
 
 ---
+
+## [1.6.14] - 2025-07-17
+
+### Changed
+
+- Default broadcaster changed to Gorilla Pool ARC because they do not enforce an api key.
 
 ## [1.6.13] - 2025-07-16
 
