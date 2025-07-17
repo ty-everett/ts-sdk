@@ -4,6 +4,7 @@
 **Prerequisites**: Basic TypeScript knowledge, [Elliptic Curve Fundamentals](./elliptic-curve-fundamentals.md) tutorial completed
 
 ## Learning Goals
+
 - Understand Elliptic Curve Diffie-Hellman (ECDH) key exchange principles
 - Implement secure key exchange using the BSV TypeScript SDK
 - Create shared secrets for encrypted communication
@@ -15,6 +16,7 @@
 Elliptic Curve Diffie-Hellman (ECDH) is a key agreement protocol that allows two parties to establish a shared secret over an unsecured communication channel. Unlike traditional encryption where you need to share a secret key beforehand, ECDH allows two parties who have never met to create a shared secret that only they know.
 
 The mathematical foundation of ECDH relies on the commutative property of elliptic curve point multiplication:
+
 - Alice computes: `(Alice's private key) × (Bob's public key)`
 - Bob computes: `(Bob's private key) × (Alice's public key)`
 - Both arrive at the same shared secret point

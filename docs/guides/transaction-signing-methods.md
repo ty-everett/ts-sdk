@@ -6,10 +6,10 @@
 
 This guide demonstrates two different approaches to signing Bitcoin transactions with the BSV TypeScript SDK:
 
-1. **Using WalletClient** - A high-level approach that abstracts key management and signing details
+1. **Using `WalletClient`** - A high-level approach that abstracts key management and signing details
 2. **Using Low-level APIs** - A direct approach with more control over the transaction signing process
 
-Each method has its advantages depending on your use case. The WalletClient approach is recommended for production applications where security is paramount, while the low-level approach gives you more control and is useful for educational purposes or specialized applications.
+Each method has its advantages depending on your use case. The `WalletClient` approach is recommended for production applications where security is paramount, while the low-level approach gives you more control and is useful for educational purposes or specialized applications.
 
 ## Prerequisites
 
@@ -17,9 +17,11 @@ Each method has its advantages depending on your use case. The WalletClient appr
 - Familiarity with Bitcoin transaction structure
 - Understanding of basic cryptographic principles
 
-## Method 1: Transaction Signing with WalletClient
+> **📚 Related Concepts**: This guide builds on [Digital Signatures](../concepts/signatures.md), [Key Management](../concepts/key-management.md), [Transaction Structure](../concepts/transaction-structure.md), and [Wallet Integration](../concepts/wallet-integration.md).
 
-The WalletClient provides a secure, high-level interface for managing keys and signing transactions. This approach is recommended for production applications as it:
+## Method 1: `WalletClient` Signing (Recommended)
+
+The `WalletClient` provides a secure, high-level interface for managing keys and signing transactions. This approach is recommended for production applications as it:
 
 - Abstracts away complex key management
 - Provides better security by isolating private keys
@@ -56,21 +58,27 @@ async function walletTransactionDemo() {
     // 2. Creating a transaction with WalletClient
     console.log('\n2. Creating a transaction with WalletClient')
     
-    // Set up payment details
-    const recipientAddress = '1DBz6V6CmvjZTvfjvJpfnrBk9Lf8fJ8dW8' // Example recipient
+    // Get our own address to send payment to self (realistic example)
+    const ourAddress = await wallet.getAddress()
     const amountSatoshis = 100
+    
+    console.log(`Our wallet address: ${ourAddress}`)
+    
+    // Create a proper P2PKH locking script for our address
+    const lockingScript = new P2PKH().lock(ourAddress)
     
     // Create a payment action using WalletClient
     // This builds a complete transaction structure internally
     const actionResult = await wallet.createAction({
-      description: `Payment to ${recipientAddress}`,
+      description: `Self-payment demonstration`,
       // Define outputs for the transaction
       outputs: [
         {
-          // In a real application, you would create a proper P2PKH script for the recipient
-          lockingScript: '76a914eb0bd5edba389198e73f8efabddfc61666969ff788ac', // Example P2PKH script
+          // Use proper P2PKH script construction
+          lockingScript: lockingScript.toHex(),
           satoshis: amountSatoshis,
-          outputDescription: `Payment to ${recipientAddress}`
+          basket: 'tutorial',
+          outputDescription: `Payment to our own address`
         }
       ],
       // Set options to ensure we get a signable transaction
@@ -86,8 +94,9 @@ async function walletTransactionDemo() {
       console.log('No signable transaction returned - check wallet configuration')
       return
     }
-    console.log(`- Description: Payment to ${recipientAddress}`)
+    console.log(`- Description: Payment demonstration`)
     console.log(`- Amount: ${amountSatoshis} satoshis`)
+    console.log(`- Recipient: ${ourAddress} (our own address)`)
     
     // 3. Sign the transaction with WalletClient
     console.log('\n3. Signing transaction with WalletClient')
@@ -106,7 +115,7 @@ async function walletTransactionDemo() {
       console.log(`Transaction ID: ${signResult.txid}`)
     }
     
-    // 4. Examine the transaction
+    // 4. Examine the transaction (retrieve it from the network and inspect it)
     console.log('\n4. Examining the transaction')
     
     // Check if we have a transaction ID from the sign result
@@ -114,20 +123,92 @@ async function walletTransactionDemo() {
       console.log(`Transaction ID: ${signResult.txid}`)
       console.log('Transaction was successfully signed and broadcast!')
       
-      // Note: In a real application, you would fetch the transaction details
-      // from the blockchain using the txid to examine its structure
+      // Actually retrieve and inspect the transaction using the wallet
+      try {
+        // Wait a moment for the transaction to propagate
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Retry logic to find the transaction outputs
+        const maxRetries = 5 // 30 seconds with 5-second intervals
+        const retryInterval = 5000 // 5 seconds
+        let relatedOutputs: any[] = []
+        let retryCount = 0
+        
+        console.log('\nSearching for transaction outputs...')
+        
+        while (retryCount < maxRetries && relatedOutputs.length === 0) {
+          try {
+            // List our outputs to see the transaction result
+            const { outputs } = await wallet.listOutputs({ basket: 'tutorial' })
+            
+            // Find outputs related to our transaction
+            // Extract txid from outpoint (format: "txid.outputIndex")
+            relatedOutputs = outputs.filter(output => {
+              const [outputTxid] = output.outpoint.split('.')
+              return outputTxid === signResult.txid
+            })
+            
+            if (relatedOutputs.length > 0) {
+              console.log('\nTransaction inspection results:')
+              console.log(`- Found ${relatedOutputs.length} output(s) from this transaction`)
+              
+              relatedOutputs.forEach((output, index) => {
+                console.log(`\nOutput ${index + 1}:`)
+                console.log(`  - Value: ${output.satoshis} satoshis`)
+                console.log(`  - Outpoint: ${output.outpoint}`)
+                console.log(`  - Locking Script: ${output.lockingScript}`)
+                console.log(`  - Spendable: ${output.spendable ? 'Yes' : 'No'}`)
+                if (output.tags && output.tags.length > 0) {
+                  console.log(`  - Tags: ${output.tags.join(', ')}`)
+                }
+              })
+              
+              // Analyze the locking script
+              const firstOutput = relatedOutputs[0]
+              console.log('\nScript Analysis:')
+              console.log(`- Script Type: P2PKH (Pay-to-Public-Key-Hash)`)
+              console.log(`- Script validates payment to: ${ourAddress}`)
+              console.log(`- This output can be spent by providing a valid signature`)
+              
+              break // Found the outputs, exit the retry loop
+            } else {
+              retryCount++
+              if (retryCount < maxRetries) {
+                console.log(`Attempt ${retryCount}/${maxRetries}: Transaction not propagated yet, retrying in ${retryInterval/1000} seconds...`)
+                await new Promise(resolve => setTimeout(resolve, retryInterval))
+              }
+            }
+          } catch (listError: any) {
+            retryCount++
+            if (retryCount < maxRetries) {
+              console.log(`Attempt ${retryCount}/${maxRetries}: Error listing outputs, retrying in ${retryInterval/1000} seconds...`)
+              console.log(`Error: ${listError.message}`)
+              await new Promise(resolve => setTimeout(resolve, retryInterval))
+            } else {
+              throw listError // Re-throw on final attempt
+            }
+          }
+        }
+        
+        if (relatedOutputs.length === 0) {
+          console.log('\nTransaction outputs not found after 30 seconds.')
+          console.log('This might be because:')
+          console.log('- The outputs went to a different basket')
+          console.log('- The transaction is taking longer to sync')
+          console.log('- Network connectivity issues')
+          console.log('\nYou can check the transaction on WhatsOnChain:')
+          console.log(`https://whatsonchain.com/tx/${signResult.txid}`)
+        }
+        
+      } catch (inspectionError) {
+        console.log('\nCould not inspect transaction details:')
+        console.log('This is normal and can happen because:')
+        console.log('- Transaction is still propagating through the network')
+        console.log('- Wallet needs time to sync with the blockchain')
+        console.log('- Network connectivity issues')
+        console.log(`\nError details: ${inspectionError.message}`)
+      }
       
-      // In a real application, you would examine the transaction structure here
-      console.log('\nTo examine the transaction structure, you would:')
-      console.log('1. Fetch the transaction from the blockchain using the txid')
-      console.log('2. Parse the transaction to view inputs, outputs, and scripts')
-      console.log('3. Verify signatures and validate the transaction')
-      
-      console.log('\nExample output information you would see:')
-      console.log('- Input count: typically 1 or more inputs from your wallet')
-      console.log('- Output count: at least 2 (payment + change)')
-      console.log('- Input scripts: Contains signatures and public keys')
-      console.log('- Output scripts: Contains P2PKH or other locking scripts')
     } else {
       console.log('No transaction ID available - transaction may not have been broadcast')
     }
@@ -140,7 +221,7 @@ async function walletTransactionDemo() {
 walletTransactionDemo().catch(console.error)
 ```
 
-### Key Benefits of the WalletClient Approach
+### Key Benefits of the `WalletClient` Approach
 
 1. **Security**: Private keys are managed by the wallet service, reducing exposure
 2. **Abstraction**: Complex transaction construction details are handled internally
@@ -153,81 +234,162 @@ The low-level approach gives you direct control over the transaction signing pro
 
 - Educational purposes to understand the underlying mechanics
 - Specialized applications requiring custom transaction structures
-- Situations where you need fine-grained control over the signing process
-
-### Example Code
+- Custom fee calculation and UTXO management
+- Advanced transaction types and complex scripts
 
 ```typescript
-import { PrivateKey, PublicKey, Transaction, P2PKH } from '@bsv/sdk'
+import { PrivateKey, Transaction, P2PKH, Script } from '@bsv/sdk'
 
-async function transactionSigningDemo() {
-  // Generate keys for our demo
+async function lowLevelTransactionDemo() {
+  console.log('\n=== Low-Level Transaction Signing Demo ===')
+  
+  // 1. Generate keys for our demonstration
   const privateKey = PrivateKey.fromRandom()
+  const publicKey = privateKey.toPublicKey()
   const address = privateKey.toAddress()
   
-  console.log('\n=== Keys for Transaction Signing ===')  
+  console.log('\n1. Key Generation:')
   console.log(`Private Key (WIF): ${privateKey.toWif()}`)
-  console.log(`Address: ${address.toString()}`)
+  console.log(`Public Key: ${publicKey.toString()}`)
+  console.log(`Address: ${address}`)
   
-  // Create a new transaction
+  // 2. Create a realistic transaction with proper structure
+  console.log('\n2. Creating Transaction Structure:')
+  
+  // Create a transaction that demonstrates real Bitcoin transaction patterns
   const tx = new Transaction()
   
-  // For demonstration, we'll add a dummy input
-  // In a real scenario, this would be a reference to a UTXO
-  // For our example, we'll create a simple transaction structure
-  // In a real scenario, you would use actual UTXOs
+  // For this demo, we'll create a transaction that spends from a P2PKH output
+  // and creates a new P2PKH output (self-payment) plus an OP_RETURN data output
   
-  // First, create a dummy transaction that will serve as our input source
-  const dummyTx = new Transaction()
-  dummyTx.addOutput({
+  // First, create a source transaction that contains funds we can spend
+  const sourceTransaction = new Transaction()
+  sourceTransaction.addOutput({
     lockingScript: new P2PKH().lock(address),
-    satoshis: 100
+    satoshis: 1000 // Source has 1000 satoshis
   })
   
-  // Now add an input that references our dummy transaction
+  // Add input that spends from our source transaction
   tx.addInput({
-    sourceTransaction: dummyTx,  // Reference to the dummy transaction
+    sourceTransaction,
     sourceOutputIndex: 0,
     unlockingScriptTemplate: new P2PKH().unlock(privateKey)
   })
   
-  // Add an output
+  // Add a P2PKH output (payment to ourselves)
   tx.addOutput({
     lockingScript: new P2PKH().lock(address),
-    satoshis: 100
+    satoshis: 500
   })
   
-  console.log('\n=== Transaction Before Signing ===')  
-  console.log(`Input Count: ${tx.inputs.length}`)
-  console.log(`Output Count: ${tx.outputs.length}`)
-  console.log(`First input has unlocking script: ${tx.inputs[0].unlockingScript ? 'Yes' : 'No'}`)
-  console.log(`First input has unlocking script template: ${tx.inputs[0].unlockingScriptTemplate ? 'Yes' : 'No'}`)
+  // Add an OP_RETURN data output
+  tx.addOutput({
+    lockingScript: Script.fromASM('OP_RETURN 48656c6c6f20426974636f696e21'), // "Hello Bitcoin!" in hex
+    satoshis: 0
+  })
   
-  // Now, sign the transaction
-  await tx.sign()
+  // Add change output
+  tx.addOutput({
+    lockingScript: new P2PKH().lock(address),
+    change: true // Automatically calculates change amount after fees
+  })
   
-  console.log('\n=== Transaction After Signing ===')  
-  console.log(`Transaction ID: ${Buffer.from(tx.id()).toString('hex')}`)
-  console.log(`First input has unlocking script: ${tx.inputs[0].unlockingScript ? 'Yes' : 'No'}`)
+  console.log('Transaction structure created:')
+  console.log(`- Inputs: ${tx.inputs.length}`)
+  console.log(`- Outputs: ${tx.outputs.length}`)
+  console.log(`- Input amount: 1000 satoshis`)
+  console.log(`- Payment output: 500 satoshis`)
+  console.log(`- Data output: 0 satoshis (OP_RETURN)`)
+  console.log(`- Change output: Will be calculated automatically`)
   
-  // Let's look at the unlocking script (scriptSig) that contains the signature
-  if (tx.inputs[0].unlockingScript) {
-    console.log(`\nUnlocking Script (ASM): ${tx.inputs[0].unlockingScript.toASM()}`)
+  // 3. Calculate fees and finalize the transaction
+  console.log('\n3. Fee Calculation and Signing:')
+  
+  // Calculate appropriate fees based on transaction size
+  await tx.fee()
+  
+  // Display fee information
+  const changeOutput = tx.outputs.find(output => output.change)
+  if (changeOutput && changeOutput.satoshis !== undefined) {
+    console.log(`Fee calculated: ${1000 - 500 - changeOutput.satoshis} satoshis`)
+    console.log(`Change amount: ${changeOutput.satoshis} satoshis`)
   }
   
-  // Serialize the transaction to hex
-  const txHex = tx.toHex()
-  console.log(`\nSigned Transaction (hex, first 64 chars): ${txHex.substring(0, 64)}...`)
+  // Sign the transaction
+  console.log('\nSigning transaction...')
+  await tx.sign()
   
-  // Verify the signature(s) in the transaction
-  const isValid = await tx.verify()
-  console.log(`\nTransaction signature verification: ${isValid ? 'Valid ✓' : 'Invalid ✗'}`)
-  console.log('\nNote: The verification shows as invalid because this is a simplified example.')
-  console.log('In real transactions, proper UTXOs and transaction validation would be required.')
+  // 4. Examine the signed transaction
+  console.log('\n4. Transaction Analysis:')
+  console.log(`Transaction ID: ${Buffer.from(tx.id()).toString('hex')}`)
+  
+  // Check if the input has been properly signed
+  const input = tx.inputs[0]
+  if (input.unlockingScript) {
+    const unlockingASM = input.unlockingScript.toASM()
+    console.log(`\nUnlocking Script (ASM): ${unlockingASM}`)
+    
+    // Parse the signature and public key from the unlocking script
+    const scriptParts = unlockingASM.split(' ')
+    if (scriptParts.length >= 2) {
+      console.log(`- Signature present: ✓ (${scriptParts[0].length} chars)`)
+      console.log(`- Public key present: ✓ (${scriptParts[1].length} chars)`)
+    }
+  }
+  
+  // 5. Verify the transaction
+  console.log('\n5. Transaction Verification:')
+  
+  try {
+    const isValid = await tx.verify()
+    console.log(`Transaction verification: ${isValid ? 'Valid ✓' : 'Invalid ✗'}`)
+    
+    if (isValid) {
+      console.log('\n✓ Transaction is properly constructed and signed!')
+      console.log('✓ All inputs have valid signatures')
+      console.log('✓ All outputs have valid locking scripts')
+      console.log('✓ Fee calculation is correct')
+    }
+  } catch (error: any) {
+    console.log(`Verification error: ${error.message}`)
+  }
+  
+  // 6. Display transaction hex
+  const txHex = tx.toHex()
+  console.log('\n6. Transaction Serialization:')
+  console.log(`Transaction size: ${txHex.length / 2} bytes`)
+  console.log(`Transaction hex (first 100 chars): ${txHex.substring(0, 100)}...`)
+  
+  // 7. Demonstrate transaction structure analysis
+  console.log('\n7. Transaction Structure Analysis:')
+  console.log('Outputs breakdown:')
+  tx.outputs.forEach((output, index) => {
+    const script = output.lockingScript
+    let scriptType = 'Unknown'
+    
+    if (script.toASM().startsWith('OP_DUP OP_HASH160')) {
+      scriptType = 'P2PKH (Pay-to-Public-Key-Hash)'
+    } else if (script.toASM().startsWith('OP_RETURN')) {
+      scriptType = 'OP_RETURN (Data)'
+    }
+    
+    console.log(`  Output ${index}: ${output.satoshis} satoshis - ${scriptType}`)
+    if (output.change) {
+      console.log(`    (Change output)`)
+    }
+  })
+  
+  console.log('\n✓ Low-level transaction signing demonstration complete!')
+  console.log('This transaction demonstrates:')
+  console.log('- Proper input/output construction')
+  console.log('- Automatic fee calculation')
+  console.log('- Digital signature creation and verification')
+  console.log('- Multiple output types (P2PKH + OP_RETURN)')
+  console.log('- Change handling')
 }
 
-// Run our transaction signing demo
-transactionSigningDemo().catch(console.error)
+// Run the demonstration
+lowLevelTransactionDemo().catch(console.error)
 ```
 
 ### Key Benefits of the Low-level Approach
@@ -241,24 +403,13 @@ transactionSigningDemo().catch(console.error)
 
 Consider the following factors when deciding which approach to use:
 
-| Factor | WalletClient Approach | Low-level Approach |
+| Factor | `WalletClient` Approach | Low-level Approach |
 |--------|----------------------|-------------------|
 | Security | Higher (keys managed by wallet) | Lower (direct key handling) |
 | Complexity | Lower (abstracted API) | Higher (manual transaction construction) |
 | Control | Limited (managed by wallet) | Complete (direct access) |
 | Use Case | Production applications | Educational, specialized applications |
 | Integration | Better for enterprise systems | Better for custom implementations |
-
-## Best Practices
-
-Regardless of which approach you choose, follow these best practices:
-
-1. **Never expose private keys**: Keep private keys secure and never expose them in logs or user interfaces
-2. **Test thoroughly**: Always test transaction signing in a test environment before production
-3. **Verify signatures**: Always verify signatures after signing to ensure transaction validity
-4. **Handle errors gracefully**: Implement proper error handling for signing failures
-5. **Consider SIGHASH flags**: Use appropriate signature hash types for your use case
-6. **Document key management**: Maintain clear documentation of your key management approach
 
 ## Related Resources
 

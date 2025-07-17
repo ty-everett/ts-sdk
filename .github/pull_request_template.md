@@ -14,7 +14,7 @@ Describe the tests you've added or any testing steps you've taken.
 - [ ] All tests pass locally
 - [ ] I have tested manually in my local environment
 
-## Checklist:
+## Checklist
 
 - [ ] I have performed a self-review of my own code
 - [ ] I have made corresponding changes to the documentation

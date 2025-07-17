@@ -19,21 +19,27 @@ const isValid = await transaction.verify(chainTracker, {
 ## Verification Levels
 
 ### Basic Validation
+
 Check transaction structure and format:
+
 - Valid input/output formats
 - Correct serialization
 - Proper script syntax
 - Signature format validation
 
 ### Script Execution
+
 Verify that unlocking scripts satisfy locking scripts:
+
 - Execute Bitcoin script opcodes
 - Validate signature operations
 - Check script conditions
 - Ensure proper stack state
 
 ### SPV Verification
+
 Confirm transaction inclusion in the blockchain:
+
 - Verify merkle proofs
 - Validate block headers
 - Check proof of work
@@ -42,7 +48,9 @@ Confirm transaction inclusion in the blockchain:
 ## SDK Verification Methods
 
 ### Transaction.verify()
+
 Complete transaction verification:
+
 ```typescript
 const result = await transaction.verify(chainTracker, {
   merkleProof: merkleProof,
@@ -52,7 +60,9 @@ const result = await transaction.verify(chainTracker, {
 ```
 
 ### Script Verification
+
 Verify individual scripts:
+
 ```typescript
 const isValid = unlockingScript.verify(
   lockingScript,
@@ -62,7 +72,9 @@ const isValid = unlockingScript.verify(
 ```
 
 ### Signature Verification
+
 Check digital signatures:
+
 ```typescript
 const publicKey = PrivateKey.fromWif(wif).toPublicKey()
 const isValid = publicKey.verify(messageHash, signature)
@@ -71,7 +83,9 @@ const isValid = publicKey.verify(messageHash, signature)
 ## Verification Options
 
 ### Memory Limits
+
 Control script execution memory usage:
+
 ```typescript
 const options = {
   maxMemoryLimit: 50000000 // 50MB limit
@@ -79,7 +93,9 @@ const options = {
 ```
 
 ### Scripts-Only Mode
+
 Skip SPV verification for performance:
+
 ```typescript
 const options = {
   scriptsOnly: true
@@ -87,7 +103,9 @@ const options = {
 ```
 
 ### Custom Chain Tracker
+
 Use specific data sources:
+
 ```typescript
 const customTracker = new WhatsOnChain('testnet')
 const isValid = await transaction.verify(customTracker)
@@ -96,6 +114,7 @@ const isValid = await transaction.verify(customTracker)
 ## BEEF Verification
 
 BEEF format includes verification data:
+
 ```typescript
 // BEEF transactions include proofs
 const beefTx = Transaction.fromHexBEEF(beefData)
@@ -107,6 +126,7 @@ const isValid = await beefTx.verify(chainTracker)
 ## Error Handling
 
 Common verification failures:
+
 - Invalid signatures
 - Script execution errors
 - Missing merkle proofs
@@ -126,7 +146,9 @@ try {
 ## Performance Considerations
 
 ### Batch Verification
+
 Verify multiple transactions efficiently:
+
 ```typescript
 const results = await Promise.all(
   transactions.map(tx => tx.verify(chainTracker))
@@ -134,7 +156,9 @@ const results = await Promise.all(
 ```
 
 ### Caching
+
 Cache verification results:
+
 ```typescript
 const verificationCache = new Map()
 
@@ -147,16 +171,19 @@ if (!verificationCache.has(txid)) {
 ## Security Best Practices
 
 ### Always Verify
+
 - Verify transactions before trusting them
 - Check both script execution and SPV proofs
 - Validate input data before verification
 
 ### Multiple Sources
+
 - Use multiple chain trackers for redundancy
 - Cross-check verification results
 - Implement fallback mechanisms
 
 ### Resource Limits
+
 - Set appropriate memory limits
 - Timeout long-running verifications
 - Monitor verification performance
@@ -164,6 +191,7 @@ if (!verificationCache.has(txid)) {
 ## Common Use Cases
 
 ### Payment Verification
+
 ```typescript
 // Verify received payment
 const payment = Transaction.fromHex(paymentHex)
@@ -175,6 +203,7 @@ if (isValid) {
 ```
 
 ### Historical Transaction Audit
+
 ```typescript
 // Verify old transactions
 for (const txHex of historicalTransactions) {
@@ -187,6 +216,7 @@ for (const txHex of historicalTransactions) {
 ## Integration Patterns
 
 ### Wallet Integration
+
 ```typescript
 // Wallets typically handle verification
 const wallet = new WalletClient()
@@ -197,6 +227,7 @@ const action = await wallet.createAction({
 ```
 
 ### Application Verification
+
 ```typescript
 // Applications verify received transactions
 async function processIncomingTransaction(txHex: string) {

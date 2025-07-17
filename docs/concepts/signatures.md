@@ -22,6 +22,7 @@ const isValid = publicKey.verify(message, signature)
 ## Bitcoin Signatures
 
 Bitcoin uses ECDSA (Elliptic Curve Digital Signature Algorithm):
+
 - **secp256k1**: The elliptic curve used by Bitcoin
 - **SHA-256**: Hash function for message digests
 - **DER Encoding**: Standard format for signature serialization
@@ -31,25 +32,33 @@ Bitcoin uses ECDSA (Elliptic Curve Digital Signature Algorithm):
 SIGHASH flags determine what parts of a transaction are signed:
 
 ### SIGHASH_ALL (Default)
+
 Signs all inputs and outputs:
+
 ```typescript
 const signature = privateKey.sign(txHash, 'all')
 ```
 
 ### SIGHASH_NONE
+
 Signs all inputs but no outputs:
+
 ```typescript
 const signature = privateKey.sign(txHash, 'none')
 ```
 
 ### SIGHASH_SINGLE
+
 Signs all inputs and one corresponding output:
+
 ```typescript
 const signature = privateKey.sign(txHash, 'single')
 ```
 
 ### SIGHASH_ANYONECANPAY
+
 Can be combined with other flags to sign only one input:
+
 ```typescript
 const signature = privateKey.sign(txHash, 'all|anyonecanpay')
 ```
@@ -102,16 +111,19 @@ const s = signature.s
 ## Security Considerations
 
 ### Nonce Security
+
 - Each signature must use a unique, random nonce
 - Reusing nonces can leak private keys
 - The SDK handles nonce generation securely
 
 ### Signature Malleability
+
 - Bitcoin signatures can be modified without invalidating them
 - Use canonical signatures to prevent malleability
 - The SDK produces canonical signatures by default
 
 ### Hash Types
+
 - Choose appropriate SIGHASH types for your use case
 - SIGHASH_ALL is safest for most applications
 - Other types enable advanced transaction patterns
@@ -119,6 +131,7 @@ const s = signature.s
 ## Common Patterns
 
 ### Multi-Input Signing
+
 ```typescript
 // Sign multiple inputs in a transaction
 for (let i = 0; i < transaction.inputs.length; i++) {
@@ -128,6 +141,7 @@ for (let i = 0; i < transaction.inputs.length; i++) {
 ```
 
 ### Conditional Signatures
+
 ```typescript
 // Different signatures for different conditions
 const signature1 = privateKey1.sign(txHash, 'all')
@@ -137,6 +151,7 @@ const signature2 = privateKey2.sign(txHash, 'single')
 ## Error Handling
 
 Common signature issues:
+
 - Invalid private key format
 - Incorrect message hash
 - Malformed signature data

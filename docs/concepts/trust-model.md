@@ -7,11 +7,13 @@ Understanding the security assumptions and trust relationships in BSV TypeScript
 The SDK is designed around minimizing trust requirements:
 
 ### Trustless Verification
+
 - **Cryptographic Proofs**: Verify transactions mathematically
 - **SPV Security**: Validate without trusting third parties
 - **Self-Sovereign**: Users control their own keys and data
 
 ### Minimized Dependencies
+
 - **Zero External Dependencies**: Reduces attack surface
 - **Self-Contained**: All cryptographic operations built-in
 - **Auditable**: Open source and transparent implementation
@@ -19,19 +21,25 @@ The SDK is designed around minimizing trust requirements:
 ## Trust Relationships
 
 ### User Trust
+
 Users must trust:
+
 - **The SDK Code**: Open source and auditable
 - **Their Wallet**: Manages private keys securely
 - **Their Device**: Secure execution environment
 
 ### Network Trust
+
 Applications rely on:
+
 - **Bitcoin Network**: Honest majority of miners
 - **Chain Trackers**: Provide accurate blockchain data
 - **SPV Assumptions**: Valid merkle proofs and headers
 
 ### Service Trust
+
 Optional trust relationships:
+
 - **Wallet Providers**: If using hosted wallets
 - **ARC Services**: For transaction broadcasting
 - **Overlay Services**: For additional functionality
@@ -39,12 +47,14 @@ Optional trust relationships:
 ## Security Assumptions
 
 ### Cryptographic Security
+
 - **secp256k1**: Elliptic curve is secure
 - **SHA-256**: Hash function is collision-resistant
 - **ECDSA**: Digital signature scheme is unforgeable
 - **Random Number Generation**: Entropy source is secure
 
 ### Network Security
+
 - **Proof of Work**: Mining provides security
 - **Longest Chain**: Honest chain has most work
 - **Block Finality**: Deep confirmations prevent reorganization
@@ -53,6 +63,7 @@ Optional trust relationships:
 ## Risk Mitigation
 
 ### Key Management
+
 ```typescript
 // Minimize private key exposure
 const wallet = new WalletClient() // Keys stay in wallet
@@ -62,6 +73,7 @@ const wallet = new WalletClient() // Keys stay in wallet
 ```
 
 ### Transaction Verification
+
 ```typescript
 // Always verify important transactions
 const isValid = await transaction.verify(chainTracker, {
@@ -71,6 +83,7 @@ const isValid = await transaction.verify(chainTracker, {
 ```
 
 ### Multiple Sources
+
 ```typescript
 // Use multiple chain trackers
 const config = {
@@ -84,6 +97,7 @@ const config = {
 ## Threat Model
 
 ### Attacks to Consider
+
 - **Private Key Compromise**: Secure key storage
 - **Man-in-the-Middle**: Use HTTPS and verify certificates
 - **Service Downtime**: Implement fallback mechanisms
@@ -93,6 +107,7 @@ const config = {
 ## Application Design
 
 ### Security-First Design
+
 ```typescript
 // Validate all inputs
 function processTransaction(txHex: string) {
@@ -106,6 +121,7 @@ function processTransaction(txHex: string) {
 ```
 
 ### Error Handling
+
 ```typescript
 // Handle trust failures gracefully
 try {

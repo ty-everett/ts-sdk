@@ -6,6 +6,7 @@
 ## Learning Goals
 
 By completing this tutorial, you will:
+
 - Understand cryptographic hash functions and their properties
 - Master the Hash module classes and helper functions in the BSV TypeScript SDK
 - Implement various hash algorithms (SHA-256, SHA-512, SHA-1, RIPEMD-160)
@@ -34,6 +35,7 @@ import { Hash, Utils } from '@bsv/sdk'
 ```
 
 The `Hash` module contains:
+
 - Hash function classes (`SHA256`, `SHA512`, `SHA1`, `RIPEMD160`)
 - HMAC classes (`SHA256HMAC`, `SHA512HMAC`, `SHA1HMAC`)
 - Helper functions (`sha256`, `sha512`, `hash256`, `hash160`, `sha256hmac`)
@@ -758,6 +760,7 @@ function efficientHashing(messages: string[]): string[] {
 This tutorial covered comprehensive usage of cryptographic hashing and HMACs in the BSV TypeScript SDK:
 
 **Key Concepts Learned:**
+
 - Hash function fundamentals and Bitcoin-specific applications
 - SHA-256, SHA-512, SHA-1, and RIPEMD-160 implementation
 - HMAC creation and verification for message authentication
@@ -766,6 +769,7 @@ This tutorial covered comprehensive usage of cryptographic hashing and HMACs in 
 - Security best practices for key management and validation
 
 **Practical Applications:**
+
 - Data integrity verification systems
 - Message authentication protocols
 - Transaction metadata protection
@@ -773,6 +777,7 @@ This tutorial covered comprehensive usage of cryptographic hashing and HMACs in 
 - Secure key derivation patterns
 
 **Security Considerations:**
+
 - Proper input validation and error handling
 - Constant-time comparison to prevent timing attacks
 - Secure key generation and storage practices
@@ -781,34 +786,3 @@ This tutorial covered comprehensive usage of cryptographic hashing and HMACs in 
 The Hash module in the BSV TypeScript SDK provides both low-level control through classes and high-level convenience through helper functions, enabling developers to implement robust cryptographic solutions for Bitcoin applications.
 
 Continue exploring advanced cryptographic topics with the [ECDH Key Exchange](./ecdh-key-exchange.md) and [AES Symmetric Encryption](./aes-encryption.md) tutorials to build complete cryptographic systems.
-
-```typescript
-// Example usage
-const metadataProtector = new SecureTransactionMetadata('user_password_123')
-
-const originalMetadata: TransactionMetadata = {
-  description: 'Payment for services',
-  category: 'business',
-  tags: ['consulting', 'development'],
-  amount: 100
-}
-
-const protectedData = metadataProtector.protectMetadata(originalMetadata)
-console.log('Protected metadata:', protectedData)
-
-const extracted = metadataProtector.verifyAndExtract(protectedData)
-console.log('Extracted metadata:', extracted)
-console.log('Metadata matches:', JSON.stringify(originalMetadata) === JSON.stringify(extracted))
-```
-
-Follow these instructions to make the following change to my code document.
-
-Instruction: Update all occurrences of "WalletClient" to be formatted as inline code `WalletClient`, except in headers and when it appears in actual code blocks.
-
-Code Edit:
-```typescript
-// Understanding of `WalletClient` usage (for practical applications)
-While the `WalletClient` provides high-level transaction operations, understanding hashes and HMACs enables you to build sophisticated cryptographic applications and secure data verification systems.
-
-## Integration with `WalletClient`
-For production applications, the `WalletClient` provides secure hash operations:

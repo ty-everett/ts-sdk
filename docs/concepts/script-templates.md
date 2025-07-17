@@ -22,7 +22,9 @@ const unlockingScript = template.unlock(privateKey, signature)
 ## Standard Templates
 
 ### P2PKH (Pay to Public Key Hash)
+
 The most common Bitcoin script pattern:
+
 ```typescript
 const p2pkh = new P2PKH()
 const lock = p2pkh.lock(publicKeyHash)
@@ -30,7 +32,9 @@ const unlock = p2pkh.unlock(privateKey, signature)
 ```
 
 ### P2PK (Pay to Public Key)
+
 Direct payment to a public key:
+
 ```typescript
 const p2pk = new P2PK()
 const lock = p2pk.lock(publicKey)
@@ -38,7 +42,9 @@ const unlock = p2pk.unlock(signature)
 ```
 
 ### OP_RETURN (Data Storage)
+
 Store arbitrary data on-chain:
+
 ```typescript
 const opReturn = new OpReturn()
 const lock = opReturn.lock(data)
@@ -86,16 +92,19 @@ interface ScriptTemplate {
 ## Benefits
 
 ### Reusability
+
 - Standard patterns for common use cases
 - Consistent implementation across applications
 - Reduced development time
 
 ### Security
+
 - Well-tested script patterns
 - Reduced risk of script errors
 - Best practice implementations
 
 ### Maintainability
+
 - Clear separation of script logic
 - Easy to update and modify
 - Testable components
@@ -103,6 +112,7 @@ interface ScriptTemplate {
 ## Working with Templates
 
 ### Transaction Integration
+
 ```typescript
 // Use template in transaction
 const output = {
@@ -118,6 +128,7 @@ const input = {
 ```
 
 ### Fee Estimation
+
 ```typescript
 // Estimate script size for fee calculation
 const estimatedSize = template.estimateLength([publicKeyHash])
@@ -127,6 +138,7 @@ const fee = estimatedSize * feePerByte
 ## Advanced Patterns
 
 ### Multi-Signature
+
 ```typescript
 class MultiSigTemplate implements ScriptTemplate {
   lock(threshold: number, publicKeys: string[]): Script {
@@ -140,6 +152,7 @@ class MultiSigTemplate implements ScriptTemplate {
 ```
 
 ### Conditional Scripts
+
 ```typescript
 class ConditionalTemplate implements ScriptTemplate {
   lock(condition: Script, trueScript: Script, falseScript: Script): Script {

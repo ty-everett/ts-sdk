@@ -90,4 +90,3 @@ export default IdentityDisplay
 ## License
 
 Open BSV License
-

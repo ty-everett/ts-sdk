@@ -34,22 +34,26 @@ tx.addOutput({
 ## Key Concepts
 
 ### Inputs
+
 - Reference previous transaction outputs (UTXOs)
 - Include unlocking scripts to prove ownership
 - Must be fully consumed (no partial spending)
 
 ### Outputs
+
 - Create new UTXOs with specific values
 - Include locking scripts that define spending conditions
 - Can be spent by future transactions
 
 ### Transaction ID
+
 - Unique identifier calculated from transaction data
 - Used to reference the transaction in inputs
 
 ## Working with Transactions
 
 The SDK provides methods to:
+
 - Serialize transactions to hex format
 - Calculate transaction fees
 - Verify transaction validity

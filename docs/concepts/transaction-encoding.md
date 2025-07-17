@@ -7,7 +7,9 @@ How Bitcoin transactions are serialized and deserialized in different formats wi
 The SDK supports multiple transaction encoding formats:
 
 ### Raw Transaction Format
+
 Standard Bitcoin transaction serialization:
+
 ```typescript
 import { Transaction } from '@bsv/sdk'
 
@@ -19,7 +21,9 @@ const tx = Transaction.fromHex(txHex)
 ```
 
 ### BEEF Format
+
 Bitcoin Extras Extension Format for efficient data exchange:
+
 ```typescript
 // Serialize to BEEF
 const beefHex = transaction.toBEEF()
@@ -29,7 +33,9 @@ const tx = Transaction.fromHexBEEF(beefHex)
 ```
 
 ### Binary Format
+
 Raw binary data for maximum efficiency:
+
 ```typescript
 // Serialize to binary
 const txBinary = transaction.toBinary()
@@ -41,6 +47,7 @@ const tx = Transaction.fromBinary(txBinary)
 ## Serialization Structure
 
 ### Standard Transaction
+
 ```
 Version (4 bytes)
 Input Count (varint)
@@ -51,6 +58,7 @@ Lock Time (4 bytes)
 ```
 
 ### Input Structure
+
 ```
 Previous TX Hash (32 bytes)
 Output Index (4 bytes)
@@ -60,6 +68,7 @@ Sequence (4 bytes)
 ```
 
 ### Output Structure
+
 ```
 Value (8 bytes)
 Script Length (varint)
@@ -69,6 +78,7 @@ Locking Script (variable)
 ## BEEF Enhancements
 
 BEEF format adds:
+
 - **Merkle Proofs**: SPV verification data
 - **Block Headers**: Chain validation information
 - **Metadata**: Additional transaction context
@@ -77,16 +87,19 @@ BEEF format adds:
 ## Encoding Considerations
 
 ### Size Optimization
+
 - Use BEEF for transactions with proofs
 - Use raw format for minimal overhead
 - Consider compression for large batches
 
 ### Compatibility
+
 - Raw format works with all Bitcoin software
 - BEEF requires compatible parsers
 - Binary format is most efficient but less portable
 
 ### Performance
+
 - Binary operations are fastest
 - Hex encoding is human-readable
 - BEEF provides best feature/size ratio
@@ -94,6 +107,7 @@ BEEF format adds:
 ## Working with Encodings
 
 ### Conversion Between Formats
+
 ```typescript
 // Start with a transaction
 const tx = new Transaction()
@@ -107,6 +121,7 @@ const beef = tx.toBEEF()
 ```
 
 ### Validation
+
 ```typescript
 // Verify encoding integrity
 const originalTx = Transaction.fromHex(hex)
@@ -117,16 +132,19 @@ console.log(hex === roundTripHex) // true
 ## Use Cases
 
 ### Network Transmission
+
 - Use hex for JSON APIs
 - Use binary for efficient protocols
 - Use BEEF for SPV applications
 
 ### Storage
+
 - Raw format for blockchain storage
 - BEEF for application databases
 - Binary for memory-constrained environments
 
 ### Interoperability
+
 - Hex for debugging and logging
 - Raw format for wallet compatibility
 - BEEF for modern Bitcoin applications
@@ -134,6 +152,7 @@ console.log(hex === roundTripHex) // true
 ## Error Handling
 
 Common encoding issues:
+
 - Invalid hex characters
 - Truncated binary data
 - Malformed BEEF structures

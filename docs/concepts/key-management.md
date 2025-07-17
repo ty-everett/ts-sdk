@@ -21,6 +21,7 @@ const publicKey = privateKey.toPublicKey()
 Private keys are 256-bit numbers that control Bitcoin funds:
 
 ### Generation
+
 ```typescript
 // Secure random generation
 const privKey = PrivateKey.fromRandom()
@@ -30,6 +31,7 @@ const privKey2 = PrivateKey.fromString('hex_string')
 ```
 
 ### Formats
+
 ```typescript
 // WIF (Wallet Import Format)
 const wif = privateKey.toWif()
@@ -46,6 +48,7 @@ const der = privateKey.toDER()
 Public keys are derived from private keys and can be shared safely:
 
 ### Derivation
+
 ```typescript
 // Always derive from private key
 const publicKey = privateKey.toPublicKey()
@@ -54,6 +57,7 @@ const publicKey = privateKey.toPublicKey()
 ```
 
 ### Formats
+
 ```typescript
 // Compressed (33 bytes) - preferred
 const compressed = publicKey.toString()
@@ -91,12 +95,14 @@ const childPubKey = childKey.toPublicKey()
 ## Security Considerations
 
 ### Private Key Security
+
 - **Never expose**: Private keys should never be logged or transmitted
 - **Secure storage**: Use encrypted storage for private keys
 - **Random generation**: Always use cryptographically secure randomness
 - **Access control**: Limit who can access private key operations
 
 ### Best Practices
+
 ```typescript
 // Good: Generate securely
 const key = PrivateKey.fromRandom()
@@ -149,6 +155,7 @@ const key3 = PrivateKey.fromDER(derBytes)
 ## Cryptographic Operations
 
 The SDK provides secure implementations of:
+
 - **ECDSA**: Digital signature algorithm
 - **ECDH**: Key exchange protocol
 - **Hash Functions**: SHA-256, RIPEMD-160
@@ -157,6 +164,7 @@ The SDK provides secure implementations of:
 ## Memory Management
 
 Sensitive key data should be cleared when no longer needed:
+
 - Use secure memory practices
 - Clear variables containing key data
 - Avoid keeping keys in memory longer than necessary
@@ -164,6 +172,7 @@ Sensitive key data should be cleared when no longer needed:
 ## Testing and Development
 
 For development and testing:
+
 - Use testnet for experiments
 - Generate new keys for each test
 - Never use mainnet keys in test code

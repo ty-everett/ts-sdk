@@ -2,6 +2,7 @@
 **Prerequisites**: Completed "Transaction Types and Data" tutorial, Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Master multi-input/multi-output transaction construction
 - Implement advanced fee calculation and optimization strategies
 - Handle change outputs efficiently
@@ -449,7 +450,6 @@ async function createTransactionChain() {
 createTransactionChain().catch(console.error)
 ```
 
-
 ## Performance Optimization Strategies
 
 For high-throughput applications, consider these optimization techniques:
@@ -546,8 +546,6 @@ async function optimizedTransactionPatterns() {
 optimizedTransactionPatterns().catch(console.error)
 ```
 
-
-
 ## Conclusion
 
 You've now mastered advanced transaction construction with the BSV TypeScript SDK's `WalletClient`. You can:
@@ -566,7 +564,6 @@ These techniques enable you to build production-ready applications that efficien
 - Check out specialized tutorials for your specific use case
 
 - Advanced transaction construction requires robust error handling for production applications. For comprehensive coverage of error handling patterns, retry mechanisms, and recovery strategies, see the dedicated [Error Handling Tutorial](./error-handling.md).
-
 
 ## Additional Resources
 

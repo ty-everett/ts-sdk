@@ -4,6 +4,7 @@
 **Prerequisites**: Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Install and configure the BSV TypeScript SDK
 - Create a simple P2PKH transaction
 - Understand BSV transaction anatomy

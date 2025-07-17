@@ -667,23 +667,27 @@ const testDebugConfig = {
 ### Debug Checklist
 
 1. **Enable appropriate logging level**
+
    ```typescript
    // Set debug level based on issue severity
    const config = { logging: { level: 'debug' } }
    ```
 
 2. **Check network connectivity**
+
    ```typescript
    NetworkInspector.startRequest('health-check', 'https://api.whatsonchain.com/v1/bsv/main/chain/info', 'GET')
    ```
 
 3. **Validate transaction structure**
+
    ```typescript
    const analysis = TransactionAnalyzer.analyze(transaction)
    console.log('Transaction Analysis:', analysis)
    ```
 
 4. **Monitor performance**
+
    ```typescript
    PerformanceMonitor.startTimer('wallet-operation')
    // ... perform operation
@@ -691,6 +695,7 @@ const testDebugConfig = {
    ```
 
 5. **Check memory usage**
+
    ```typescript
    MemoryMonitor.logMemoryUsage('before-operation')
    // ... perform operation

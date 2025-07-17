@@ -4,6 +4,7 @@
 **Prerequisites**: Completed "Your First BSV Transaction" tutorial, Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Set up a BSV testnet environment
 - Obtain and manage testnet coins
 - Create and broadcast real transactions on the testnet
@@ -136,14 +137,17 @@ After requesting coins from a faucet, you'll need to verify that you received th
 6. Click on the transaction ID (txid) to view the full transaction details
 
 7. On the transaction details page, find the following information:
-   - **Transaction ID (txid)**: This is the long hexadecimal string at the top of the page (e.g., `7f4e6ea49a847f557fccd9bf99d4a07ac103e5e8cb3464abb852af552516317e`)
-   - **Output Index**: In the "Outputs" section, find your address and note its index number (0-based). If your address is the first output, the index is 0.
-   - **Output Amount**: Note the amount sent to your address in this specific output. WhatsOnChain displays amounts in BSV (e.g., 0.00010000 BSV), but our code needs satoshis. To convert:
-     * 1 BSV = 100,000,000 satoshis
-     * Example: 0.00010000 BSV = 10,000 satoshis (multiply by 100,000,000)
-     * You can use a calculator or simply move the decimal point 8 places to the right
+
+    - **Transaction ID (txid)**: This is the long hexadecimal string at the top of the page (e.g., `7f4e6ea49a847f557fccd9bf99d4a07ac103e5e8cb3464abb852af552516317e`)
+    - **Output Index**: In the "Outputs" section, find your address and note its index number (0-based). If your address is the first output, the index is 0.
+    - **Output Amount**: Note the amount sent to your address in this specific output. WhatsOnChain displays amounts in BSV (e.g., 0.00010000 BSV), but our code needs satoshis. To convert:
+
+        - 1 BSV = 100,000,000 satoshis
+        - Example: 0.00010000 BSV = 10,000 satoshis (multiply by 100,000,000)
+        - You can use a calculator or simply move the decimal point 8 places to the right
 
 8. Write down or copy these three pieces of information:
+
    ```
    Transaction ID (txid): [your transaction id]
    Output Index: [your output index, usually 0]
@@ -165,9 +169,10 @@ In the same way, when creating a Bitcoin transaction:
 
 1. **You spend the entire UTXO** (even if you only want to send a portion of it)
 2. **You specify how to distribute those funds**:
-   - Some goes to the recipient (the payment)
-   - Some goes to the miners (the transaction fee)
-   - The remainder comes back to you (the change)
+
+    - Some goes to the recipient (the payment)
+    - Some goes to the miners (the transaction fee)
+    - The remainder comes back to you (the change)
 
 ### Prerequisites
 
@@ -190,21 +195,21 @@ import https from 'https'
 
 async function main() {
   try {
-    // 1. Set up your wallet
+    // Step 1: Set up your wallet
     const privateKey = PrivateKey.fromWif('your_testnet_private_key_here')
     const myAddress = privateKey.toAddress([0x6f]) // 0x6f is the testnet prefix
     const recipientAddress = 'testnet_address_to_send_coins_to'
 
-    // 2. Fetch the full transaction hex
+    // Step 2: Fetch the full transaction hex
     const txid = 'source_transaction_id_here'
     const response = await fetch(`https://api.whatsonchain.com/v1/bsv/test/tx/${txid}/hex`)
     const sourceTxHex = await response.text()
     console.log(`Retrieved transaction hex (first 50 chars): ${sourceTxHex.substring(0, 50)}...`)
     
-    // 3. Create a transaction
+    // Step 3: Create a transaction
     const tx = new Transaction()
     
-    // 4. Add the input
+    // Step 4: Add the input
     // For testnet, we need the hex of the transaction that contains our UTXO
     tx.addInput({
       sourceTransaction: Transaction.fromHex(sourceTxHex),
@@ -212,23 +217,23 @@ async function main() {
       unlockingScriptTemplate: new P2PKH().unlock(privateKey)
     })
     
-    // 5. Add the recipient output
+    // Step 5: Add the recipient output
     tx.addOutput({
       lockingScript: new P2PKH().lock(recipientAddress),
       satoshis: 100 // Amount to send (must be less than input amount)
     })
     
-    // 6. Add the change output back to our address
+    // Step 6: Add the change output back to our address
       tx.addOutput({
         lockingScript: new P2PKH().lock(myAddress),
       change: true // SDK will automatically calculate the change amount
       })
     
-    // 7. Calculate fee and sign the transaction
+    // Step 7: Calculate fee and sign the transaction
     await tx.fee()
     await tx.sign()
     
-    // 8. Broadcast the transaction to the testnet using ARC
+    // Step 8: Broadcast the transaction to the testnet using ARC
     // You need to provide your Taal API key here
     // Get it by signing up at https://console.taal.com
     const apiKey = 'your_taal_api_key_here' // Replace with your actual API key
@@ -246,7 +251,7 @@ async function main() {
     const result = await tx.broadcast(arc)
     console.log('ARC Response:', JSON.stringify(result, null, 2)) // Log the full response for debugging
     
-    // 9. Display the transaction ID
+    // Step 9: Display the transaction ID
     console.log(`Transaction ID: ${Buffer.from(tx.id()).toString('hex')}`)
     console.log(`View on explorer: https://test.whatsonchain.com/tx/${Buffer.from(tx.id()).toString('hex')}`)
     console.log('Transaction broadcast successfully!')
@@ -295,11 +300,13 @@ await tx.fee()
 ```
 
 This method automatically calculates the appropriate fee based on:
+
 - The size of your transaction (in bytes)
 - Current network fee rates
 - Number of inputs and outputs
 
 The `change: true` parameter in our change output works with the fee calculation to:
+
 1. Calculate the appropriate fee amount
 2. Subtract that fee from the total input amount
 3. Allocate the remaining balance to the change address

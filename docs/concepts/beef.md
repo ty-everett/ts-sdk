@@ -5,6 +5,7 @@ Bitcoin Extras Extension Format (BEEF) - an efficient way to package Bitcoin tra
 ## What is BEEF?
 
 BEEF is a standardized format that combines:
+
 - **Transaction Data**: The actual Bitcoin transaction
 - **Merkle Proofs**: SPV verification data
 - **Block Headers**: Chain validation information
@@ -28,16 +29,19 @@ const isValid = await tx.verify(chainTracker)
 ## Key Benefits
 
 ### Efficiency
+
 - **Compact**: Includes only necessary verification data
 - **Self-Contained**: No external lookups required
 - **Batch Processing**: Multiple transactions in one package
 
 ### SPV Integration
+
 - **Merkle Proofs**: Verify transaction inclusion
 - **Block Headers**: Validate proof of work
 - **Chain Context**: Understand transaction position
 
 ### Interoperability
+
 - **Standardized**: Consistent format across applications
 - **Portable**: Easy to transmit and store
 - **Compatible**: Works with SPV clients
@@ -45,6 +49,7 @@ const isValid = await tx.verify(chainTracker)
 ## Use Cases
 
 ### Transaction Broadcasting
+
 ```typescript
 // Broadcast transaction with proof
 const beefTx = Transaction.fromHexBEEF(beefData)
@@ -52,11 +57,13 @@ await beefTx.broadcast(arcConfig)
 ```
 
 ### Data Exchange
+
 - Share transactions between applications
 - Provide verification data to SPV clients
 - Archive transactions with proofs
 
 ### Wallet Integration
+
 - Import transactions with full context
 - Verify historical transactions
 - Synchronize between devices
@@ -64,6 +71,7 @@ await beefTx.broadcast(arcConfig)
 ## BEEF Structure
 
 The format includes:
+
 1. **Version**: BEEF format version
 2. **Transactions**: One or more Bitcoin transactions
 3. **Proofs**: Merkle proofs for each transaction

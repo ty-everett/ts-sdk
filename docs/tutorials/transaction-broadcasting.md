@@ -4,6 +4,7 @@
 **Prerequisites**: Completed "Your First BSV Transaction" tutorial, Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Understand how transaction broadcasting works in BSV
 - Learn the difference between `WalletClient` and direct broadcasting approaches
 - Configure broadcasting for testnet vs mainnet
@@ -32,11 +33,12 @@ Your App → WalletClient → Wallet → Mining Services → BSV Network
 ```
 
 The Wallet acts as a proxy that:
-- Manages your broadcasting preferences 
+
+- Manages your broadcasting preferences
 - Handles fallback logic between different services
 - Provides a consistent API regardless of the underlying service
 
-Due to its simplicity, this is the recommended approach. 
+Due to its simplicity, this is the recommended approach.
 
 ### Direct Broadcasting Flow
 
@@ -47,6 +49,7 @@ Your App → Custom Broadcaster → Mining Service API → BSV Network
 ```
 
 This approach gives you:
+
 - Full control over which service to use
 - Direct error handling and response processing
 - Ability to implement custom retry logic
@@ -56,7 +59,7 @@ Due to its complexity and need to handle the low-level details of the broadcasti
 
 ## Step 1: WalletClient Broadcasting
 
-Let's start with the `WalletClient` approach, which is the simplest for most applications. This is the same approach we have seen in the previous tutorials, where we used the `WalletClient` to create and broadcast transactions. 
+Let's start with the `WalletClient` approach, which is the simplest for most applications. This is the same approach we have seen in the previous tutorials, where we used the `WalletClient` to create and broadcast transactions.
 
 ### Basic WalletClient Setup
 
@@ -184,11 +187,10 @@ When you use `WalletClient`:
 5. **Response**: You receive either a transaction ID (success) or an error message
 
 The key advantage is that **you don't control the broadcasting directly** - the BRC-100 wallet handles it based on its configuration. This means:
+
 - ✅ Easy to use - no need to manage API keys or endpoints
 - ✅ Fallback logic built-in
 - ✅ User can configure preferred services through the wallet UI
-
-
 
 ## Step 2: Direct Broadcasting with Custom Broadcasters
 
@@ -203,6 +205,7 @@ The `WalletClient` approach in step 1 is the recommended approach. However, if y
 3. **Manual broadcast**: Use your chosen broadcaster to submit the transaction
 
 This approach is useful when you need to:
+
 - Use a specific broadcasting service (ARC, WhatsOnChain, etc.)
 - Implement custom retry logic or error handling
 - Broadcast to multiple services for redundancy
@@ -511,18 +514,18 @@ monitoringExample('your-transaction-id-here')
 In this tutorial, you learned about the two main approaches to transaction broadcasting in BSV:
 
 ### `WalletClient` Approach
+
 - ✅ **Simple**: Easy to use with BRC-100 wallets
 - ✅ **Managed**: Wallet handles service selection and fallbacks
 - ✅ **User Control**: Users can configure preferred services
 
-
 ### Direct Broadcasting Approach
+
 - ✅ **Full Control**: Choose exactly which service to use
 - ✅ **No Dependencies**: Works without external wallet software
 - ✅ **Custom Logic**: Implement your own retry and fallback logic
 - ✅ **Error Handling**: Direct access to service responses
 - ❌ **More Complex**: Requires more setup and configuration
-
 
 ### Next Steps
 

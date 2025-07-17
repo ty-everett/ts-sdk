@@ -36,8 +36,6 @@ Complete technical specifications and API documentation:
 - [Transaction](./reference/transaction.md)
 - [View all references →](./reference/index.md)
 
-
-
 ### [🏗️ Concepts & Explanations](./concepts/index.md)
 
 Understanding the architecture and design principles:

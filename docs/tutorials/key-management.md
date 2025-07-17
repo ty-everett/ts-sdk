@@ -4,6 +4,7 @@
 **Prerequisites**: Completed "Your First BSV Transaction" tutorial, Node.js, basic TypeScript knowledge  
 
 ## Learning Goals
+
 - Generate and manage private/public keys
 - Understand ECDSA signatures
 - Create and verify digital signatures
@@ -373,7 +374,6 @@ Run the script:
 npx ts-node signatures-low-level.ts
 ```
 
-
 ### Key Benefits of `WalletClient` for Signatures
 
 1. **Enhanced Security**: Private keys never leave the wallet environment
@@ -383,7 +383,7 @@ npx ts-node signatures-low-level.ts
 
 ## Step 5: Practical Application: Signing Transactions with `WalletClient`
 
-Let's put our knowledge to practical use by creating and signing a Bitcoin transaction using the `WalletClient`. 
+Let's put our knowledge to practical use by creating and signing a Bitcoin transaction using the `WalletClient`.
 
 Create a file called `wallet-transaction-signing.ts`:
 
@@ -502,6 +502,7 @@ npx ts-node wallet-transaction-signing.ts
 ```
 
 This example demonstrates:
+
 1. Creating a transaction with inputs and outputs
 2. Getting the transaction hash that needs to be signed
 3. How the `WalletClient` would sign this hash securely
@@ -525,7 +526,8 @@ Congratulations! You've learned the fundamentals of key management and cryptogra
 
 These cryptographic concepts form the foundation of Bitcoin and blockchain technology. By understanding how keys and signatures work, you're well-equipped to build secure and robust applications using the BSV TypeScript SDK.
 
-For more advanced techniques like different signature hash types (SIGHASH flags), manual signature creation, and multi-signature transactions, refer to the [Advanced Transaction Signing guide](../guides/advanced-transaction-signing.md).
+For more advanced techniques like different signature hash types (SIGHASH flags), manual signature creation, and multi-signature transactions, refer to the following documents:
+
 - [Advanced Transaction Signing](../guides/advanced-transaction-signing.md) (How-To Guide)
 - [Transaction Signatures Reference](../reference/transaction-signatures.md) (Technical Reference)
 

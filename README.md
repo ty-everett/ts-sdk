@@ -93,10 +93,10 @@ For a more detailed tutorial and advanced examples, check our [Documentation](#d
 Comprehensive documentation is available in several formats:
 
 - **[📚 Online Documentation](https://bitcoin-sv.github.io/ts-sdk)**: Our complete documentation:
-  - **[🚀 Tutorials](https://bitcoin-sv.github.io/ts-sdk/tutorials/)**: Step-by-step lessons to learn by doing
-  - **[🔧 How-To Guides](https://bitcoin-sv.github.io/ts-sdk/guides/)**: Practical solutions to specific problems
-  - **[📚 Reference](https://bitcoin-sv.github.io/ts-sdk/reference/)**: Complete technical specifications and API documentation
-  - **[🏗️ Concepts](https://bitcoin-sv.github.io/ts-sdk/concepts/)**: Architecture and design explanations
+    - **[🚀 Tutorials](https://bitcoin-sv.github.io/ts-sdk/tutorials/)**: Step-by-step lessons to learn by doing
+    - **[🔧 How-To Guides](https://bitcoin-sv.github.io/ts-sdk/guides/)**: Practical solutions to specific problems
+    - **[📚 Reference](https://bitcoin-sv.github.io/ts-sdk/reference/)**: Complete technical specifications and API documentation
+    - **[🏗️ Concepts](https://bitcoin-sv.github.io/ts-sdk/concepts/)**: Architecture and design explanations
 - **[⚡ Examples](https://docs.bsvblockchain.org/guides/sdks/ts/examples)**: Practical code examples
 - **Code Annotations**: The SDK is richly documented with code-level annotations that show up in editors like VSCode
 
