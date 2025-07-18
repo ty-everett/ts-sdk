@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.17 - 2025-07-18](#1617---2025-07-18)
 - [1.6.16 - 2025-07-17](#1616---2025-07-17)
 - [1.6.14 - 2025-07-17](#1614---2025-07-17)
 - [1.6.13 - 2025-07-17](#1613---2025-07-17)
@@ -142,6 +143,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+## [1.6.17] - 2025-07-18
+
+### Fixed
+
+- Increase ECDSA performance by 3x by using jacobian coordinates
 
 ---
 
