@@ -1300,7 +1300,7 @@ describe('Transaction', () => {
   })
 
   describe('preventResourceExhaustion', () => {
-    it.skip('should run script evaluation but error out as soon as the memory usage exceeds the limit', async () => { // SLOW
+    it.skip('should run script evaluation but error out as soon as the memory usage exceeds the limit', async () => {
       const sourceTransaction = new Transaction()
       sourceTransaction.addInput({
         sourceTXID: '00'.repeat(32),
