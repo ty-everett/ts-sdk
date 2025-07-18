@@ -140,9 +140,6 @@ export const sign = (
     }
     return new Signature(r, s)
   }
-
-  // Should never reach here
-  throw new Error('Failed to generate a valid signature')
 }
 
 /**
