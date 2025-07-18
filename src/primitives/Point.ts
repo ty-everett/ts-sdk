@@ -571,7 +571,9 @@ export default class Point extends BasePoint {
       if (this.precomputed == null) {
         const power = this.curve._bitLength
         const step = 4
-        this.precomputed.doubles = this._getDoubles(step, power)
+        this.precomputed = {
+          doubles: this._getDoubles(step, power)
+        }
       }
 
       let result: Point
@@ -633,8 +635,8 @@ export default class Point extends BasePoint {
       throw new Error('Endomorphism not defined')
     }
     const beta = this.curve.endoBI.betaBI
-    const x = modMulP(this.xBI, beta)
-    const y = this.yBI
+    const x = modMulP(this.xBI!, beta)
+    const y = this.yBI!
     this.betaBI = { x, y }
     return { x, y }
   }
@@ -1080,6 +1082,16 @@ export default class Point extends BasePoint {
       }
       doubles.push(acc as this)
     }
+
+    if (typeof BigInt === 'function') {
+      const converted = doubles.map((p: Point) => ({
+        X: BigInt('0x' + (p.x as BigNumber).fromRed().toString(16)),
+        Y: BigInt('0x' + (p.y as BigNumber).fromRed().toString(16)),
+        Z: 1n
+      }))
+      return { step: step ?? 1, points: converted }
+    }
+
     return {
       step: step ?? 1,
       points: doubles
@@ -1314,7 +1326,7 @@ function endoSplitBI (k: bigint, curve: Curve): { k1: bigint, k2: bigint, neg1: 
 }
 
 function bigIntFixedCombMul (point: Point, k: bigint): JacobianPointBI {
-  if (point.precomputed === undefined || point.precomputed.doubles === undefined) {
+  if (point.precomputed == null || point.precomputed.doubles == null) {
     throw new Error('Precomputed doubles required for fixed comb multiplication')
   }
   const doubles = point.precomputed.doubles

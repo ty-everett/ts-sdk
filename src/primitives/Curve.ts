@@ -1041,33 +1041,42 @@ export default class Curve {
     this.zeroBI = 0n
     this.oneBI = 1n
     this.twoBI = 2n
+    const bnToBigInt = (bn: BigNumber): bigint => {
+      const hex = bn.toString(16)
+      if (hex.startsWith('-')) {
+        return -BigInt('0x' + hex.slice(1))
+      }
+      return BigInt('0x' + hex)
+    }
     if (this.endo !== undefined) {
       this.endoBI = {
-        betaBI: BigInt('0x' + this.endo.beta.toString(16)),
-        lambdaBI: BigInt('0x' + this.endo.lambda.toString(16)),
+        betaBI: bnToBigInt(this.endo.beta),
+        lambdaBI: bnToBigInt(this.endo.lambda),
         basisBI: this.endo.basis.map((vec) => ({
-          aBI: BigInt('0x' + vec.a.toString(16)),
-          bBI: BigInt('0x' + vec.b.toString(16))
+          aBI: bnToBigInt(vec.a),
+          bBI: bnToBigInt(vec.b)
         }))
       }
     }
 
     if (this.g.precomputed !== null) {
-      const preDoubles = this.g.precomputed.doubles
-      const preNaf = this.g.precomputed.naf
+      const preDoubles = this.g.precomputed.doubles!
+      const preNaf = this.g.precomputed.naf!
       this.g.precomputed = {
         doubles: {
           step: preDoubles.step,
           points: preDoubles.points.map((p: Point) => ({
-            x: BigInt('0x' + p.x.fromRed().toString(16)),
-            y: BigInt('0x' + p.y.fromRed().toString(16))
+            X: BigInt('0x' + p.x!.fromRed().toString(16)),
+            Y: BigInt('0x' + p.y!.fromRed().toString(16)),
+            Z: 1n
           }))
         },
         naf: {
           wnd: preNaf.wnd,
           points: preNaf.points.map((p: Point) => ({
-            x: BigInt('0x' + p.x.fromRed().toString(16)),
-            y: BigInt('0x' + p.y.fromRed().toString(16))
+            X: BigInt('0x' + p.x!.fromRed().toString(16)),
+            Y: BigInt('0x' + p.y!.fromRed().toString(16)),
+            Z: 1n
           }))
         }
       }

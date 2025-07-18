@@ -8,9 +8,9 @@ export default abstract class BasePoint {
   curve: Curve
   type: 'affine' | 'jacobian'
   precomputed: {
-    doubles?: { step: number, points: BasePoint[] }
-    naf?: { wnd: number, points: BasePoint[] }
-    beta?: BasePoint | null
+    doubles?: { step: number, points: any[] }
+    naf?: { wnd: number, points: any[] }
+    beta?: BasePoint | { x: bigint, y: bigint } | null
   } | null
 
   constructor (type: 'affine' | 'jacobian') {
