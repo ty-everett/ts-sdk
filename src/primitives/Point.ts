@@ -576,12 +576,159 @@ export default class Point extends BasePoint {
       k = new BigNumber(k as number, 16)
     }
     k = k as BigNumber
-    if (this.isInfinity()) {
-      return this
-    } else if (this._hasDoubles(k)) {
-      return this._fixedNafMul(k)
+    if (typeof BigInt === 'function') {
+      if (this.inf) {
+        return this
+      }
+
+      const zero = BigInt(0)
+      const one = BigInt(1)
+      const two = BigInt(2)
+      const three = BigInt(3)
+      const four = BigInt(4)
+      const eight = BigInt(8)
+
+      const p = BigInt(
+        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F'
+      )
+      const n = BigInt(
+        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
+      )
+
+      let kBig = BigInt('0x' + k.toString(16))
+      const isNeg = kBig < zero
+      if (isNeg) kBig = -kBig
+      kBig = ((kBig % n) + n) % n
+      if (kBig === zero) {
+        return new Point(null, null)
+      }
+
+      if (this.x === null || this.y === null) {
+        throw new Error('Point coordinates cannot be null')
+      }
+
+      const Px = BigInt('0x' + this.x.fromRed().toString(16))
+      const Py = BigInt('0x' + this.y.fromRed().toString(16))
+
+      const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m
+      const modMul = (a: bigint, b: bigint, m: bigint): bigint => mod(a * b, m)
+      const modSub = (a: bigint, b: bigint, m: bigint): bigint => mod(a - b, m)
+      const modInv = (a: bigint, m: bigint): bigint => {
+        let lm = one
+        let hm = zero
+        let low = mod(a, m)
+        let high = m
+        while (low > one) {
+          const r = high / low
+          const nm = hm - lm * r
+          const neww = high - low * r
+          hm = lm
+          lm = nm
+          high = low
+          low = neww
+        }
+        return mod(lm, m)
+      }
+
+      interface JacobianPoint {
+        X: bigint
+        Y: bigint
+        Z: bigint
+      }
+
+      const pointDouble = (P: JacobianPoint): JacobianPoint => {
+        const { X: X1, Y: Y1, Z: Z1 } = P
+        if (Y1 === zero) {
+          return { X: zero, Y: one, Z: zero }
+        }
+
+        const Y1sq = modMul(Y1, Y1, p)
+        const S = modMul(four, modMul(X1, Y1sq, p), p)
+        const M = modMul(three, modMul(X1, X1, p), p)
+        const X3 = modSub(modMul(M, M, p), modMul(two, S, p), p)
+        const Y3 = modSub(
+          modMul(M, modSub(S, X3, p), p),
+          modMul(eight, modMul(Y1sq, Y1sq, p), p),
+          p
+        )
+        const Z3 = modMul(two, modMul(Y1, Z1, p), p)
+        return { X: X3, Y: Y3, Z: Z3 }
+      }
+
+      const pointAdd = (P: JacobianPoint, Q: JacobianPoint): JacobianPoint => {
+        if (P.Z === zero) return Q
+        if (Q.Z === zero) return P
+
+        const Z1Z1 = modMul(P.Z, P.Z, p)
+        const Z2Z2 = modMul(Q.Z, Q.Z, p)
+        const U1 = modMul(P.X, Z2Z2, p)
+        const U2 = modMul(Q.X, Z1Z1, p)
+        const S1 = modMul(P.Y, modMul(Z2Z2, Q.Z, p), p)
+        const S2 = modMul(Q.Y, modMul(Z1Z1, P.Z, p), p)
+
+        const H = modSub(U2, U1, p)
+        const r = modSub(S2, S1, p)
+
+        if (H === zero) {
+          if (r === zero) {
+            return pointDouble(P)
+          } else {
+            return { X: zero, Y: one, Z: zero }
+          }
+        }
+
+        const HH = modMul(H, H, p)
+        const HHH = modMul(H, HH, p)
+        const V = modMul(U1, HH, p)
+
+        const X3 = modSub(modSub(modMul(r, r, p), HHH, p), modMul(two, V, p), p)
+        const Y3 = modSub(modMul(r, modSub(V, X3, p), p), modMul(S1, HHH, p), p)
+        const Z3 = modMul(H, modMul(P.Z, Q.Z, p), p)
+
+        return { X: X3, Y: Y3, Z: Z3 }
+      }
+
+      const scalarMultiply = (
+        kVal: bigint,
+        P0: { x: bigint, y: bigint }
+      ): JacobianPoint => {
+        let N: JacobianPoint = { X: P0.x, Y: P0.y, Z: one }
+        let Q: JacobianPoint = { X: zero, Y: one, Z: zero }
+        let kk = kVal
+        while (kk > zero) {
+          if ((kk & one) === one) {
+            Q = pointAdd(Q, N)
+          }
+          N = pointDouble(N)
+          kk >>= one
+        }
+        return Q
+      }
+
+      const R = scalarMultiply(kBig, { x: Px, y: Py })
+      if (R.Z === zero) {
+        return new Point(null, null)
+      }
+      const zInv = modInv(R.Z, p)
+      const zInv2 = modMul(zInv, zInv, p)
+      const xRes = modMul(R.X, zInv2, p)
+      const yRes = modMul(R.Y, modMul(zInv2, zInv, p), p)
+
+      const xBN = new BigNumber(xRes.toString(16), 16)
+      const yBN = new BigNumber(yRes.toString(16), 16)
+      const result = new Point(xBN, yBN)
+      if (isNeg) {
+        return result.neg()
+      }
+      return result
     } else {
-      return this._endoWnafMulAdd([this], [k]) as Point
+      if (this.isInfinity()) {
+        return this
+      } else if (this._hasDoubles(k)) {
+        return this._fixedNafMul(k)
+      } else {
+        return this._endoWnafMulAdd([this], [k]) as Point
+      }
     }
   }
 

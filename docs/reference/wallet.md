@@ -1549,7 +1549,9 @@ This is useful for optimizing performance when the same keys are derived multipl
 It supports configurable cache size with sane defaults and maintains cache entries using LRU (Least Recently Used) eviction policy.
 
 ```ts
-export default class CachedKeyDeriver {
+export default class CachedKeyDeriver implements KeyDeriverApi {
+    rootKey: PrivateKey;
+    identityKey: string;
     constructor(rootKey: PrivateKey | "anyone", options?: {
         maxCacheSize?: number;
     }) 
@@ -1561,7 +1563,7 @@ export default class CachedKeyDeriver {
 }
 ```
 
-See also: [Counterparty](./wallet.md#type-counterparty), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey), [SymmetricKey](./primitives.md#class-symmetrickey), [WalletProtocol](./wallet.md#type-walletprotocol)
+See also: [Counterparty](./wallet.md#type-counterparty), [KeyDeriverApi](./wallet.md#interface-keyderiverapi), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey), [SymmetricKey](./primitives.md#class-symmetrickey), [WalletProtocol](./wallet.md#type-walletprotocol)
 
 #### Constructor
 
@@ -1580,6 +1582,23 @@ Argument Details
   + The root private key or the string 'anyone'.
 + **options**
   + Optional settings for the cache.
+
+#### Property identityKey
+
+The identity of this key deriver which is normally the public key associated with the `rootKey`
+
+```ts
+identityKey: string
+```
+
+#### Property rootKey
+
+The root key from which all other keys are derived.
+
+```ts
+rootKey: PrivateKey
+```
+See also: [PrivateKey](./primitives.md#class-privatekey)
 
 #### Method derivePrivateKey
 
@@ -1955,7 +1974,7 @@ It supports deriving public and private keys, symmetric keys, and revealing key 
 export class KeyDeriver implements KeyDeriverApi {
     rootKey: PrivateKey;
     identityKey: string;
-    constructor(rootKey: PrivateKey | "anyone") 
+    constructor(rootKey: PrivateKey | "anyone", private readonly cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), private readonly retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))) 
     derivePublicKey(protocolID: WalletProtocol, keyID: string, counterparty: Counterparty, forSelf: boolean = false): PublicKey 
     derivePrivateKey(protocolID: WalletProtocol, keyID: string, counterparty: Counterparty): PrivateKey 
     deriveSymmetricKey(protocolID: WalletProtocol, keyID: string, counterparty: Counterparty): SymmetricKey 
@@ -1964,16 +1983,16 @@ export class KeyDeriver implements KeyDeriverApi {
 }
 ```
 
-See also: [Counterparty](./wallet.md#type-counterparty), [KeyDeriverApi](./wallet.md#interface-keyderiverapi), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey), [SymmetricKey](./primitives.md#class-symmetrickey), [WalletProtocol](./wallet.md#type-walletprotocol)
+See also: [Counterparty](./wallet.md#type-counterparty), [KeyDeriverApi](./wallet.md#interface-keyderiverapi), [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey), [SymmetricKey](./primitives.md#class-symmetrickey), [WalletProtocol](./wallet.md#type-walletprotocol)
 
 #### Constructor
 
 Initializes the KeyDeriver instance with a root private key.
 
 ```ts
-constructor(rootKey: PrivateKey | "anyone") 
+constructor(rootKey: PrivateKey | "anyone", private readonly cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), private readonly retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))) 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey)
+See also: [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey)
 
 Argument Details
 

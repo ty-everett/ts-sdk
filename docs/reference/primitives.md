@@ -2396,7 +2396,7 @@ export default class PrivateKey extends BigNumber {
     toHex(): string 
     toString(base: number | "hex" = "hex", padding: number = 64): string 
     deriveSharedSecret(key: PublicKey): Point 
-    deriveChild(publicKey: PublicKey, invoiceNumber: string): PrivateKey 
+    deriveChild(publicKey: PublicKey, invoiceNumber: string, cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))): PrivateKey 
     toKeyShares(threshold: number, totalShares: number): KeyShares 
     toBackupShares(threshold: number, totalShares: number): string[] 
     static fromBackupShares(shares: string[]): PrivateKey 
@@ -2453,9 +2453,9 @@ Returns
 Derives a child key with BRC-42.
 
 ```ts
-deriveChild(publicKey: PublicKey, invoiceNumber: string): PrivateKey 
+deriveChild(publicKey: PublicKey, invoiceNumber: string, cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))): PrivateKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
+See also: [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
 
 Returns
 
@@ -2467,6 +2467,10 @@ Argument Details
   + The public key of the other party
 + **invoiceNumber**
   + The invoice number used to derive the child key
++ **cacheSharedSecret**
+  + Optional function to cache shared secrets
++ **retrieveCachedSharedSecret**
+  + Optional function to retrieve shared secrets from the cache
 
 #### Method deriveSharedSecret
 
@@ -2885,7 +2889,7 @@ export default class PublicKey extends Point {
     toDER(enc?: "hex" | undefined): number[] | string 
     toHash(enc?: "hex"): number[] | string 
     toAddress(prefix: number[] | string = [0]): string 
-    deriveChild(privateKey: PrivateKey, invoiceNumber: string): PublicKey 
+    deriveChild(privateKey: PrivateKey, invoiceNumber: string, cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))): PublicKey 
     static fromMsgHashAndCompactSignature(msgHash: BigNumber, signature: number[] | string, enc?: "hex" | "base64"): PublicKey 
 }
 ```
@@ -2920,9 +2924,9 @@ new PublicKey('abc123', 'def456');
 Derives a child key with BRC-42.
 
 ```ts
-deriveChild(privateKey: PrivateKey, invoiceNumber: string): PublicKey 
+deriveChild(privateKey: PrivateKey, invoiceNumber: string, cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))): PublicKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
+See also: [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
 
 Returns
 
@@ -2934,6 +2938,10 @@ Argument Details
   + The private key of the other party
 + **invoiceNumber**
   + The invoice number used to derive the child key
++ **cacheSharedSecret**
+  + Optional function to cache shared secrets
++ **retrieveCachedSharedSecret**
+  + Optional function to retrieve shared secrets from the cache
 
 #### Method deriveSharedSecret
 
