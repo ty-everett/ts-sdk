@@ -3,6 +3,7 @@ import JPoint from './JacobianPoint.js'
 import BigNumber from './BigNumber.js'
 import { toArray, toHex } from './utils.js'
 import ReductionContext from './ReductionContext.js'
+import Curve from './Curve.js'
 
 /**
  * `Point` class is a representation of an elliptic curve point with affine coordinates.
@@ -24,6 +25,9 @@ export default class Point extends BasePoint {
   x: BigNumber | null
   y: BigNumber | null
   inf: boolean
+  xBI: bigint | null
+  yBI: bigint | null
+  betaBI?: { x: bigint, y: bigint }
 
   /**
    * Creates a point object from a given Array. These numbers can represent coordinates in hex format, or points
@@ -273,6 +277,15 @@ export default class Point extends BasePoint {
       }
       this.inf = false
     }
+
+    if (typeof BigInt === 'function') {
+      this.xBI = this.inf ? null : BigInt('0x' + ((this.x != null) ? this.x.fromRed().toString(16) : '0'))
+      this.yBI = this.inf ? null : BigInt('0x' + ((this.y != null) ? this.y.fromRed().toString(16) : '0'))
+    } else {
+      this.xBI = null
+      this.yBI = null
+    }
+    this.betaBI = undefined
   }
 
   /**
@@ -543,77 +556,60 @@ export default class Point extends BasePoint {
         return this
       }
 
-      const zero = 0n
-      const one = 1n
-      const p = BigInt(
-        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F'
-      )
-      const n = BigInt(
-        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-      )
-
       let kBig = BigInt('0x' + k.toString(16))
-      const isNeg = kBig < zero
+      const isNeg = kBig < 0n
       if (isNeg) kBig = -kBig
-      kBig = ((kBig % n) + n) % n
-      if (kBig === zero) {
+      kBig = biMod(kBig, this.curve.nBI)
+      if (kBig === 0n) {
         return new Point(null, null)
       }
 
-      if (this.x === null || this.y === null) {
+      if (this.xBI === null || this.yBI === null) {
         throw new Error('Point coordinates cannot be null')
       }
 
-      const Px = BigInt('0x' + this.x.fromRed().toString(16))
-      const Py = BigInt('0x' + this.y.fromRed().toString(16))
+      if (this.precomputed == null) {
+        const power = this.curve._bitLength
+        const step = 4
+        this.precomputed.doubles = this._getDoubles(step, power)
+      }
 
-      const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m
-      const modMul = (a: bigint, b: bigint, m: bigint): bigint => mod(a * b, m)
-      const modInv = (a: bigint, m: bigint): bigint => {
-        let lm = one
-        let hm = zero
-        let low = mod(a, m)
-        let high = m
-        while (low > one) {
-          const r = high / low
-          const nm = hm - lm * r
-          const neww = high - low * r
-          hm = lm
-          lm = nm
-          high = low
-          low = neww
+      let result: Point
+      if (this.precomputed != null) {
+        // Use fixed comb method
+        const combRes = bigIntFixedCombMul(this, kBig)
+        const affine = jpToAffine(combRes)
+        if (affine === null) {
+          result = new Point(null, null)
+        } else {
+          const xBN = new BigNumber(affine.x.toString(16), 16).toRed(this.curve.red)
+          const yBN = new BigNumber(affine.y.toString(16), 16).toRed(this.curve.red)
+          result = new Point(xBN, yBN)
         }
-        return mod(lm, m)
+      } else {
+        // Use endomorphism with wNAF
+        const { k1, k2, neg1, neg2 } = endoSplitBI(kBig, this.curve)
+        const p1 = { x: this.xBI, y: this.yBI }
+        const p2 = this._getBetaBI()
+        if (neg1) {
+          p1.y = modSubP(0n, p1.y)
+        }
+        if (neg2) {
+          p2.y = modSubP(0n, p2.y)
+        }
+        const r1 = scalarMultiplyWNAF(k1, p1)
+        const r2 = scalarMultiplyWNAF(k2, p2)
+        const r = jpAddBI(r1, r2)
+        const affine = jpToAffine(r)
+        if (affine === null) {
+          result = new Point(null, null)
+        } else {
+          const xBN = new BigNumber(affine.x.toString(16), 16).toRed(this.curve.red)
+          const yBN = new BigNumber(affine.y.toString(16), 16).toRed(this.curve.red)
+          result = new Point(xBN, yBN)
+        }
       }
 
-      interface JacobianPoint {
-        X: bigint
-        Y: bigint
-        Z: bigint
-      }
-
-      const scalarMultiply = (
-        kVal: bigint,
-        P0: { x: bigint, y: bigint }
-      ): JacobianPoint => {
-        // Delegate to the hoisted windowed-NAF implementation above.  We
-        // keep the wrapper so that the rest of the mul() code remains
-        // untouched while providing a massive speed-up (≈4-6×).
-        return scalarMultiplyWNAF(kVal, P0) as unknown as JacobianPoint
-      }
-
-      const R = scalarMultiply(kBig, { x: Px, y: Py })
-      if (R.Z === zero) {
-        return new Point(null, null)
-      }
-      const zInv = modInv(R.Z, p)
-      const zInv2 = modMul(zInv, zInv, p)
-      const xRes = modMul(R.X, zInv2, p)
-      const yRes = modMul(R.Y, modMul(zInv2, zInv, p), p)
-
-      const xBN = new BigNumber(xRes.toString(16), 16)
-      const yBN = new BigNumber(yRes.toString(16), 16)
-      const result = new Point(xBN, yBN)
       if (isNeg) {
         return result.neg()
       }
@@ -627,6 +623,20 @@ export default class Point extends BasePoint {
         return this._endoWnafMulAdd([this], [k]) as Point
       }
     }
+  }
+
+  private _getBetaBI (): { x: bigint, y: bigint } {
+    if (this.betaBI !== undefined) {
+      return this.betaBI
+    }
+    if (this.curve.endoBI === undefined) {
+      throw new Error('Endomorphism not defined')
+    }
+    const beta = this.curve.endoBI.betaBI
+    const x = modMulP(this.xBI, beta)
+    const y = this.yBI
+    this.betaBI = { x, y }
+    return { x, y }
   }
 
   /**
@@ -1114,66 +1124,92 @@ const BI_FOUR = 4n
 const BI_EIGHT = 8n
 
 // Field prime (p) and group order (n) for secp256k1
-const P_BIGINT = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F')
+const P_BIGINT = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn
+const MU_P = 0x100000000000000000000000000000000000000000000000000000001000003d1n
 
-function biMod (a: bigint, m: bigint): bigint {
-  const r = a % m
-  return r >= 0n ? r : r + m
+function modP (x: bigint): bigint {
+  const q = (x * MU_P) >> 512n
+  let r = x - q * P_BIGINT
+  if (r >= P_BIGINT) r -= P_BIGINT
+  return r
 }
 
-const biModMul = (a: bigint, b: bigint, m: bigint): bigint => biMod(a * b, m)
-const biModSub = (a: bigint, b: bigint, m: bigint): bigint => biMod(a - b, m)
+function modMulP (a: bigint, b: bigint): bigint {
+  return modP(a * b)
+}
+
+function modSubP (a: bigint, b: bigint): bigint {
+  let r = a - b
+  if (r < 0n) r += P_BIGINT
+  return r
+}
+
+function modInv (a: bigint, m: bigint): bigint {
+  let lm = BI_ONE
+  let hm = BI_ZERO
+  let low = biMod(a, m)
+  let high = m
+  while (low > BI_ONE) {
+    const r = high / low
+    const nm = hm - lm * r
+    const neww = high - low * r
+    hm = lm
+    lm = nm
+    high = low
+    low = neww
+  }
+  return biMod(lm, m)
+}
 
 interface JacobianPointBI { X: bigint, Y: bigint, Z: bigint }
 
-const jpDouble = (P: JacobianPointBI): JacobianPointBI => {
+const jpDoubleBI = (P: JacobianPointBI): JacobianPointBI => {
   const { X: X1, Y: Y1, Z: Z1 } = P
   if (Y1 === BI_ZERO) return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO }
 
-  const Y1sq = biModMul(Y1, Y1, P_BIGINT)
-  const S = biModMul(BI_FOUR, biModMul(X1, Y1sq, P_BIGINT), P_BIGINT)
-  const M = biModMul(BI_THREE, biModMul(X1, X1, P_BIGINT), P_BIGINT)
-  const X3 = biModSub(biModMul(M, M, P_BIGINT), biModMul(BI_TWO, S, P_BIGINT), P_BIGINT)
-  const Y3 = biModSub(
-    biModMul(M, biModSub(S, X3, P_BIGINT), P_BIGINT),
-    biModMul(BI_EIGHT, biModMul(Y1sq, Y1sq, P_BIGINT), P_BIGINT),
-    P_BIGINT
+  const Y1sq = modMulP(Y1, Y1)
+  const S = modMulP(BI_FOUR, modMulP(X1, Y1sq))
+  const M = modMulP(BI_THREE, modMulP(X1, X1))
+  const X3 = modSubP(modMulP(M, M), modMulP(BI_TWO, S))
+  const Y3 = modSubP(
+    modMulP(M, modSubP(S, X3)),
+    modMulP(BI_EIGHT, modMulP(Y1sq, Y1sq))
   )
-  const Z3 = biModMul(BI_TWO, biModMul(Y1, Z1, P_BIGINT), P_BIGINT)
+  const Z3 = modMulP(BI_TWO, modMulP(Y1, Z1))
   return { X: X3, Y: Y3, Z: Z3 }
 }
 
-const jpAdd = (P: JacobianPointBI, Q: JacobianPointBI): JacobianPointBI => {
+const jpAddBI = (P: JacobianPointBI, Q: JacobianPointBI): JacobianPointBI => {
   if (P.Z === BI_ZERO) return Q
   if (Q.Z === BI_ZERO) return P
 
-  const Z1Z1 = biModMul(P.Z, P.Z, P_BIGINT)
-  const Z2Z2 = biModMul(Q.Z, Q.Z, P_BIGINT)
-  const U1 = biModMul(P.X, Z2Z2, P_BIGINT)
-  const U2 = biModMul(Q.X, Z1Z1, P_BIGINT)
-  const S1 = biModMul(P.Y, biModMul(Z2Z2, Q.Z, P_BIGINT), P_BIGINT)
-  const S2 = biModMul(Q.Y, biModMul(Z1Z1, P.Z, P_BIGINT), P_BIGINT)
+  const Z1Z1 = modMulP(P.Z, P.Z)
+  const Z2Z2 = modMulP(Q.Z, Q.Z)
+  const U1 = modMulP(P.X, Z2Z2)
+  const U2 = modMulP(Q.X, Z1Z1)
+  const S1 = modMulP(P.Y, modMulP(Z2Z2, Q.Z))
+  const S2 = modMulP(Q.Y, modMulP(Z1Z1, P.Z))
 
-  const H = biModSub(U2, U1, P_BIGINT)
-  const r = biModSub(S2, S1, P_BIGINT)
+  const H = modSubP(U2, U1)
+  const r = modSubP(S2, S1)
   if (H === BI_ZERO) {
-    if (r === BI_ZERO) return jpDouble(P)
+    if (r === BI_ZERO) return jpDoubleBI(P)
     return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO } // Infinity
   }
 
-  const HH = biModMul(H, H, P_BIGINT)
-  const HHH = biModMul(H, HH, P_BIGINT)
-  const V = biModMul(U1, HH, P_BIGINT)
+  const HH = modMulP(H, H)
+  const HHH = modMulP(H, HH)
+  const V = modMulP(U1, HH)
 
-  const X3 = biModSub(biModSub(biModMul(r, r, P_BIGINT), HHH, P_BIGINT), biModMul(BI_TWO, V, P_BIGINT), P_BIGINT)
-  const Y3 = biModSub(biModMul(r, biModSub(V, X3, P_BIGINT), P_BIGINT), biModMul(S1, HHH, P_BIGINT), P_BIGINT)
-  const Z3 = biModMul(H, biModMul(P.Z, Q.Z, P_BIGINT), P_BIGINT)
+  const X3 = modSubP(modSubP(modMulP(r, r), HHH), modMulP(BI_TWO, V))
+  const Y3 = modSubP(modMulP(r, modSubP(V, X3)), modMulP(S1, HHH))
+  const Z3 = modMulP(H, modMulP(P.Z, Q.Z))
   return { X: X3, Y: Y3, Z: Z3 }
 }
 
-const jpNeg = (P: JacobianPointBI): JacobianPointBI => {
+const jpNegBI = (P: JacobianPointBI): JacobianPointBI => {
   if (P.Z === BI_ZERO) return P
-  return { X: P.X, Y: P_BIGINT - P.Y, Z: P.Z }
+  return { X: P.X, Y: modSubP(0n, P.Y), Z: P.Z }
 }
 
 // Fast windowed-NAF scalar multiplication (default window = 5) in Jacobian
@@ -1183,6 +1219,15 @@ const scalarMultiplyWNAF = (
   P0: { x: bigint, y: bigint },
   window: number = 5
 ): JacobianPointBI => {
+  if (k <= 16n) {
+    let res = { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO }
+    const Pjp = { X: P0.x, Y: P0.y, Z: BI_ONE }
+    for (let i = 0n; i < k; i++) {
+      res = jpAddBI(res, Pjp)
+    }
+    return res
+  }
+
   // Convert affine to Jacobian
   const P: JacobianPointBI = { X: P0.x, Y: P0.y, Z: BI_ONE }
 
@@ -1190,9 +1235,9 @@ const scalarMultiplyWNAF = (
   const tblSize = 1 << (window - 1) // e.g. w=5 → 16 entries
   const tbl: JacobianPointBI[] = new Array(tblSize)
   tbl[0] = P
-  const twoP = jpDouble(P)
+  const twoP = jpDoubleBI(P)
   for (let i = 1; i < tblSize; i++) {
-    tbl[i] = jpAdd(tbl[i - 1], twoP)
+    tbl[i] = jpAddBI(tbl[i - 1], twoP)
   }
 
   // Build wNAF representation of k
@@ -1216,13 +1261,103 @@ const scalarMultiplyWNAF = (
   // Accumulate from MSB to LSB
   let Q: JacobianPointBI = { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO } // infinity
   for (let i = wnaf.length - 1; i >= 0; i--) {
-    Q = jpDouble(Q)
+    Q = jpDoubleBI(Q)
     const di = wnaf[i]
     if (di !== 0) {
       const idx = Math.abs(di) >> 1 // (|di|-1)/2  because di is odd
-      const addend = di > 0 ? tbl[idx] : jpNeg(tbl[idx])
-      Q = jpAdd(Q, addend)
+      const addend = di > 0 ? tbl[idx] : jpNegBI(tbl[idx])
+      Q = jpAddBI(Q, addend)
     }
   }
   return Q
+}
+
+function roundDivBI (num: bigint, den: bigint): bigint {
+  let quot = num / den
+  let mod = num % den
+  if (mod < 0n) {
+    mod += den
+    quot -= 1n
+  }
+  const half = den >> 1n
+  let cmp: number
+  if (mod > half) {
+    cmp = 1
+  } else if (mod < half) {
+    cmp = -1
+  } else {
+    cmp = 0
+  }
+  const r2 = den & 1n
+  if (cmp < 0 || (r2 === 1n && cmp === 0)) {
+    return quot
+  } else {
+    return quot + 1n
+  }
+}
+
+function endoSplitBI (k: bigint, curve: Curve): { k1: bigint, k2: bigint, neg1: boolean, neg2: boolean } {
+  if (curve.endoBI === undefined) {
+    throw new Error('Endomorphism not defined')
+  }
+  const v1 = curve.endoBI.basisBI[0]
+  const v2 = curve.endoBI.basisBI[1]
+  const c1 = roundDivBI(v2.bBI * k, curve.nBI)
+  const c2 = roundDivBI((-v1.bBI) * k, curve.nBI)
+  let k1 = k - c1 * v1.aBI - c2 * v2.aBI
+  let k2 = -(c1 * v1.bBI + c2 * v2.bBI)
+  const neg1 = k1 < 0n
+  if (neg1) k1 = -k1
+  const neg2 = k2 < 0n
+  if (neg2) k2 = -k2
+  return { k1, k2, neg1, neg2 }
+}
+
+function bigIntFixedCombMul (point: Point, k: bigint): JacobianPointBI {
+  if (point.precomputed === undefined || point.precomputed.doubles === undefined) {
+    throw new Error('Precomputed doubles required for fixed comb multiplication')
+  }
+  const doubles = point.precomputed.doubles
+  const step: number = doubles.step
+  const bits = point.curve._bitLength
+  const naf = Curve.getNAFBI(k, 1, bits)
+  let I = (1 << (step + 1)) - (step % 2 === 0 ? 2 : 1)
+  I = Math.floor(I / 3)
+  const repr: number[] = []
+  for (let j = 0; j < naf.length; j += step) {
+    let nafW = 0
+    for (let l = j + step - 1; l >= j; l--) {
+      nafW = (nafW << 1) + naf[l]
+    }
+    repr.push(nafW)
+  }
+  let a: JacobianPointBI = { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO }
+  let b: JacobianPointBI = { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO }
+  for (let i = I; i > 0; i--) {
+    for (let j = 0; j < repr.length; j++) {
+      const nafW = repr[j]
+      if (nafW === i) {
+        b = jpAddBI(b, doubles.points[j])
+      } else if (nafW === -i) {
+        b = jpAddBI(b, jpNegBI(doubles.points[j]))
+      }
+    }
+    a = jpAddBI(a, b)
+  }
+  return a
+}
+
+function jpToAffine (jp: JacobianPointBI): { x: bigint, y: bigint } | null {
+  if (jp.Z === 0n) return null
+  const zinv = modInv(jp.Z, P_BIGINT)
+  const zinv2 = modMulP(zinv, zinv)
+  const x = modMulP(jp.X, zinv2)
+  const zinv3 = modMulP(zinv2, zinv)
+  const y = modMulP(jp.Y, zinv3)
+  return { x, y }
+}
+
+function biMod (a: bigint, m: bigint): bigint {
+  const r = a % m
+  return r >= 0n ? r : r + m
 }

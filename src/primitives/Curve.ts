@@ -31,6 +31,14 @@ export default class Curve {
   _wnafT3: BigNumber[]
   _wnafT4: BigNumber[]
   _bitLength: number
+  pBI: bigint
+  nBI: bigint
+  aBI: bigint
+  bBI: bigint
+  zeroBI: bigint
+  oneBI: bigint
+  twoBI: bigint
+  endoBI?: { betaBI: bigint, lambdaBI: bigint, basisBI: Array<{ aBI: bigint, bBI: bigint }> }
 
   // Represent num in a w-NAF form
   static assert (
@@ -40,6 +48,34 @@ export default class Curve {
     if (!(expression as boolean)) {
       throw new Error(message)
     }
+  }
+
+  static getNAFBI (num: bigint, w: number, bits: number): number[] {
+    const naf = new Array(Math.max(Number(bits), Number(num.toString(2).length)) + 1)
+    naf.fill(0)
+
+    const ws = 1 << (w + 1)
+    let k = num
+
+    for (let i = 0; i < naf.length; i++) {
+      let z
+      const mod = Number(k & BigInt(ws - 1))
+      if (Number(k & 1n) === 1) {
+        if (mod > (ws >> 1) - 1) {
+          z = (ws >> 1) - mod
+        } else {
+          z = mod
+        }
+        k -= BigInt(z)
+      } else {
+        z = 0
+      }
+
+      naf[i] = z
+      k = k >> 1n
+    }
+
+    return naf
   }
 
   getNAF (num: BigNumber, w: number, bits: number): number[] {
@@ -997,6 +1033,45 @@ export default class Curve {
     this.endo = this._getEndomorphism(conf)
     this._endoWnafT1 = new Array(4)
     this._endoWnafT2 = new Array(4)
+
+    this.pBI = BigInt('0x' + this.p.toString(16))
+    this.nBI = BigInt('0x' + this.n.toString(16))
+    this.aBI = BigInt('0x' + this.a.fromRed().toString(16))
+    this.bBI = BigInt('0x' + this.b.fromRed().toString(16))
+    this.zeroBI = 0n
+    this.oneBI = 1n
+    this.twoBI = 2n
+    if (this.endo !== undefined) {
+      this.endoBI = {
+        betaBI: BigInt('0x' + this.endo.beta.toString(16)),
+        lambdaBI: BigInt('0x' + this.endo.lambda.toString(16)),
+        basisBI: this.endo.basis.map((vec) => ({
+          aBI: BigInt('0x' + vec.a.toString(16)),
+          bBI: BigInt('0x' + vec.b.toString(16))
+        }))
+      }
+    }
+
+    if (this.g.precomputed !== null) {
+      const preDoubles = this.g.precomputed.doubles
+      const preNaf = this.g.precomputed.naf
+      this.g.precomputed = {
+        doubles: {
+          step: preDoubles.step,
+          points: preDoubles.points.map((p: Point) => ({
+            x: BigInt('0x' + p.x.fromRed().toString(16)),
+            y: BigInt('0x' + p.y.fromRed().toString(16))
+          }))
+        },
+        naf: {
+          wnd: preNaf.wnd,
+          points: preNaf.points.map((p: Point) => ({
+            x: BigInt('0x' + p.x.fromRed().toString(16)),
+            y: BigInt('0x' + p.y.fromRed().toString(16))
+          }))
+        }
+      }
+    }
   }
 
   _getEndomorphism (conf):
