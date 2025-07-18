@@ -5337,257 +5337,67 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 sign = (msg: BigNumber, key: BigNumber, forceLowS: boolean = false, customK?: BigNumber | ((iter: number) => BigNumber)): Signature => {
-    if (typeof BigInt === "function") {
-        const zero = BigInt(0);
-        const one = BigInt(1);
-        const two = BigInt(2);
-        const n = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
-        const p = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
-        const Gx = BigInt("0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798");
-        const Gy = BigInt("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8");
-        const G = { x: Gx, y: Gy };
-        const z = BigInt("0x" + msg.toString(16));
-        const d = BigInt("0x" + key.toString(16));
-        if (d <= zero || d >= n) {
-            throw new Error("Invalid private key");
+    const curve = new Curve();
+    msg = truncateToN(msg);
+    const bytes = curve.n.byteLength();
+    const bkey = key.toArray("be", bytes);
+    const nonce = msg.toArray("be", bytes);
+    const drbg = new DRBG(bkey, nonce);
+    const ns1 = curve.n.subn(1);
+    for (let iter = 0;; iter++) {
+        let k = typeof customK === "function"
+            ? customK(iter)
+            : BigNumber.isBN(customK)
+                ? customK
+                : new BigNumber(drbg.generate(bytes), 16);
+        if (k != null) {
+            k = truncateToN(k, true);
         }
-        function bigIntToBytes(value: bigint, length: number): Uint8Array {
-            const hex = value.toString(16).padStart(length * 2, "0");
-            const bytes = new Uint8Array(length);
-            for (let i = 0; i < length; i++) {
-                bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
-            }
-            return bytes;
+        else {
+            throw new Error("k is undefined");
         }
-        const bytes = 32;
-        const bkey = bigIntToBytes(d, bytes);
-        const nonce = bigIntToBytes(z, bytes);
-        const drbg = new DRBG(Array.from(bkey), Array.from(nonce));
-        const ns1 = n - one;
-        let iter = 0;
-        function truncateToN(k: bigint, n: bigint, truncOnly: boolean = true): bigint {
-            const kBitLength = k.toString(2).length;
-            const nBitLength = n.toString(2).length;
-            const delta = kBitLength - nBitLength;
-            if (delta > 0) {
-                k = k >> BigInt(delta);
-            }
-            if (!truncOnly && k >= n) {
-                return k - n;
+        if (k.cmpn(1) <= 0 || k.cmp(ns1) >= 0) {
+            if (BigNumber.isBN(customK)) {
+                throw new Error("Invalid fixed custom K value (must be more than 1 and less than N-1)");
             }
             else {
-                return k;
+                continue;
             }
         }
-        function generateK(customK?: BigNumber | ((iter: number) => BigNumber)): bigint {
-            if (typeof customK === "function") {
-                const kbn = customK(iter);
-                const kstr = kbn.toString(16);
-                return BigInt("0x" + kstr);
-            }
-            else if ((customK != null) && BigNumber.isBN(customK)) {
-                const kstr = customK.toString(16);
-                return BigInt("0x" + kstr);
+        const kp = curve.g.mul(k);
+        if (kp.isInfinity()) {
+            if (BigNumber.isBN(customK)) {
+                throw new Error("Invalid fixed custom K value (must not create a point at infinity when multiplied by the generator point)");
             }
             else {
-                const khex = drbg.generate(bytes);
-                return BigInt("0x" + khex);
+                continue;
             }
         }
-        function mod(a: bigint, m: bigint): bigint {
-            return ((a % m) + m) % m;
-        }
-        function modInv(a: bigint, m: bigint): bigint {
-            let lm = one;
-            let hm = zero;
-            let low = mod(a, m);
-            let high = m;
-            while (low > one) {
-                const r = high / low;
-                const nm = hm - lm * r;
-                const neww = high - low * r;
-                hm = lm;
-                lm = nm;
-                high = low;
-                low = neww;
-            }
-            return mod(lm, m);
-        }
-        function pointAdd(P: {
-            x: bigint;
-            y: bigint;
-        } | null, Q: {
-            x: bigint;
-            y: bigint;
-        } | null): {
-            x: bigint;
-            y: bigint;
-        } | null {
-            if (P === null)
-                return Q;
-            if (Q === null)
-                return P;
-            if (P.x === Q.x && P.y === mod(-Q.y, p)) {
-                return null;
-            }
-            let m: bigint;
-            if (P.x === Q.x && P.y === Q.y) {
-                if (P.y === zero) {
-                    return null;
-                }
-                const numerator = mod(BigInt(3) * P.x * P.x, p);
-                const denominator = modInv(two * P.y, p);
-                m = mod(numerator * denominator, p);
+        const kpX = kp.getX();
+        const r = kpX.umod(curve.n);
+        if (r.cmpn(0) === 0) {
+            if (BigNumber.isBN(customK)) {
+                throw new Error("Invalid fixed custom K value (when multiplied by G, the resulting x coordinate mod N must not be zero)");
             }
             else {
-                const numerator = mod(Q.y - P.y, p);
-                const denominator = modInv(Q.x - P.x, p);
-                m = mod(numerator * denominator, p);
+                continue;
             }
-            const xR = mod(m * m - P.x - Q.x, p);
-            const yR = mod(m * (P.x - xR) - P.y, p);
-            return { x: xR, y: yR };
         }
-        function scalarMul(k: bigint, P: {
-            x: bigint;
-            y: bigint;
-        }): {
-            x: bigint;
-            y: bigint;
-        } {
-            let N = P;
-            let Q: {
-                x: bigint;
-                y: bigint;
-            } | null = null;
-            while (k > BigInt(0)) {
-                if (k % BigInt(2) === BigInt(1)) {
-                    Q = Q === null ? N : (pointAdd(Q, N) ?? Q);
-                }
-                N = pointAdd(N, N) ?? N;
-                k >>= BigInt(1);
+        let s = k.invm(curve.n).mul(r.mul(key).iadd(msg));
+        s = s.umod(curve.n);
+        if (s.cmpn(0) === 0) {
+            if (BigNumber.isBN(customK)) {
+                throw new Error("Invalid fixed custom K value (when used with the key, it cannot create a zero value for S)");
             }
-            if (Q === null) {
-                throw new Error("Scalar multiplication resulted in an invalid point.");
+            else {
+                continue;
             }
-            return Q;
         }
-        let validSignature = false;
-        while (!validSignature) {
-            iter += 1;
-            validSignature = true;
-            iter += 1;
-            let k = generateK(customK);
-            k = truncateToN(k, n, true);
-            if (k <= one || k >= ns1) {
-                if (customK instanceof BigNumber) {
-                    throw new Error("Invalid fixed custom K value (must be more than 1 and less than N-1)");
-                }
-                else {
-                    continue;
-                }
-            }
-            const R = scalarMul(k, G);
-            if (R === null) {
-                if (customK instanceof BigNumber) {
-                    throw new Error("Invalid fixed custom K value (must not create a point at infinity when multiplied by the generator point)");
-                }
-                else {
-                    continue;
-                }
-            }
-            const r = mod(R.x, n);
-            if (r === zero) {
-                if (customK instanceof BigNumber) {
-                    throw new Error("Invalid fixed custom K value (when multiplied by G, the resulting x coordinate mod N must not be zero)");
-                }
-                else {
-                    continue;
-                }
-            }
-            const kInv = modInv(k, n);
-            const rd = mod(r * d, n);
-            let s = mod(kInv * (z + rd), n);
-            if (s === zero) {
-                if (customK instanceof BigNumber) {
-                    throw new Error("Invalid fixed custom K value (when used with the key, it cannot create a zero value for S)");
-                }
-                else {
-                    continue;
-                }
-            }
-            if (forceLowS && s > n / two) {
-                s = n - s;
-            }
-            const rbn = new BigNumber(r.toString(16), 16);
-            const sbn = new BigNumber(s.toString(16), 16);
-            return new Signature(rbn, sbn);
+        if (forceLowS && s.cmp(curve.n.ushrn(1)) > 0) {
+            s = curve.n.sub(s);
         }
+        return new Signature(r, s);
     }
-    else {
-        const curve = new Curve();
-        msg = truncateToN(msg);
-        const bytes = curve.n.byteLength();
-        const bkey = key.toArray("be", bytes);
-        const nonce = msg.toArray("be", bytes);
-        const drbg = new DRBG(bkey, nonce);
-        const ns1 = curve.n.subn(1);
-        for (let iter = 0;; iter++) {
-            let k = typeof customK === "function"
-                ? customK(iter)
-                : BigNumber.isBN(customK)
-                    ? customK
-                    : new BigNumber(drbg.generate(bytes), 16);
-            if (k != null) {
-                k = truncateToN(k, true);
-            }
-            else {
-                throw new Error("k is undefined");
-            }
-            if (k.cmpn(1) <= 0 || k.cmp(ns1) >= 0) {
-                if (BigNumber.isBN(customK)) {
-                    throw new Error("Invalid fixed custom K value (must be more than 1 and less than N-1)");
-                }
-                else {
-                    continue;
-                }
-            }
-            const kp = curve.g.mul(k);
-            if (kp.isInfinity()) {
-                if (BigNumber.isBN(customK)) {
-                    throw new Error("Invalid fixed custom K value (must not create a point at infinity when multiplied by the generator point)");
-                }
-                else {
-                    continue;
-                }
-            }
-            const kpX = kp.getX();
-            const r = kpX.umod(curve.n);
-            if (r.cmpn(0) === 0) {
-                if (BigNumber.isBN(customK)) {
-                    throw new Error("Invalid fixed custom K value (when multiplied by G, the resulting x coordinate mod N must not be zero)");
-                }
-                else {
-                    continue;
-                }
-            }
-            let s = k.invm(curve.n).mul(r.mul(key).iadd(msg));
-            s = s.umod(curve.n);
-            if (s.cmpn(0) === 0) {
-                if (BigNumber.isBN(customK)) {
-                    throw new Error("Invalid fixed custom K value (when used with the key, it cannot create a zero value for S)");
-                }
-                else {
-                    continue;
-                }
-            }
-            if (forceLowS && s.cmp(curve.n.ushrn(1)) > 0) {
-                s = curve.n.sub(s);
-            }
-            return new Signature(r, s);
-        }
-    }
-    throw new Error("Failed to generate a valid signature");
 }
 ```
 
@@ -5741,167 +5551,145 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 verify = (msg: BigNumber, sig: Signature, key: Point): boolean => {
-    if (typeof BigInt === "function") {
-        const zero = BigInt(0);
-        const one = BigInt(1);
-        const two = BigInt(2);
-        const three = BigInt(3);
-        const p = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
-        const n = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
-        const G = {
-            x: BigInt("0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"),
-            y: BigInt("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8")
-        };
-        const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m;
-        const modInv = (a: bigint, m: bigint): bigint => {
-            let [oldr, r] = [a, m];
-            let [olds, s] = [BigInt(1), BigInt(0)];
-            while (r !== zero) {
-                const q = oldr / r;
-                [oldr, r] = [r, oldr - q * r];
-                [olds, s] = [s, olds - q * s];
-            }
-            if (oldr > one)
-                return zero;
-            return mod(olds, m);
-        };
-        const modMul = (a: bigint, b: bigint, m: bigint): bigint => mod(a * b, m);
-        const modSub = (a: bigint, b: bigint, m: bigint): bigint => mod(a - b, m);
-        const four = BigInt(4);
-        const eight = BigInt(8);
-        interface JacobianPoint {
-            X: bigint;
-            Y: bigint;
-            Z: bigint;
+    const zero = BigInt(0);
+    const one = BigInt(1);
+    const two = BigInt(2);
+    const three = BigInt(3);
+    const p = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
+    const n = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
+    const G = {
+        x: BigInt("0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"),
+        y: BigInt("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8")
+    };
+    const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m;
+    const modInv = (a: bigint, m: bigint): bigint => {
+        let [oldr, r] = [a, m];
+        let [olds, s] = [BigInt(1), BigInt(0)];
+        while (r !== zero) {
+            const q = oldr / r;
+            [oldr, r] = [r, oldr - q * r];
+            [olds, s] = [s, olds - q * s];
         }
-        const pointDouble = (P: JacobianPoint): JacobianPoint => {
-            const { X: X1, Y: Y1, Z: Z1 } = P;
-            if (Y1 === zero) {
+        if (oldr > one)
+            return zero;
+        return mod(olds, m);
+    };
+    const modMul = (a: bigint, b: bigint, m: bigint): bigint => mod(a * b, m);
+    const modSub = (a: bigint, b: bigint, m: bigint): bigint => mod(a - b, m);
+    const four = BigInt(4);
+    const eight = BigInt(8);
+    interface JacobianPoint {
+        X: bigint;
+        Y: bigint;
+        Z: bigint;
+    }
+    const pointDouble = (P: JacobianPoint): JacobianPoint => {
+        const { X: X1, Y: Y1, Z: Z1 } = P;
+        if (Y1 === zero) {
+            return { X: zero, Y: one, Z: zero };
+        }
+        const Y1sq = modMul(Y1, Y1, p);
+        const S = modMul(four, modMul(X1, Y1sq, p), p);
+        const M = modMul(three, modMul(X1, X1, p), p);
+        const X3 = modSub(modMul(M, M, p), modMul(two, S, p), p);
+        const Y3 = modSub(modMul(M, modSub(S, X3, p), p), modMul(eight, modMul(Y1sq, Y1sq, p), p), p);
+        const Z3 = modMul(two, modMul(Y1, Z1, p), p);
+        return { X: X3, Y: Y3, Z: Z3 };
+    };
+    const pointAdd = (P: JacobianPoint, Q: JacobianPoint): JacobianPoint => {
+        if (P.Z === zero)
+            return Q;
+        if (Q.Z === zero)
+            return P;
+        const Z1Z1 = modMul(P.Z, P.Z, p);
+        const Z2Z2 = modMul(Q.Z, Q.Z, p);
+        const U1 = modMul(P.X, Z2Z2, p);
+        const U2 = modMul(Q.X, Z1Z1, p);
+        const S1 = modMul(P.Y, modMul(Z2Z2, Q.Z, p), p);
+        const S2 = modMul(Q.Y, modMul(Z1Z1, P.Z, p), p);
+        const H = modSub(U2, U1, p);
+        const r = modSub(S2, S1, p);
+        if (H === zero) {
+            if (r === zero) {
+                return pointDouble(P);
+            }
+            else {
                 return { X: zero, Y: one, Z: zero };
             }
-            const Y1sq = modMul(Y1, Y1, p);
-            const S = modMul(four, modMul(X1, Y1sq, p), p);
-            const M = modMul(three, modMul(X1, X1, p), p);
-            const X3 = modSub(modMul(M, M, p), modMul(two, S, p), p);
-            const Y3 = modSub(modMul(M, modSub(S, X3, p), p), modMul(eight, modMul(Y1sq, Y1sq, p), p), p);
-            const Z3 = modMul(two, modMul(Y1, Z1, p), p);
-            return { X: X3, Y: Y3, Z: Z3 };
-        };
-        const pointAdd = (P: JacobianPoint, Q: JacobianPoint): JacobianPoint => {
-            if (P.Z === zero)
-                return Q;
-            if (Q.Z === zero)
-                return P;
-            const Z1Z1 = modMul(P.Z, P.Z, p);
-            const Z2Z2 = modMul(Q.Z, Q.Z, p);
-            const U1 = modMul(P.X, Z2Z2, p);
-            const U2 = modMul(Q.X, Z1Z1, p);
-            const S1 = modMul(P.Y, modMul(Z2Z2, Q.Z, p), p);
-            const S2 = modMul(Q.Y, modMul(Z1Z1, P.Z, p), p);
-            const H = modSub(U2, U1, p);
-            const r = modSub(S2, S1, p);
-            if (H === zero) {
-                if (r === zero) {
-                    return pointDouble(P);
-                }
-                else {
-                    return { X: zero, Y: one, Z: zero };
-                }
-            }
-            const HH = modMul(H, H, p);
-            const HHH = modMul(H, HH, p);
-            const V = modMul(U1, HH, p);
-            const X3 = modSub(modSub(modMul(r, r, p), HHH, p), modMul(two, V, p), p);
-            const Y3 = modSub(modMul(r, modSub(V, X3, p), p), modMul(S1, HHH, p), p);
-            const Z3 = modMul(H, modMul(P.Z, Q.Z, p), p);
-            return { X: X3, Y: Y3, Z: Z3 };
-        };
-        const scalarMultiply = (k: bigint, P: {
-            x: bigint;
-            y: bigint;
-        }): JacobianPoint => {
-            const N: JacobianPoint = { X: P.x, Y: P.y, Z: one };
-            let Q: JacobianPoint = { X: zero, Y: one, Z: zero };
-            const kBin = k.toString(2);
-            for (let i = 0; i < kBin.length; i++) {
-                Q = pointDouble(Q);
-                if (kBin[i] === "1") {
-                    Q = pointAdd(Q, N);
-                }
-            }
-            return Q;
-        };
-        const verifyECDSA = (hash: bigint, publicKey: {
-            x: bigint;
-            y: bigint;
-        }, signature: {
-            r: bigint;
-            s: bigint;
-        }): boolean => {
-            const { r, s } = signature;
-            const z = hash;
-            if (r <= zero || r >= n || s <= zero || s >= n) {
-                return false;
-            }
-            const w = modInv(s, n);
-            if (w === zero) {
-                return false;
-            }
-            const u1 = modMul(z, w, n);
-            const u2 = modMul(r, w, n);
-            const RG = scalarMultiply(u1, G);
-            const RQ = scalarMultiply(u2, publicKey);
-            const R = pointAdd(RG, RQ);
-            if (R.Z === zero) {
-                return false;
-            }
-            const ZInv = modInv(R.Z, p);
-            if (ZInv === zero) {
-                return false;
-            }
-            const ZInv2 = modMul(ZInv, ZInv, p);
-            const x1affine = modMul(R.X, ZInv2, p);
-            const v = mod(x1affine, n);
-            return v === r;
-        };
-        const hash = BigInt("0x" + msg.toString(16));
-        if ((key.x == null) || (key.y == null)) {
-            throw new Error("Invalid public key: missing coordinates.");
         }
-        const publicKey = {
-            x: BigInt("0x" + key.x.toString(16)),
-            y: BigInt("0x" + key.y.toString(16))
-        };
-        const signature = {
-            r: BigInt("0x" + sig.r.toString(16)),
-            s: BigInt("0x" + sig.s.toString(16))
-        };
-        return verifyECDSA(hash, publicKey, signature);
+        const HH = modMul(H, H, p);
+        const HHH = modMul(H, HH, p);
+        const V = modMul(U1, HH, p);
+        const X3 = modSub(modSub(modMul(r, r, p), HHH, p), modMul(two, V, p), p);
+        const Y3 = modSub(modMul(r, modSub(V, X3, p), p), modMul(S1, HHH, p), p);
+        const Z3 = modMul(H, modMul(P.Z, Q.Z, p), p);
+        return { X: X3, Y: Y3, Z: Z3 };
+    };
+    const scalarMultiply = (k: bigint, P: {
+        x: bigint;
+        y: bigint;
+    }): JacobianPoint => {
+        const N: JacobianPoint = { X: P.x, Y: P.y, Z: one };
+        let Q: JacobianPoint = { X: zero, Y: one, Z: zero };
+        const kBin = k.toString(2);
+        for (let i = 0; i < kBin.length; i++) {
+            Q = pointDouble(Q);
+            if (kBin[i] === "1") {
+                Q = pointAdd(Q, N);
+            }
+        }
+        return Q;
+    };
+    const verifyECDSA = (hash: bigint, publicKey: {
+        x: bigint;
+        y: bigint;
+    }, signature: {
+        r: bigint;
+        s: bigint;
+    }): boolean => {
+        const { r, s } = signature;
+        const z = hash;
+        if (r <= zero || r >= n || s <= zero || s >= n) {
+            return false;
+        }
+        const w = modInv(s, n);
+        if (w === zero) {
+            return false;
+        }
+        const u1 = modMul(z, w, n);
+        const u2 = modMul(r, w, n);
+        const RG = scalarMultiply(u1, G);
+        const RQ = scalarMultiply(u2, publicKey);
+        const R = pointAdd(RG, RQ);
+        if (R.Z === zero) {
+            return false;
+        }
+        const ZInv = modInv(R.Z, p);
+        if (ZInv === zero) {
+            return false;
+        }
+        const ZInv2 = modMul(ZInv, ZInv, p);
+        const x1affine = modMul(R.X, ZInv2, p);
+        const v = mod(x1affine, n);
+        return v === r;
+    };
+    const hash = BigInt("0x" + msg.toString(16));
+    if ((key.x == null) || (key.y == null)) {
+        throw new Error("Invalid public key: missing coordinates.");
     }
-    else {
-        const curve = new Curve();
-        msg = truncateToN(msg);
-        const r = sig.r;
-        const s = sig.s;
-        if (r.cmpn(1) < 0 || r.cmp(curve.n) >= 0) {
-            return false;
-        }
-        if (s.cmpn(1) < 0 || s.cmp(curve.n) >= 0) {
-            return false;
-        }
-        const sinv = s.invm(curve.n);
-        const u1 = sinv.mul(msg).umod(curve.n);
-        const u2 = sinv.mul(r).umod(curve.n);
-        const p = curve.g.jmulAdd(u1, key, u2);
-        if (p.isInfinity()) {
-            return false;
-        }
-        return p.eqXToP(r);
-    }
+    const publicKey = {
+        x: BigInt("0x" + key.x.toString(16)),
+        y: BigInt("0x" + key.y.toString(16))
+    };
+    const signature = {
+        r: BigInt("0x" + sig.r.toString(16)),
+        s: BigInt("0x" + sig.s.toString(16))
+    };
+    return verifyECDSA(hash, publicKey, signature);
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Curve](./primitives.md#class-curve), [JacobianPoint](./primitives.md#class-jacobianpoint), [Point](./primitives.md#class-point), [Signature](./primitives.md#class-signature)
+See also: [BigNumber](./primitives.md#class-bignumber), [JacobianPoint](./primitives.md#class-jacobianpoint), [Point](./primitives.md#class-point), [Signature](./primitives.md#class-signature)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
