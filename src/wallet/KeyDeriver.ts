@@ -185,8 +185,9 @@ export class KeyDeriver implements KeyDeriverApi {
     // This is a publicly derivable key and should only be used in scenarios where public disclosure is intended.
     if (counterparty === 'anyone') {
       counterparty = this.anyone
+    } else {
+      counterparty = this.normalizeCounterparty(counterparty)
     }
-    counterparty = this.normalizeCounterparty(counterparty)
     const derivedPublicKey = this.derivePublicKey(
       protocolID,
       keyID,
