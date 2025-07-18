@@ -436,6 +436,7 @@ describe('ProtoWallet', () => {
     const ad1 = Random(200)
     const bd1 = Random(100)
 
+    console.time('stat')
     const an1 = await createNonce((alice as any), bobPriv.toPublicKey().toString())
     const { signature: as1 } = await alice.createSignature({
       data: ad1,
@@ -469,6 +470,7 @@ describe('ProtoWallet', () => {
       keyID: '1',
       counterparty: bobPriv.toPublicKey().toString()
     })
+    console.timeEnd('stat')
   })
   describe('ProtoWallet Key Linkage Revelation', () => {
     it('Validates the revealCounterpartyKeyLinkage function', async () => {

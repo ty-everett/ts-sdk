@@ -1110,8 +1110,7 @@ export default class Point extends BasePoint {
 
 // -----------------------------------------------------------------------------
 // BigInt helpers & constants (secp256k1) – hoisted so we don't recreate them on
-// every Point.mul() call.  These are ONLY used when the runtime supports
-// native BigInt and therefore only affect the fast-path we add below.
+// every Point.mul() call.
 // -----------------------------------------------------------------------------
 const BI_ZERO = 0n
 const BI_ONE = 1n
@@ -1120,8 +1119,25 @@ const BI_THREE = 3n
 const BI_FOUR = 4n
 const BI_EIGHT = 8n
 
-// Field prime (p) and group order (n) for secp256k1
-const P_BIGINT = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F')
+const P_BIGINT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn
+const MASK_256 = (1n << 256n) - 1n // 0xffff…ffff (256 sones)
+
+function red (x: bigint): bigint {
+  // first fold
+  let hi = x >> 256n
+  x = (x & MASK_256) + (hi << 32n) + hi * 977n
+
+  // second fold  (hi ≤ 2³² + 977 here, so one more pass is enough)
+  hi = x >> 256n
+  x = (x & MASK_256) + (hi << 32n) + hi * 977n
+
+  // final conditional subtraction
+  if (x >= P_BIGINT) x -= P_BIGINT
+  return x
+}
+
+const biModSub = (a: bigint, b: bigint): bigint => (a >= b ? a - b : P_BIGINT - (b - a))
+const biModMul = (a: bigint, b: bigint): bigint => red(a * b)
 
 // Generator point coordinates as bigint constants
 const GX_BIGINT = BigInt('0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798')
@@ -1130,30 +1146,21 @@ const GY_BIGINT = BigInt('0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47
 // Cache for precomputed windowed tables keyed by 'window:x:y'
 const WNAF_TABLE_CACHE: Map<string, JacobianPointBI[]> = new Map()
 
-function biMod (a: bigint, m: bigint): bigint {
-  const r = a % m
-  return r >= 0n ? r : r + m
-}
-
-const biModMul = (a: bigint, b: bigint, m: bigint): bigint => biMod(a * b, m)
-const biModSub = (a: bigint, b: bigint, m: bigint): bigint => biMod(a - b, m)
-
 interface JacobianPointBI { X: bigint, Y: bigint, Z: bigint }
 
 const jpDouble = (P: JacobianPointBI): JacobianPointBI => {
   const { X: X1, Y: Y1, Z: Z1 } = P
   if (Y1 === BI_ZERO) return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO }
 
-  const Y1sq = biModMul(Y1, Y1, P_BIGINT)
-  const S = biModMul(BI_FOUR, biModMul(X1, Y1sq, P_BIGINT), P_BIGINT)
-  const M = biModMul(BI_THREE, biModMul(X1, X1, P_BIGINT), P_BIGINT)
-  const X3 = biModSub(biModMul(M, M, P_BIGINT), biModMul(BI_TWO, S, P_BIGINT), P_BIGINT)
+  const Y1sq = biModMul(Y1, Y1)
+  const S = biModMul(BI_FOUR, biModMul(X1, Y1sq))
+  const M = biModMul(BI_THREE, biModMul(X1, X1))
+  const X3 = biModSub(biModMul(M, M), biModMul(BI_TWO, S))
   const Y3 = biModSub(
-    biModMul(M, biModSub(S, X3, P_BIGINT), P_BIGINT),
-    biModMul(BI_EIGHT, biModMul(Y1sq, Y1sq, P_BIGINT), P_BIGINT),
-    P_BIGINT
+    biModMul(M, biModSub(S, X3)),
+    biModMul(BI_EIGHT, biModMul(Y1sq, Y1sq))
   )
-  const Z3 = biModMul(BI_TWO, biModMul(Y1, Z1, P_BIGINT), P_BIGINT)
+  const Z3 = biModMul(BI_TWO, biModMul(Y1, Z1))
   return { X: X3, Y: Y3, Z: Z3 }
 }
 
@@ -1161,27 +1168,27 @@ const jpAdd = (P: JacobianPointBI, Q: JacobianPointBI): JacobianPointBI => {
   if (P.Z === BI_ZERO) return Q
   if (Q.Z === BI_ZERO) return P
 
-  const Z1Z1 = biModMul(P.Z, P.Z, P_BIGINT)
-  const Z2Z2 = biModMul(Q.Z, Q.Z, P_BIGINT)
-  const U1 = biModMul(P.X, Z2Z2, P_BIGINT)
-  const U2 = biModMul(Q.X, Z1Z1, P_BIGINT)
-  const S1 = biModMul(P.Y, biModMul(Z2Z2, Q.Z, P_BIGINT), P_BIGINT)
-  const S2 = biModMul(Q.Y, biModMul(Z1Z1, P.Z, P_BIGINT), P_BIGINT)
+  const Z1Z1 = biModMul(P.Z, P.Z)
+  const Z2Z2 = biModMul(Q.Z, Q.Z)
+  const U1 = biModMul(P.X, Z2Z2)
+  const U2 = biModMul(Q.X, Z1Z1)
+  const S1 = biModMul(P.Y, biModMul(Z2Z2, Q.Z))
+  const S2 = biModMul(Q.Y, biModMul(Z1Z1, P.Z))
 
-  const H = biModSub(U2, U1, P_BIGINT)
-  const r = biModSub(S2, S1, P_BIGINT)
+  const H = biModSub(U2, U1)
+  const r = biModSub(S2, S1)
   if (H === BI_ZERO) {
     if (r === BI_ZERO) return jpDouble(P)
     return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO } // Infinity
   }
 
-  const HH = biModMul(H, H, P_BIGINT)
-  const HHH = biModMul(H, HH, P_BIGINT)
-  const V = biModMul(U1, HH, P_BIGINT)
+  const HH = biModMul(H, H)
+  const HHH = biModMul(H, HH)
+  const V = biModMul(U1, HH)
 
-  const X3 = biModSub(biModSub(biModMul(r, r, P_BIGINT), HHH, P_BIGINT), biModMul(BI_TWO, V, P_BIGINT), P_BIGINT)
-  const Y3 = biModSub(biModMul(r, biModSub(V, X3, P_BIGINT), P_BIGINT), biModMul(S1, HHH, P_BIGINT), P_BIGINT)
-  const Z3 = biModMul(H, biModMul(P.Z, Q.Z, P_BIGINT), P_BIGINT)
+  const X3 = biModSub(biModSub(biModMul(r, r), HHH), biModMul(BI_TWO, V))
+  const Y3 = biModSub(biModMul(r, biModSub(V, X3)), biModMul(S1, HHH))
+  const Z3 = biModMul(H, biModMul(P.Z, Q.Z))
   return { X: X3, Y: Y3, Z: Z3 }
 }
 
