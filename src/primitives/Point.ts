@@ -569,9 +569,10 @@ export default class Point extends BasePoint {
       }
 
       if (this.precomputed == null) {
+        this.precomputed = {} as any
         const power = this.curve._bitLength
         const step = 4
-        this.precomputed.doubles = this._getDoubles(step, power)
+        this.precomputed!.doubles = this._getDoubles(step, power)
       }
 
       let result: Point
@@ -633,6 +634,9 @@ export default class Point extends BasePoint {
       throw new Error('Endomorphism not defined')
     }
     const beta = this.curve.endoBI.betaBI
+    if (this.xBI === null || this.yBI === null) {
+      throw new Error('Point coordinates cannot be null')
+    }
     const x = modMulP(this.xBI, beta)
     const y = this.yBI
     this.betaBI = { x, y }
@@ -1314,10 +1318,20 @@ function endoSplitBI (k: bigint, curve: Curve): { k1: bigint, k2: bigint, neg1: 
 }
 
 function bigIntFixedCombMul (point: Point, k: bigint): JacobianPointBI {
-  if (point.precomputed === undefined || point.precomputed.doubles === undefined) {
+  if (!point.precomputed || point.precomputed.doubles === undefined) {
     throw new Error('Precomputed doubles required for fixed comb multiplication')
   }
-  const doubles = point.precomputed.doubles
+  const doubles = point.precomputed.doubles!
+  const bigPoints: JacobianPointBI[] = doubles.points.map((pt: any) => {
+    if ('X' in pt && 'Y' in pt && 'Z' in pt) return pt as JacobianPointBI
+    if (typeof pt.x === 'bigint' && typeof pt.y === 'bigint') {
+      return { X: pt.x, Y: pt.y, Z: BI_ONE }
+    }
+    const p = pt as Point
+    const x = BigInt('0x' + p.x!.fromRed().toString(16))
+    const y = BigInt('0x' + p.y!.fromRed().toString(16))
+    return { X: x, Y: y, Z: BI_ONE }
+  })
   const step: number = doubles.step
   const bits = point.curve._bitLength
   const naf = Curve.getNAFBI(k, 1, bits)
@@ -1337,9 +1351,9 @@ function bigIntFixedCombMul (point: Point, k: bigint): JacobianPointBI {
     for (let j = 0; j < repr.length; j++) {
       const nafW = repr[j]
       if (nafW === i) {
-        b = jpAddBI(b, doubles.points[j])
+        b = jpAddBI(b, bigPoints[j])
       } else if (nafW === -i) {
-        b = jpAddBI(b, jpNegBI(doubles.points[j]))
+        b = jpAddBI(b, jpNegBI(bigPoints[j]))
       }
     }
     a = jpAddBI(a, b)

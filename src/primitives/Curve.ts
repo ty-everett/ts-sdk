@@ -2,6 +2,7 @@ import BigNumber from './BigNumber.js'
 import ReductionContext from './ReductionContext.js'
 import MontgomoryMethod from './MontgomoryMethod.js'
 import Point from './Point.js'
+import BasePoint from './BasePoint.js'
 import { toArray } from './utils.js'
 
 // This ensures that only one curve is ever created, enhancing performance.
@@ -1047,28 +1048,30 @@ export default class Curve {
         lambdaBI: BigInt('0x' + this.endo.lambda.toString(16)),
         basisBI: this.endo.basis.map((vec) => ({
           aBI: BigInt('0x' + vec.a.toString(16)),
-          bBI: BigInt('0x' + vec.b.toString(16))
+          bBI: vec.b.isNeg()
+            ? -BigInt('0x' + vec.b.abs().toString(16))
+            : BigInt('0x' + vec.b.toString(16))
         }))
       }
     }
 
     if (this.g.precomputed !== null) {
-      const preDoubles = this.g.precomputed.doubles
-      const preNaf = this.g.precomputed.naf
+      const preDoubles = this.g.precomputed.doubles!
+      const preNaf = this.g.precomputed.naf!
       this.g.precomputed = {
         doubles: {
           step: preDoubles.step,
           points: preDoubles.points.map((p: Point) => ({
-            x: BigInt('0x' + p.x.fromRed().toString(16)),
-            y: BigInt('0x' + p.y.fromRed().toString(16))
-          }))
+            x: BigInt('0x' + p.x!.fromRed().toString(16)),
+            y: BigInt('0x' + p.y!.fromRed().toString(16))
+          })) as unknown as BasePoint[]
         },
         naf: {
           wnd: preNaf.wnd,
           points: preNaf.points.map((p: Point) => ({
-            x: BigInt('0x' + p.x.fromRed().toString(16)),
-            y: BigInt('0x' + p.y.fromRed().toString(16))
-          }))
+            x: BigInt('0x' + p.x!.fromRed().toString(16)),
+            y: BigInt('0x' + p.y!.fromRed().toString(16))
+          })) as unknown as BasePoint[]
         }
       }
     }
