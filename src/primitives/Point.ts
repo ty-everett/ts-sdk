@@ -564,8 +564,15 @@ export default class Point extends BasePoint {
         throw new Error('Point coordinates cannot be null')
       }
 
-      const Px = BigInt('0x' + this.x.fromRed().toString(16))
-      const Py = BigInt('0x' + this.y.fromRed().toString(16))
+      let Px: bigint
+      let Py: bigint
+      if (this === this.curve.g) {
+        Px = GX_BIGINT
+        Py = GY_BIGINT
+      } else {
+        Px = BigInt('0x' + this.x.fromRed().toString(16))
+        Py = BigInt('0x' + this.y.fromRed().toString(16))
+      }
 
       const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m
       const modMul = (a: bigint, b: bigint, m: bigint): bigint => mod(a * b, m)
@@ -1116,6 +1123,13 @@ const BI_EIGHT = 8n
 // Field prime (p) and group order (n) for secp256k1
 const P_BIGINT = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F')
 
+// Generator point coordinates as bigint constants
+const GX_BIGINT = BigInt('0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798')
+const GY_BIGINT = BigInt('0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8')
+
+// Cache for precomputed windowed tables keyed by 'window:x:y'
+const WNAF_TABLE_CACHE: Map<string, JacobianPointBI[]> = new Map()
+
 function biMod (a: bigint, m: bigint): bigint {
   const r = a % m
   return r >= 0n ? r : r + m
@@ -1183,16 +1197,22 @@ const scalarMultiplyWNAF = (
   P0: { x: bigint, y: bigint },
   window: number = 5
 ): JacobianPointBI => {
-  // Convert affine to Jacobian
-  const P: JacobianPointBI = { X: P0.x, Y: P0.y, Z: BI_ONE }
-
-  // Pre-compute odd multiples: P, 3P, 5P, … up to 2^{w-1}-1
-  const tblSize = 1 << (window - 1) // e.g. w=5 → 16 entries
-  const tbl: JacobianPointBI[] = new Array(tblSize)
-  tbl[0] = P
-  const twoP = jpDouble(P)
-  for (let i = 1; i < tblSize; i++) {
-    tbl[i] = jpAdd(tbl[i - 1], twoP)
+  const key = `${window}:${P0.x.toString(16)}:${P0.y.toString(16)}`
+  let tbl = WNAF_TABLE_CACHE.get(key)
+  let P: JacobianPointBI
+  if (tbl === undefined) {
+    // Convert affine to Jacobian and pre-compute odd multiples
+    const tblSize = 1 << (window - 1) // e.g. w=5 → 16 entries
+    tbl = new Array(tblSize)
+    P = { X: P0.x, Y: P0.y, Z: BI_ONE }
+    tbl[0] = P
+    const twoP = jpDouble(P)
+    for (let i = 1; i < tblSize; i++) {
+      tbl[i] = jpAdd(tbl[i - 1], twoP)
+    }
+    WNAF_TABLE_CACHE.set(key, tbl)
+  } else {
+    P = tbl[0]
   }
 
   // Build wNAF representation of k
