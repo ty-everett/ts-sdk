@@ -1,4 +1,4 @@
-import { PrivateKey, PublicKey, SymmetricKey } from '../primitives/index.js'
+import { Point, PrivateKey, PublicKey, SymmetricKey } from '../primitives/index.js'
 import { Counterparty, KeyDeriver, KeyDeriverApi } from './KeyDeriver.js'
 import { WalletProtocol } from './Wallet.interfaces.js'
 
@@ -9,7 +9,7 @@ import { WalletProtocol } from './Wallet.interfaces.js'
  */
 export default class CachedKeyDeriver implements KeyDeriverApi {
   private readonly keyDeriver: KeyDeriver
-  private readonly cache: Map<string, PublicKey | PrivateKey | SymmetricKey | number[]>
+  private readonly cache: Map<string, PublicKey | PrivateKey | SymmetricKey | Point | number[]>
   private readonly maxCacheSize: number
 
   /**
@@ -37,9 +37,17 @@ export default class CachedKeyDeriver implements KeyDeriverApi {
     } else {
       this.rootKey = rootKey
     }
-    this.keyDeriver = new KeyDeriver(this.rootKey)
+    this.keyDeriver = new KeyDeriver(
+      this.rootKey,
+      (priv, pub, point) => {
+        this.cacheSet(`${priv.toString()}-${pub.toString()}`, point)
+      },
+      (priv, pub) => {
+        return this.cacheGet(`${priv.toString()}-${pub.toString()}`) as Point | undefined
+      }
+    )
     this.identityKey = this.rootKey.toPublicKey().toString()
-    this.cache = new Map<string, PublicKey | PrivateKey | SymmetricKey | number[]>()
+    this.cache = new Map<string, PublicKey | PrivateKey | SymmetricKey | Point | number[]>()
     const maxCacheSize = options?.maxCacheSize
     this.maxCacheSize = (maxCacheSize != null && !isNaN(maxCacheSize) && maxCacheSize > 0) ? maxCacheSize : 1000
   }
@@ -253,7 +261,7 @@ export default class CachedKeyDeriver implements KeyDeriverApi {
    * @param {string} cacheKey - The key of the cached item.
    * @returns {any} - The cached value.
    */
-  private cacheGet (cacheKey: string): PublicKey | PrivateKey | SymmetricKey | number[] | undefined {
+  private cacheGet (cacheKey: string): PublicKey | PrivateKey | SymmetricKey | Point | number[] | undefined {
     const value = this.cache.get(cacheKey)
     // Update the entry to reflect recent use
     this.cache.delete(cacheKey)
@@ -268,7 +276,7 @@ export default class CachedKeyDeriver implements KeyDeriverApi {
    * @param {string} cacheKey - The key of the item to cache.
    * @param {any} value - The value to cache.
    */
-  private cacheSet (cacheKey: string, value: PublicKey | PrivateKey | SymmetricKey | number[]): void {
+  private cacheSet (cacheKey: string, value: PublicKey | PrivateKey | SymmetricKey | Point | number[]): void {
     if (this.cache.size >= this.maxCacheSize) {
       // Evict the least recently used item (first item in Map)
       const firstKey = this.cache.keys().next().value
