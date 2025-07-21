@@ -129,4 +129,9 @@ describe('Hash', function () {
       })
     }
   })
+  it('Executes PBKDF2 as used in the Metanet user management protocol in a timely manner', () => {
+    console.time('PBKDF2')
+    hash.pbkdf2([1, 2, 3, 4, 5, 6, 7, 8], new Array(32).fill(10), 7777, 256, 'sha512')
+    console.timeEnd('PBKDF2')
+  })
 })
