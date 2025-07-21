@@ -33,9 +33,14 @@ export type LookupAnswer =
 
 /** Default SLAP trackers */
 export const DEFAULT_SLAP_TRACKERS: string[] = [
-  // Babbage primary overlay service
-  'https://users.bapp.dev'
+  // BSVA clusters
+  'https://overlay-us-1.bsvb.tech',
+  'https://overlay-eu-1.bsvb.tech',
+  'https://overlay-ap-1.bsvb.tech',
 
+  // Babbage primary overlay service
+  'https://users.bapp.dev',
+  
   // NOTE: Other entities may submit pull requests to the library if they maintain SLAP overlay services.
   // Additional trackers run by different entities contribute to greater network resiliency.
   // It also generally doesn't hurt to have more trackers in this list.
