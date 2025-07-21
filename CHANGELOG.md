@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.18 - 2025-07-20](#1618---2025-07-20)
 - [1.6.17 - 2025-07-18](#1617---2025-07-18)
 - [1.6.16 - 2025-07-17](#1616---2025-07-17)
 - [1.6.14 - 2025-07-17](#1614---2025-07-17)
