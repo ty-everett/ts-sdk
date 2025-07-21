@@ -146,6 +146,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.6.18] - 2025-07-20
+
+### Added
+
+- More default SLAP trackers (run by BSVA) to ensure redundancy and resiliency.
+
+---
+
 ## [1.6.17] - 2025-07-18
 
 ### Fixed
