@@ -1644,6 +1644,21 @@ export function pbkdf2 (
   if (digest !== 'sha512') {
     throw new Error('Only sha512 is supported in this PBKDF2 implementation')
   }
+  // Attempt to use the native Node.js implementation if available as it is
+  // considerably faster than the pure TypeScript fallback below. If the crypto
+  // module isn't present (for example in a browser build) we'll silently fall
+  // back to the original implementation.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nodeCrypto = require('crypto')
+    if (typeof nodeCrypto.pbkdf2Sync === 'function') {
+      const p = Buffer.from(password)
+      const s = Buffer.from(salt)
+      return [...nodeCrypto.pbkdf2Sync(p, s, iterations, keylen, digest)]
+    }
+  } catch {
+    // ignore
+  }
   const DK = new Array(keylen)
   const block1 = [...salt, 0, 0, 0, 0]
 
