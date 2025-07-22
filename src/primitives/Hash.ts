@@ -1659,6 +1659,17 @@ export function pbkdf2 (
   } catch {
     // ignore
   }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fast = require('./fast/pbkdf2.js')
+    const sha = require('./fast/sha512.js')
+    const p = Uint8Array.from(password)
+    const s = Uint8Array.from(salt)
+    const out = fast.pbkdf2(sha.sha512, p, s, { c: iterations, dkLen: keylen })
+    return Array.from(out)
+  } catch {
+    // Fallback to original slow implementation if fast path fails
+  }
   const DK = new Array(keylen)
   const block1 = [...salt, 0, 0, 0, 0]
 
