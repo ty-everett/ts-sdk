@@ -1,5 +1,3 @@
-import { pbkdf2 as fast} from './fast-pbkdf2-sha512-helpers/pbkdf2.js'
-import { sha512 as sha } from './fast-pbkdf2-sha512-helpers/sha512.js'
 
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -1627,6 +1625,39 @@ export const sha512hmac = (
   return new SHA512HMAC(key).update(msg, enc).digest()
 }
 
+function hmacSha512(key: Uint8Array, data: Uint8Array): Uint8Array {
+  const h = new SHA512HMAC(Array.from(key))
+  h.update(Array.from(data))
+  return Uint8Array.from(h.digest())
+}
+
+function pbkdf2Fast(
+  password: Uint8Array,
+  salt: Uint8Array,
+  iterations: number,
+  keylen: number
+): Uint8Array {
+  const hLen = 64
+  const l = Math.ceil(keylen / hLen)
+  const DK = new Uint8Array(l * hLen)
+  const block = new Uint8Array(salt.length + 4)
+  block.set(salt)
+  for (let i = 1; i <= l; i++) {
+    block[salt.length] = (i >>> 24) & 0xff
+    block[salt.length + 1] = (i >>> 16) & 0xff
+    block[salt.length + 2] = (i >>> 8) & 0xff
+    block[salt.length + 3] = i & 0xff
+    let u = hmacSha512(password, block)
+    const t = u.slice()
+    for (let j = 1; j < iterations; j++) {
+      u = hmacSha512(password, u)
+      for (let k = 0; k < hLen; k++) t[k] ^= u[k]
+    }
+    DK.set(t, (i - 1) * hLen)
+  }
+  return DK.subarray(0, keylen)
+}
+
 /**
  * Limited SHA-512-only PBKDF2 function for use in deprecated BIP39 code.
  * @function pbkdf2
@@ -1665,6 +1696,6 @@ export function pbkdf2 (
   // }
   const p = Uint8Array.from(password)
   const s = Uint8Array.from(salt)
-  const out = fast(sha, p, s, { c: iterations, dkLen: keylen })
+  const out = pbkdf2Fast(p, s, iterations, keylen)
   return Array.from(out)
 }
