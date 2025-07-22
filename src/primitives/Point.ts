@@ -2,7 +2,6 @@ import BasePoint from './BasePoint.js'
 import JPoint from './JacobianPoint.js'
 import BigNumber from './BigNumber.js'
 import { toArray, toHex } from './utils.js'
-import ReductionContext from './ReductionContext.js'
 
 // -----------------------------------------------------------------------------
 // BigInt helpers & constants (secp256k1) – hoisted so we don't recreate them on
@@ -43,6 +42,32 @@ export const biModInv = (a: bigint): bigint => { // binary‑ext GCD
   return biMod(lm)
 }
 export const biModSqr = (a: bigint): bigint => biModMul(a, a)
+
+export const biModPow = (base: bigint, exp: bigint): bigint => {
+  let result = BI_ONE
+  base = biMod(base)
+  let e = exp
+  while (e > BI_ZERO) {
+    if ((e & BI_ONE) === BI_ONE) result = biModMul(result, base)
+    base = biModMul(base, base)
+    e >>= BI_ONE
+  }
+  return result
+}
+
+export const P_PLUS1_DIV4 = (P_BIGINT + 1n) >> 2n
+
+export const biModSqrt = (a: bigint): bigint | null => {
+  const r = biModPow(a, P_PLUS1_DIV4)
+  return biModMul(r, r) === biMod(a) ? r : null
+}
+
+const toBigInt = (x: BigNumber | number | number[] | string): bigint => {
+  if (BigNumber.isBN(x)) return BigInt('0x' + (x as BigNumber).toString(16))
+  if (typeof x === 'string') return BigInt('0x' + x)
+  if (Array.isArray(x)) return BigInt('0x' + toHex(x))
+  return BigInt(x as number)
+}
 
 // Generator point coordinates as bigint constants
 export const GX_BIGINT = BigInt('0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798')
@@ -191,10 +216,6 @@ export const modInvN = (a: bigint): bigint => {
  * @property inf - Flag to record if the point is at infinity in the Elliptic Curve.
  */
 export default class Point extends BasePoint {
-  private static readonly red: any = new ReductionContext('k256')
-  private static readonly a: BigNumber = new BigNumber(0).toRed(Point.red)
-  private static readonly b: BigNumber = new BigNumber(7).toRed(Point.red)
-  private static readonly zero: BigNumber = new BigNumber(0).toRed(Point.red)
   x: BigNumber | null
   y: BigNumber | null
   inf: boolean
@@ -269,13 +290,6 @@ export default class Point extends BasePoint {
     return Point.fromDER(bytes)
   }
 
-  static redSqrtOptimized (y2: BigNumber): BigNumber {
-    const red = Point.red
-    const p = red.m // The modulus
-    const exponent = p.addn(1).iushrn(2) // (p + 1) / 4
-    return y2.redPow(exponent)
-  }
-
   /**
    * Generates a point from an x coordinate and a boolean indicating whether the corresponding
    * y coordinate is odd.
@@ -292,66 +306,17 @@ export default class Point extends BasePoint {
    * const point = Point.fromX(xCoordinate, true);
    */
   static fromX (x: BigNumber | number | number[] | string, odd: boolean): Point {
-    function mod (a: bigint, n: bigint): bigint {
-      return ((a % n) + n) % n
+    let xBigInt = toBigInt(x)
+    xBigInt = biMod(xBigInt)
+    const y2 = biModAdd(biModMul(biModSqr(xBigInt), xBigInt), 7n)
+    const y = biModSqrt(y2)
+    if (y === null) throw new Error('Invalid point')
+    let yBig = y
+    if ((yBig & BI_ONE) !== (odd ? BI_ONE : BI_ZERO)) {
+      yBig = biModSub(P_BIGINT, yBig)
     }
-    function modPow (base: bigint, exponent: bigint, modulus: bigint): bigint {
-      let result = BigInt(1)
-      base = mod(base, modulus)
-      while (exponent > BigInt(0)) {
-        if ((exponent & BigInt(1)) === BigInt(1)) {
-          result = mod(result * base, modulus)
-        }
-        exponent >>= BigInt(1)
-        base = mod(base * base, modulus)
-      }
-      return result
-    }
-    function sqrtMod (a: bigint, p: bigint): bigint | null {
-      const exponent = (p + BigInt(1)) >> BigInt(2)
-      const sqrtCandidate = modPow(a, exponent, p)
-      if (mod(sqrtCandidate * sqrtCandidate, p) === mod(a, p)) {
-        return sqrtCandidate
-      } else {
-        return null
-      }
-    }
-
-    // Curve parameters for secp256k1
-    const p = BigInt(
-      '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F'
-    )
-    const b = BigInt(7)
-
-    let xBigInt: bigint
-    if (x instanceof BigNumber) {
-      xBigInt = BigInt('0x' + x.toString(16))
-    } else if (typeof x === 'string') {
-      xBigInt = BigInt('0x' + x)
-    } else if (Array.isArray(x)) {
-      xBigInt = BigInt('0x' + toHex(x).padStart(64, '0'))
-    } else if (typeof x === 'number') {
-      xBigInt = BigInt(x)
-    } else {
-      throw new Error('Invalid x-coordinate type')
-    }
-
-    xBigInt = mod(xBigInt, p)
-
-    const y2 = mod(modPow(xBigInt, BigInt(3), p) + b, p)
-
-    let y = sqrtMod(y2, p)
-    if (y === null) {
-      throw new Error('Invalid point')
-    }
-
-    const isYOdd = y % BigInt(2) === BigInt(1)
-    if ((odd && !isYOdd) || (!odd && isYOdd)) {
-      y = p - y
-    }
-
     const xBN = new BigNumber(xBigInt.toString(16), 16)
-    const yBN = new BigNumber(y.toString(16), 16)
+    const yBN = new BigNumber(yBig.toString(16), 16)
     return new Point(xBN, yBN)
   }
 
@@ -622,26 +587,31 @@ export default class Point extends BasePoint {
 
     // P + (-P) = O
     if (this.neg().eq(p)) {
-      return new Point(new BigNumber(0), new BigNumber(0))
+      return new Point(null, null)
     }
 
     // P + Q = O
     if (this.x?.cmp(p.x ?? new BigNumber(0)) === 0) {
-      return new Point(new BigNumber(0), new BigNumber(0))
+      return new Point(null, null)
     }
 
-    const q = {
-      x: BigInt('0x' + (p.x as BigNumber).fromRed().toString(16)),
-      y: BigInt('0x' + (p.y as BigNumber).fromRed().toString(16))
+    const P1 = {
+      X: BigInt('0x' + (this.x as BigNumber).fromRed().toString(16)),
+      Y: BigInt('0x' + (this.y as BigNumber).fromRed().toString(16)),
+      Z: BI_ONE
     }
-    const t = {
-      x: BigInt('0x' + (this.x as BigNumber).fromRed().toString(16)),
-      y: BigInt('0x' + (this.y as BigNumber).fromRed().toString(16))
+    const Q1 = {
+      X: BigInt('0x' + (p.x as BigNumber).fromRed().toString(16)),
+      Y: BigInt('0x' + (p.y as BigNumber).fromRed().toString(16)),
+      Z: BI_ONE
     }
-    const λ = biModMul(biModSub(q.y, t.y), biModInv(biModSub(q.x, t.x)))
-    const rx = biModSub(biModSub(biModSqr(λ), t.x), q.x)
-    const ry = biModSub(biModMul(λ, biModSub(t.x, rx)), t.y)
-    return new Point(rx.toString(16), ry.toString(16))
+    const R = jpAdd(P1, Q1)
+    if (R.Z === BI_ZERO) return new Point(null, null)
+    const zInv = biModInv(R.Z)
+    const zInv2 = biModMul(zInv, zInv)
+    const xRes = biModMul(R.X, zInv2)
+    const yRes = biModMul(R.Y, biModMul(zInv2, zInv))
+    return new Point(xRes.toString(16), yRes.toString(16))
   }
 
   /**
@@ -654,25 +624,21 @@ export default class Point extends BasePoint {
    * const result = P.dbl();
    * */
   dbl (): Point {
-    if (this.inf) {
-      return this
+    if (this.inf) return this
+    if (this.x === null || this.y === null) {
+      throw new Error('Point coordinates cannot be null')
     }
 
-    // 2P = O
-    const ys1 = (this.y ?? new BigNumber(0)).redAdd(this.y ?? new BigNumber(0))
-    if (ys1.cmpn(0) === 0) {
-      return new Point(new BigNumber(0), new BigNumber(0))
-    }
+    const X = BigInt('0x' + this.x.fromRed().toString(16))
+    const Y = BigInt('0x' + this.y.fromRed().toString(16))
+    if (Y === BI_ZERO) return new Point(null, null)
 
-    const a = this.curve.a
-    const x2 = (this.x ?? new BigNumber(0)).redSqr()
-    const dyinv = ys1.redInvm()
-    const c = x2.redAdd(x2).redIAdd(x2).redIAdd(a).redMul(dyinv)
-
-    const nx = c.redSqr().redISub((this.x ?? new BigNumber(0)).redAdd(this.x ?? new BigNumber(0)))
-    const ny = c.redMul((this.x ?? new BigNumber(0)).redSub(nx)).redISub(this.y ?? new BigNumber(0))
-
-    return new Point(nx, ny)
+    const R = jpDouble({ X, Y, Z: BI_ONE })
+    const zInv = biModInv(R.Z)
+    const zInv2 = biModMul(zInv, zInv)
+    const xRes = biModMul(R.X, zInv2)
+    const yRes = biModMul(R.Y, biModMul(zInv2, zInv))
+    return new Point(xRes.toString(16), yRes.toString(16))
   }
 
   /**
@@ -1134,7 +1100,7 @@ export default class Point extends BasePoint {
     for (i = 0; i < points.length; i++) {
       const split = this.curve._endoSplit(coeffs[i])
       let p = points[i]
-      let beta: Point = p._getBeta() ?? new Point(new BigNumber(0), new BigNumber(0))
+      let beta: Point = p._getBeta() ?? new Point(null, null)
 
       if (split.k1.negative !== 0) {
         split.k1.ineg()
