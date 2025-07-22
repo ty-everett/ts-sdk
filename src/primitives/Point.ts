@@ -4,6 +4,180 @@ import BigNumber from './BigNumber.js'
 import { toArray, toHex } from './utils.js'
 import ReductionContext from './ReductionContext.js'
 
+// -----------------------------------------------------------------------------
+// BigInt helpers & constants (secp256k1) – hoisted so we don't recreate them on
+// every Point.mul() call.
+// -----------------------------------------------------------------------------
+export const BI_ZERO = 0n
+export const BI_ONE = 1n
+export const BI_TWO = 2n
+export const BI_THREE = 3n
+export const BI_FOUR = 4n
+export const BI_EIGHT = 8n
+
+export const P_BIGINT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn
+export const N_BIGINT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n
+export const MASK_256 = (1n << 256n) - 1n // 0xffff…ffff (256 sones)
+
+export function red (x: bigint): bigint {
+  // first fold
+  let hi = x >> 256n
+  x = (x & MASK_256) + (hi << 32n) + hi * 977n
+
+  // second fold  (hi ≤ 2³² + 977 here, so one more pass is enough)
+  hi = x >> 256n
+  x = (x & MASK_256) + (hi << 32n) + hi * 977n
+
+  // final conditional subtraction
+  if (x >= P_BIGINT) x -= P_BIGINT
+  return x
+}
+
+export const biMod = (a: bigint): bigint => red((a % P_BIGINT + P_BIGINT) % P_BIGINT)
+export const biModSub = (a: bigint, b: bigint): bigint => (a >= b ? a - b : P_BIGINT - (b - a))
+export const biModMul = (a: bigint, b: bigint): bigint => red(a * b)
+export const biModAdd = (a: bigint, b: bigint): bigint => red(a + b)
+export const biModInv = (a: bigint): bigint => { // binary‑ext GCD
+  let lm = BI_ONE; let hm = BI_ZERO; let low = biMod(a); let high = P_BIGINT
+  while (low > BI_ONE) { const r = high / low; [lm, hm] = [hm - lm * r, lm]; [low, high] = [high - low * r, low] }
+  return biMod(lm)
+}
+export const biModSqr = (a: bigint): bigint => biModMul(a, a)
+
+// Generator point coordinates as bigint constants
+export const GX_BIGINT = BigInt('0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798')
+export const GY_BIGINT = BigInt('0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8')
+
+// Cache for precomputed windowed tables keyed by 'window:x:y'
+const WNAF_TABLE_CACHE: Map<string, JacobianPointBI[]> = new Map()
+
+export interface JacobianPointBI { X: bigint, Y: bigint, Z: bigint }
+
+export const jpDouble = (P: JacobianPointBI): JacobianPointBI => {
+  const { X: X1, Y: Y1, Z: Z1 } = P
+  if (Y1 === BI_ZERO) return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO }
+
+  const Y1sq = biModMul(Y1, Y1)
+  const S = biModMul(BI_FOUR, biModMul(X1, Y1sq))
+  const M = biModMul(BI_THREE, biModMul(X1, X1))
+  const X3 = biModSub(biModMul(M, M), biModMul(BI_TWO, S))
+  const Y3 = biModSub(
+    biModMul(M, biModSub(S, X3)),
+    biModMul(BI_EIGHT, biModMul(Y1sq, Y1sq))
+  )
+  const Z3 = biModMul(BI_TWO, biModMul(Y1, Z1))
+  return { X: X3, Y: Y3, Z: Z3 }
+}
+
+export const jpAdd = (P: JacobianPointBI, Q: JacobianPointBI): JacobianPointBI => {
+  if (P.Z === BI_ZERO) return Q
+  if (Q.Z === BI_ZERO) return P
+
+  const Z1Z1 = biModMul(P.Z, P.Z)
+  const Z2Z2 = biModMul(Q.Z, Q.Z)
+  const U1 = biModMul(P.X, Z2Z2)
+  const U2 = biModMul(Q.X, Z1Z1)
+  const S1 = biModMul(P.Y, biModMul(Z2Z2, Q.Z))
+  const S2 = biModMul(Q.Y, biModMul(Z1Z1, P.Z))
+
+  const H = biModSub(U2, U1)
+  const r = biModSub(S2, S1)
+  if (H === BI_ZERO) {
+    if (r === BI_ZERO) return jpDouble(P)
+    return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO } // Infinity
+  }
+
+  const HH = biModMul(H, H)
+  const HHH = biModMul(H, HH)
+  const V = biModMul(U1, HH)
+
+  const X3 = biModSub(biModSub(biModMul(r, r), HHH), biModMul(BI_TWO, V))
+  const Y3 = biModSub(biModMul(r, biModSub(V, X3)), biModMul(S1, HHH))
+  const Z3 = biModMul(H, biModMul(P.Z, Q.Z))
+  return { X: X3, Y: Y3, Z: Z3 }
+}
+
+export const jpNeg = (P: JacobianPointBI): JacobianPointBI => {
+  if (P.Z === BI_ZERO) return P
+  return { X: P.X, Y: P_BIGINT - P.Y, Z: P.Z }
+}
+
+// Fast windowed-NAF scalar multiplication (default window = 5) in Jacobian
+// coordinates.  Returns Q = k * P0 as a JacobianPoint.
+export const scalarMultiplyWNAF = (
+  k: bigint,
+  P0: { x: bigint, y: bigint },
+  window: number = 5
+): JacobianPointBI => {
+  const key = `${window}:${P0.x.toString(16)}:${P0.y.toString(16)}`
+  let tbl = WNAF_TABLE_CACHE.get(key)
+  let P: JacobianPointBI
+  if (tbl === undefined) {
+    // Convert affine to Jacobian and pre-compute odd multiples
+    const tblSize = 1 << (window - 1) // e.g. w=5 → 16 entries
+    tbl = new Array(tblSize)
+    P = { X: P0.x, Y: P0.y, Z: BI_ONE }
+    tbl[0] = P
+    const twoP = jpDouble(P)
+    for (let i = 1; i < tblSize; i++) {
+      tbl[i] = jpAdd(tbl[i - 1], twoP)
+    }
+    WNAF_TABLE_CACHE.set(key, tbl)
+  } else {
+    P = tbl[0]
+  }
+
+  // Build wNAF representation of k
+  const wnaf: number[] = []
+  const wBig = 1n << BigInt(window)
+  const wHalf = wBig >> 1n
+  let kTmp = k
+  while (kTmp > 0n) {
+    if ((kTmp & BI_ONE) === BI_ZERO) {
+      wnaf.push(0)
+      kTmp >>= BI_ONE
+    } else {
+      let z = kTmp & (wBig - 1n) // kTmp mod 2^w
+      if (z > wHalf) z -= wBig // make it odd & within (-2^{w-1}, 2^{w-1})
+      wnaf.push(Number(z))
+      kTmp -= z
+      kTmp >>= BI_ONE
+    }
+  }
+
+  // Accumulate from MSB to LSB
+  let Q: JacobianPointBI = { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO } // infinity
+  for (let i = wnaf.length - 1; i >= 0; i--) {
+    Q = jpDouble(Q)
+    const di = wnaf[i]
+    if (di !== 0) {
+      const idx = Math.abs(di) >> 1 // (|di|-1)/2  because di is odd
+      const addend = di > 0 ? tbl[idx] : jpNeg(tbl[idx])
+      Q = jpAdd(Q, addend)
+    }
+  }
+  return Q
+}
+
+export const modN = (a: bigint): bigint => {
+  let r = a % N_BIGINT
+  if (r < 0n) r += N_BIGINT
+  return r
+}
+export const modMulN = (a: bigint, b: bigint): bigint => modN(a * b)
+
+/** modular inverse modulo n with plain extended‑gcd (not constant‑time) */
+export const modInvN = (a: bigint): bigint => {
+  let lm = 1n; let hm = 0n
+  let low = modN(a); let high = N_BIGINT
+  while (low > 1n) {
+    const q = high / low
+    ;[lm, hm] = [hm - lm * q, lm]
+    ;[low, high] = [high - low * q, low]
+  }
+  return modN(lm)
+}
+
 /**
  * `Point` class is a representation of an elliptic curve point with affine coordinates.
  * It extends the functionality of BasePoint and carries x, y coordinates of point on the curve.
@@ -456,17 +630,18 @@ export default class Point extends BasePoint {
       return new Point(new BigNumber(0), new BigNumber(0))
     }
 
-    let c = this.y?.redSub(p.y ?? new BigNumber(0)) ?? new BigNumber(0)
-    if (c.cmpn(0) !== 0) {
-      c = c.redMul(this.x?.redSub(p.x ?? new BigNumber(0)).redInvm() ?? new BigNumber(1))
+    const q = {
+      x: BigInt('0x' + (p.x as BigNumber).fromRed().toString(16)),
+      y: BigInt('0x' + (p.y as BigNumber).fromRed().toString(16))
     }
-
-    const nx = c?.redSqr().redISub(this.x ?? new BigNumber(0)).redISub(p.x ?? new BigNumber(0))
-    const ny = (c ?? new BigNumber(1))
-      .redMul((this.x ?? new BigNumber(0)).redSub(nx ?? new BigNumber(0)))
-      .redISub(this.y ?? new BigNumber(0))
-
-    return new Point(nx ?? new BigNumber(0), ny ?? new BigNumber(0))
+    const t = {
+      x: BigInt('0x' + (this.x as BigNumber).fromRed().toString(16)),
+      y: BigInt('0x' + (this.y as BigNumber).fromRed().toString(16))
+    }
+    const λ = biModMul(biModSub(q.y, t.y), biModInv(biModSub(q.x, t.x)))
+    const rx = biModSub(biModSub(biModSqr(λ), t.x), q.x)
+    const ry = biModSub(biModMul(λ, biModSub(t.x, rx)), t.y)
+    return new Point(rx.toString(16), ry.toString(16))
   }
 
   /**
@@ -538,102 +713,48 @@ export default class Point extends BasePoint {
       k = new BigNumber(k as number, 16)
     }
     k = k as BigNumber
-    if (typeof BigInt === 'function') {
-      if (this.inf) {
-        return this
-      }
-
-      const zero = 0n
-      const one = 1n
-      const p = BigInt(
-        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F'
-      )
-      const n = BigInt(
-        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-      )
-
-      let kBig = BigInt('0x' + k.toString(16))
-      const isNeg = kBig < zero
-      if (isNeg) kBig = -kBig
-      kBig = ((kBig % n) + n) % n
-      if (kBig === zero) {
-        return new Point(null, null)
-      }
-
-      if (this.x === null || this.y === null) {
-        throw new Error('Point coordinates cannot be null')
-      }
-
-      let Px: bigint
-      let Py: bigint
-      if (this === this.curve.g) {
-        Px = GX_BIGINT
-        Py = GY_BIGINT
-      } else {
-        Px = BigInt('0x' + this.x.fromRed().toString(16))
-        Py = BigInt('0x' + this.y.fromRed().toString(16))
-      }
-
-      const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m
-      const modMul = (a: bigint, b: bigint, m: bigint): bigint => mod(a * b, m)
-      const modInv = (a: bigint, m: bigint): bigint => {
-        let lm = one
-        let hm = zero
-        let low = mod(a, m)
-        let high = m
-        while (low > one) {
-          const r = high / low
-          const nm = hm - lm * r
-          const neww = high - low * r
-          hm = lm
-          lm = nm
-          high = low
-          low = neww
-        }
-        return mod(lm, m)
-      }
-
-      interface JacobianPoint {
-        X: bigint
-        Y: bigint
-        Z: bigint
-      }
-
-      const scalarMultiply = (
-        kVal: bigint,
-        P0: { x: bigint, y: bigint }
-      ): JacobianPoint => {
-        // Delegate to the hoisted windowed-NAF implementation above.  We
-        // keep the wrapper so that the rest of the mul() code remains
-        // untouched while providing a massive speed-up (≈4-6×).
-        return scalarMultiplyWNAF(kVal, P0) as unknown as JacobianPoint
-      }
-
-      const R = scalarMultiply(kBig, { x: Px, y: Py })
-      if (R.Z === zero) {
-        return new Point(null, null)
-      }
-      const zInv = modInv(R.Z, p)
-      const zInv2 = modMul(zInv, zInv, p)
-      const xRes = modMul(R.X, zInv2, p)
-      const yRes = modMul(R.Y, modMul(zInv2, zInv, p), p)
-
-      const xBN = new BigNumber(xRes.toString(16), 16)
-      const yBN = new BigNumber(yRes.toString(16), 16)
-      const result = new Point(xBN, yBN)
-      if (isNeg) {
-        return result.neg()
-      }
-      return result
-    } else {
-      if (this.isInfinity()) {
-        return this
-      } else if (this._hasDoubles(k)) {
-        return this._fixedNafMul(k)
-      } else {
-        return this._endoWnafMulAdd([this], [k]) as Point
-      }
+    if (this.inf) {
+      return this
     }
+
+    let kBig = BigInt('0x' + k.toString(16))
+    const isNeg = kBig < BI_ZERO
+    if (isNeg) kBig = -kBig
+    kBig = biMod(kBig)
+    if (kBig === BI_ZERO) {
+      return new Point(null, null)
+    }
+
+    if (this.x === null || this.y === null) {
+      throw new Error('Point coordinates cannot be null')
+    }
+
+    let Px: bigint
+    let Py: bigint
+    if (this === this.curve.g) {
+      Px = GX_BIGINT
+      Py = GY_BIGINT
+    } else {
+      Px = BigInt('0x' + this.x.fromRed().toString(16))
+      Py = BigInt('0x' + this.y.fromRed().toString(16))
+    }
+
+    const R = scalarMultiplyWNAF(kBig, { x: Px, y: Py })
+    if (R.Z === BI_ZERO) {
+      return new Point(null, null)
+    }
+    const zInv = biModInv(R.Z)
+    const zInv2 = biModMul(zInv, zInv)
+    const xRes = biModMul(R.X, zInv2)
+    const yRes = biModMul(R.Y, biModMul(zInv2, zInv))
+
+    const xBN = new BigNumber(xRes.toString(16), 16)
+    const yBN = new BigNumber(yRes.toString(16), 16)
+    const result = new Point(xBN, yBN)
+    if (isNeg) {
+      return result.neg()
+    }
+    return result
   }
 
   /**
@@ -1106,150 +1227,4 @@ export default class Point extends BasePoint {
       points: res
     }
   }
-}
-
-// -----------------------------------------------------------------------------
-// BigInt helpers & constants (secp256k1) – hoisted so we don't recreate them on
-// every Point.mul() call.
-// -----------------------------------------------------------------------------
-const BI_ZERO = 0n
-const BI_ONE = 1n
-const BI_TWO = 2n
-const BI_THREE = 3n
-const BI_FOUR = 4n
-const BI_EIGHT = 8n
-
-const P_BIGINT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn
-const MASK_256 = (1n << 256n) - 1n // 0xffff…ffff (256 sones)
-
-function red (x: bigint): bigint {
-  // first fold
-  let hi = x >> 256n
-  x = (x & MASK_256) + (hi << 32n) + hi * 977n
-
-  // second fold  (hi ≤ 2³² + 977 here, so one more pass is enough)
-  hi = x >> 256n
-  x = (x & MASK_256) + (hi << 32n) + hi * 977n
-
-  // final conditional subtraction
-  if (x >= P_BIGINT) x -= P_BIGINT
-  return x
-}
-
-const biModSub = (a: bigint, b: bigint): bigint => (a >= b ? a - b : P_BIGINT - (b - a))
-const biModMul = (a: bigint, b: bigint): bigint => red(a * b)
-
-// Generator point coordinates as bigint constants
-const GX_BIGINT = BigInt('0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798')
-const GY_BIGINT = BigInt('0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8')
-
-// Cache for precomputed windowed tables keyed by 'window:x:y'
-const WNAF_TABLE_CACHE: Map<string, JacobianPointBI[]> = new Map()
-
-interface JacobianPointBI { X: bigint, Y: bigint, Z: bigint }
-
-const jpDouble = (P: JacobianPointBI): JacobianPointBI => {
-  const { X: X1, Y: Y1, Z: Z1 } = P
-  if (Y1 === BI_ZERO) return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO }
-
-  const Y1sq = biModMul(Y1, Y1)
-  const S = biModMul(BI_FOUR, biModMul(X1, Y1sq))
-  const M = biModMul(BI_THREE, biModMul(X1, X1))
-  const X3 = biModSub(biModMul(M, M), biModMul(BI_TWO, S))
-  const Y3 = biModSub(
-    biModMul(M, biModSub(S, X3)),
-    biModMul(BI_EIGHT, biModMul(Y1sq, Y1sq))
-  )
-  const Z3 = biModMul(BI_TWO, biModMul(Y1, Z1))
-  return { X: X3, Y: Y3, Z: Z3 }
-}
-
-const jpAdd = (P: JacobianPointBI, Q: JacobianPointBI): JacobianPointBI => {
-  if (P.Z === BI_ZERO) return Q
-  if (Q.Z === BI_ZERO) return P
-
-  const Z1Z1 = biModMul(P.Z, P.Z)
-  const Z2Z2 = biModMul(Q.Z, Q.Z)
-  const U1 = biModMul(P.X, Z2Z2)
-  const U2 = biModMul(Q.X, Z1Z1)
-  const S1 = biModMul(P.Y, biModMul(Z2Z2, Q.Z))
-  const S2 = biModMul(Q.Y, biModMul(Z1Z1, P.Z))
-
-  const H = biModSub(U2, U1)
-  const r = biModSub(S2, S1)
-  if (H === BI_ZERO) {
-    if (r === BI_ZERO) return jpDouble(P)
-    return { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO } // Infinity
-  }
-
-  const HH = biModMul(H, H)
-  const HHH = biModMul(H, HH)
-  const V = biModMul(U1, HH)
-
-  const X3 = biModSub(biModSub(biModMul(r, r), HHH), biModMul(BI_TWO, V))
-  const Y3 = biModSub(biModMul(r, biModSub(V, X3)), biModMul(S1, HHH))
-  const Z3 = biModMul(H, biModMul(P.Z, Q.Z))
-  return { X: X3, Y: Y3, Z: Z3 }
-}
-
-const jpNeg = (P: JacobianPointBI): JacobianPointBI => {
-  if (P.Z === BI_ZERO) return P
-  return { X: P.X, Y: P_BIGINT - P.Y, Z: P.Z }
-}
-
-// Fast windowed-NAF scalar multiplication (default window = 5) in Jacobian
-// coordinates.  Returns Q = k * P0 as a JacobianPoint.
-const scalarMultiplyWNAF = (
-  k: bigint,
-  P0: { x: bigint, y: bigint },
-  window: number = 5
-): JacobianPointBI => {
-  const key = `${window}:${P0.x.toString(16)}:${P0.y.toString(16)}`
-  let tbl = WNAF_TABLE_CACHE.get(key)
-  let P: JacobianPointBI
-  if (tbl === undefined) {
-    // Convert affine to Jacobian and pre-compute odd multiples
-    const tblSize = 1 << (window - 1) // e.g. w=5 → 16 entries
-    tbl = new Array(tblSize)
-    P = { X: P0.x, Y: P0.y, Z: BI_ONE }
-    tbl[0] = P
-    const twoP = jpDouble(P)
-    for (let i = 1; i < tblSize; i++) {
-      tbl[i] = jpAdd(tbl[i - 1], twoP)
-    }
-    WNAF_TABLE_CACHE.set(key, tbl)
-  } else {
-    P = tbl[0]
-  }
-
-  // Build wNAF representation of k
-  const wnaf: number[] = []
-  const wBig = 1n << BigInt(window)
-  const wHalf = wBig >> 1n
-  let kTmp = k
-  while (kTmp > 0n) {
-    if ((kTmp & BI_ONE) === BI_ZERO) {
-      wnaf.push(0)
-      kTmp >>= BI_ONE
-    } else {
-      let z = kTmp & (wBig - 1n) // kTmp mod 2^w
-      if (z > wHalf) z -= wBig // make it odd & within (-2^{w-1}, 2^{w-1})
-      wnaf.push(Number(z))
-      kTmp -= z
-      kTmp >>= BI_ONE
-    }
-  }
-
-  // Accumulate from MSB to LSB
-  let Q: JacobianPointBI = { X: BI_ZERO, Y: BI_ONE, Z: BI_ZERO } // infinity
-  for (let i = wnaf.length - 1; i >= 0; i--) {
-    Q = jpDouble(Q)
-    const di = wnaf[i]
-    if (di !== 0) {
-      const idx = Math.abs(di) >> 1 // (|di|-1)/2  because di is odd
-      const addend = di > 0 ? tbl[idx] : jpNeg(tbl[idx])
-      Q = jpAdd(Q, addend)
-    }
-  }
-  return Q
 }

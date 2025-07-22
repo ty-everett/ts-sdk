@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.19 - 2025-07-21](#1619---2025-07-21)
 - [1.6.18 - 2025-07-20](#1618---2025-07-20)
 - [1.6.17 - 2025-07-18](#1617---2025-07-18)
 - [1.6.16 - 2025-07-17](#1616---2025-07-17)
@@ -144,6 +145,18 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.6.19] - 2025-07-21
+
+### Added
+
+- Improve performance of PBKDF2-SHA512 by 5x
+- Improve build performance by 5x with rspack
+- ECDSA signature verification speed increased by 50%
+- Improve performance for sha256, sha512, sha256hmac, and sha512hmac with native BigInt logic
+- Fix remaining lint errors, removing final two files from the ignore-list
 
 ---
 
