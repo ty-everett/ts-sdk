@@ -216,7 +216,7 @@
     "lint": "ts-standard --fix src/**/*.ts",
     "build": "npm run build:ts && npm run build:umd",
     "build:ts": "tsc -b && tsconfig-to-dual-package tsconfig.cjs.json",
-    "build:umd": "webpack --config webpack.config.js",
+    "build:umd": "rspack --config rspack.config.js",
     "dev": "tsc -b -w",
     "prepublish": "npm run build",
     "doc": "ts2md",
@@ -256,16 +256,12 @@
     "tsconfig-to-dual-package": "^1.2.0",
     "typescript": "5.1",
     "typescript-eslint": "^8.29.0",
-    "webpack": "^5.98.0",
-    "webpack-cli": "^6.0.1"
+    "@rspack/cli": "^0.4.4"
   },
   "ts-standard": {
     "project": "tsconfig.eslint.json",
     "ignore": [
-      "dist",
-      "src/script/ScriptTemplate.ts",
-      "src/transaction/Transaction.ts",
-      "src/auth/transports/SimplifiedFetchTransport.ts"
+      "dist"
     ]
   }
 }
