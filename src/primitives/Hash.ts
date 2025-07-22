@@ -1,3 +1,6 @@
+import { pbkdf2 as fast} from './fast-pbkdf2-sha512-helpers/pbkdf2.js'
+import { sha512 as sha } from './fast-pbkdf2-sha512-helpers/sha512.js'
+
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/naming-convention */
 const assert = (
@@ -239,7 +242,7 @@ export function toArray (
   if (!(msg as unknown as boolean)) {
     return []
   }
-  const res = []
+  const res: number[] = []
   if (typeof msg === 'string') {
     if (enc !== 'hex') {
       // Inspired by stringToUtf8ByteArray() in closure-library by Google
@@ -400,6 +403,7 @@ function FT_1 (s, x, y, z): number {
   if (s === 2) {
     return maj32(x, y, z)
   }
+  return 0
 }
 
 function ch32 (x, y, z): number {
@@ -1648,54 +1652,19 @@ export function pbkdf2 (
   // considerably faster than the pure TypeScript fallback below. If the crypto
   // module isn't present (for example in a browser build) we'll silently fall
   // back to the original implementation.
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const nodeCrypto = require('crypto')
-    if (typeof nodeCrypto.pbkdf2Sync === 'function') {
-      const p = Buffer.from(password)
-      const s = Buffer.from(salt)
-      return [...nodeCrypto.pbkdf2Sync(p, s, iterations, keylen, digest)]
-    }
-  } catch {
-    // ignore
-  }
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fast = require('./fast/pbkdf2.js')
-    const sha = require('./fast/sha512.js')
-    const p = Uint8Array.from(password)
-    const s = Uint8Array.from(salt)
-    const out = fast.pbkdf2(sha.sha512, p, s, { c: iterations, dkLen: keylen })
-    return Array.from(out)
-  } catch {
-    // Fallback to original slow implementation if fast path fails
-  }
-  const DK = new Array(keylen)
-  const block1 = [...salt, 0, 0, 0, 0]
-
-  let destPos = 0
-  const hLen = 64
-  const l = Math.ceil(keylen / hLen)
-
-  for (let i = 1; i <= l; i++) {
-    block1[salt.length] = (i >> 24) & 0xff // MSB
-    block1[salt.length + 1] = (i >> 16) & 0xff
-    block1[salt.length + 2] = (i >> 8) & 0xff
-    block1[salt.length + 3] = i & 0xff // LSB
-
-    const T = sha512hmac(password, block1)
-    let U = T
-
-    for (let j = 1; j < iterations; j++) {
-      U = sha512hmac(password, U)
-      for (let k = 0; k < hLen; k++) T[k] ^= U[k]
-    }
-
-    for (let i = 0; i < T.length; i++) {
-      DK[destPos + i] = T[i]
-    }
-    destPos += hLen
-  }
-
-  return DK.slice(0, keylen)
+  // try {
+  //   // eslint-disable-next-line @typescript-eslint/no-var-requires
+  //   const nodeCrypto = require('crypto')
+  //   if (typeof nodeCrypto.pbkdf2Sync === 'function') {
+  //     const p = Buffer.from(password)
+  //     const s = Buffer.from(salt)
+  //     return [...nodeCrypto.pbkdf2Sync(p, s, iterations, keylen, digest)]
+  //   }
+  // } catch {
+  //   // ignore
+  // }
+  const p = Uint8Array.from(password)
+  const s = Uint8Array.from(salt)
+  const out = fast(sha, p, s, { c: iterations, dkLen: keylen })
+  return Array.from(out)
 }
