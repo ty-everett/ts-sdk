@@ -2180,7 +2180,7 @@ class HMAC<T extends Hash<T>> extends Hash<HMAC<T>> {
   }
 }
 
-function pbkdf2Core (hash: (msg: Input) => Uint8Array & { create: () => FastSHA512, blockLen: number, outputLen: number }, password: KDFInput, salt: KDFInput, opts: { c: number, dkLen?: number }) {
+function pbkdf2Core (hash: (msg: Input) => Uint8Array & { create: () => FastSHA512, blockLen: number, outputLen: number }, password: KDFInput, salt: KDFInput, opts: { c: number, dkLen?: number }): Uint8Array {
   ahash(hash)
   const { c, dkLen } = Object.assign({ dkLen: 32 }, opts)
   anumber(c)
@@ -2246,17 +2246,17 @@ export function pbkdf2 (
   // considerably faster than the pure TypeScript fallback below. If the crypto
   // module isn't present (for example in a browser build) we'll silently fall
   // back to the original implementation.
-  // try {
-  //   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  //   const nodeCrypto = require('crypto')
-  //   if (typeof nodeCrypto.pbkdf2Sync === 'function') {
-  //     const p = Buffer.from(password)
-  //     const s = Buffer.from(salt)
-  //     return [...nodeCrypto.pbkdf2Sync(p, s, iterations, keylen, digest)]
-  //   }
-  // } catch {
-  //   // ignore
-  // }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nodeCrypto = require('crypto')
+    if (typeof nodeCrypto.pbkdf2Sync === 'function') {
+      const p = Buffer.from(password)
+      const s = Buffer.from(salt)
+      return [...nodeCrypto.pbkdf2Sync(p, s, iterations, keylen, digest)]
+    }
+  } catch {
+    // ignore
+  }
   const p = Uint8Array.from(password)
   const s = Uint8Array.from(salt)
   const out = pbkdf2Fast(p, s, iterations, keylen)
