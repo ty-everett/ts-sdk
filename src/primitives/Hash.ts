@@ -328,7 +328,7 @@ function zero8 (word: string): string {
 
 function bytesToHex (data: Uint8Array): string {
   let res = ''
-  for (const b of data) res += b.toString(16).padStart(2, '0')
+  for (const b of data) res += (b.toString(16).padStart(2, '0') as string)
   return res
 }
 
@@ -508,126 +508,6 @@ function Kh (j): number {
   }
 }
 
-function sum64 (buf: number[], pos: number, ah: number, al: number): void {
-  const bh = buf[pos]
-  const bl = buf[pos + 1]
-
-  const lo = (al + bl) >>> 0
-  const hi = (lo < al ? 1 : 0) + ah + bh
-  buf[pos] = hi >>> 0
-  buf[pos + 1] = lo
-}
-
-function sum64HI (ah: number, al: number, bh: number, bl: number): number {
-  const lo = (al + bl) >>> 0
-  const hi = (lo < al ? 1 : 0) + ah + bh
-  return hi >>> 0
-}
-
-function sum64LO (ah: number, al: number, bh: number, bl: number): number {
-  const lo = al + bl
-  return lo >>> 0
-}
-
-function sum64and4HI (
-  ah: number,
-  al: number,
-  bh: number,
-  bl: number,
-  ch: number,
-  cl: number,
-  dh: number,
-  dl: number
-): number {
-  let carry = 0
-  let lo = al
-  lo = (lo + bl) >>> 0
-  carry += lo < al ? 1 : 0
-  lo = (lo + cl) >>> 0
-  carry += lo < cl ? 1 : 0
-  lo = (lo + dl) >>> 0
-  carry += lo < dl ? 1 : 0
-
-  const hi = ah + bh + ch + dh + carry
-  return hi >>> 0
-}
-
-function sum64and4LO (
-  ah: number,
-  al: number,
-  bh: number,
-  bl: number,
-  ch: number,
-  cl: number,
-  dh: number,
-  dl: number
-): number {
-  const lo = al + bl + cl + dl
-  return lo >>> 0
-}
-
-function sum64and5HI (
-  ah: number,
-  al: number,
-  bh: number,
-  bl: number,
-  ch: number,
-  cl: number,
-  dh: number,
-  dl: number,
-  eh: number,
-  el: number
-): number {
-  let carry = 0
-  let lo = al
-  lo = (lo + bl) >>> 0
-  carry += lo < al ? 1 : 0
-  lo = (lo + cl) >>> 0
-  carry += lo < cl ? 1 : 0
-  lo = (lo + dl) >>> 0
-  carry += lo < dl ? 1 : 0
-  lo = (lo + el) >>> 0
-  carry += lo < el ? 1 : 0
-
-  const hi = ah + bh + ch + dh + eh + carry
-  return hi >>> 0
-}
-
-function sum64and5LO (
-  ah: number,
-  al: number,
-  bh: number,
-  bl: number,
-  ch: number,
-  cl: number,
-  dh: number,
-  dl: number,
-  eh: number,
-  el: number
-): number {
-  const lo = al + bl + cl + dl + el
-  return lo >>> 0
-}
-
-function rotr64HI (ah: number, al: number, num: number): number {
-  const r = (al << (32 - num)) | (ah >>> num)
-  return r >>> 0
-}
-
-function rotr64LO (ah: number, al: number, num: number): number {
-  const r = (ah << (32 - num)) | (al >>> num)
-  return r >>> 0
-}
-
-function shr64HI (ah: number, al: number, num: number): number {
-  return ah >>> num
-}
-
-function shr64LO (ah: number, al: number, num: number): number {
-  const r = (ah << (32 - num)) | (al >>> num)
-  return r >>> 0
-}
-
 /**
  * An implementation of RIPEMD160 cryptographic hash function. Extends the BaseHash class.
  * It provides a way to compute a 'digest' for any kind of input data; transforming the data
@@ -732,14 +612,17 @@ export class SHA256 {
   constructor () {
     this.h = new FastSHA256()
   }
+
   update (msg: number[] | string, enc?: 'hex' | 'utf8'): this {
     const data = Uint8Array.from(toArray(msg, enc))
     this.h.update(data)
     return this
   }
+
   digest (): number[] {
     return Array.from(this.h.digest())
   }
+
   digestHex (): string {
     return bytesToHex(this.h.digest())
   }
@@ -849,145 +732,20 @@ export class SHA512 {
   constructor () {
     this.h = new FastSHA512()
   }
+
   update (msg: number[] | string, enc?: 'hex' | 'utf8'): this {
     const data = Uint8Array.from(toArray(msg, enc))
     this.h.update(data)
     return this
   }
+
   digest (): number[] {
     return Array.from(this.h.digest())
   }
+
   digestHex (): string {
     return bytesToHex(this.h.digest())
   }
-}
-
-function ch64_hi (xh: number, xl: number, yh: number, yl: number, zh: number, zl: number): number {
-  let r: number = (xh & yh) ^ (~xh & zh)
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function ch64_lo (xh: number, xl: number, yh: number, yl: number, zh: number, zl: number): number {
-  let r: number = (xl & yl) ^ (~xl & zl)
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function maj64_hi (xh: number, xl: number, yh: number, yl: number, zh: number, zl: number): number {
-  let r: number = (xh & yh) ^ (xh & zh) ^ (yh & zh)
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function maj64_lo (xh: number, xl: number, yh: number, yl: number, zh: number, zl: number): number {
-  let r: number = (xl & yl) ^ (xl & zl) ^ (yl & zl)
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function s0_512_hi (xh: number, xl: number): number {
-  const c0_hi: number = rotr64HI(xh, xl, 28)
-  const c1_hi: number = rotr64HI(xl, xh, 2) // 34
-  const c2_hi: number = rotr64HI(xl, xh, 7) // 39
-
-  let r: number = c0_hi ^ c1_hi ^ c2_hi
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function s0_512_lo (xh: number, xl: number): number {
-  const c0_lo: number = rotr64LO(xh, xl, 28)
-  const c1_lo: number = rotr64LO(xl, xh, 2) // 34
-  const c2_lo: number = rotr64LO(xl, xh, 7) // 39
-
-  let r: number = c0_lo ^ c1_lo ^ c2_lo
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function s1_512_hi (xh: number, xl: number): number {
-  const c0_hi: number = rotr64HI(xh, xl, 14)
-  const c1_hi: number = rotr64HI(xh, xl, 18)
-  const c2_hi: number = rotr64HI(xl, xh, 9) // 41
-
-  let r: number = c0_hi ^ c1_hi ^ c2_hi
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function s1_512_lo (xh: number, xl: number): number {
-  const c0_lo: number = rotr64LO(xh, xl, 14)
-  const c1_lo: number = rotr64LO(xh, xl, 18)
-  const c2_lo: number = rotr64LO(xl, xh, 9) // 41
-
-  let r: number = c0_lo ^ c1_lo ^ c2_lo
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function g0_512_hi (xh: number, xl: number): number {
-  const c0_hi: number = rotr64HI(xh, xl, 1)
-  const c1_hi: number = rotr64HI(xh, xl, 8)
-  const c2_hi: number = shr64HI(xh, xl, 7)
-
-  let r: number = c0_hi ^ c1_hi ^ c2_hi
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function g0_512_lo (xh: number, xl: number): number {
-  const c0_lo: number = rotr64LO(xh, xl, 1)
-  const c1_lo: number = rotr64LO(xh, xl, 8)
-  const c2_lo: number = shr64LO(xh, xl, 7)
-
-  let r: number = c0_lo ^ c1_lo ^ c2_lo
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function g1_512_hi (xh: number, xl: number): number {
-  const c0_hi: number = rotr64HI(xh, xl, 19)
-  const c1_hi: number = rotr64HI(xl, xh, 29) // 61
-  const c2_hi: number = shr64HI(xh, xl, 6)
-
-  let r: number = c0_hi ^ c1_hi ^ c2_hi
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
-}
-
-function g1_512_lo (xh: number, xl: number): number {
-  const c0_lo: number = rotr64LO(xh, xl, 19)
-  const c1_lo: number = rotr64LO(xl, xh, 29) // 61
-  const c2_lo: number = shr64LO(xh, xl, 6)
-
-  let r: number = c0_lo ^ c1_lo ^ c2_lo
-  if (r < 0) {
-    r += 0x100000000
-  }
-  return r
 }
 
 /**
