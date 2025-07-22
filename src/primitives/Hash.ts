@@ -1631,11 +1631,16 @@ function isBytes (a: unknown): a is Uint8Array {
   return a instanceof Uint8Array || (ArrayBuffer.isView(a) && a.constructor.name === 'Uint8Array')
 }
 function anumber (n: number): void {
-  if (!Number.isSafeInteger(n) || n < 0) throw new Error('positive integer expected, got ' + n)
+  if (!Number.isSafeInteger(n) || n < 0) {
+    throw new Error(`positive integer expected, got ${n}`)
+  }
 }
 function abytes (b: Uint8Array | undefined, ...lengths: number[]): void {
   if (!isBytes(b)) throw new Error('Uint8Array expected')
-  if (lengths.length > 0 && !lengths.includes(b.length)) { throw new Error('Uint8Array expected of length ' + lengths + ', got length=' + b.length) }
+  if (lengths.length > 0 && !lengths.includes(b.length)) {
+    const lens = lengths.join(',')
+    throw new Error(`Uint8Array expected of length ${lens}, got length=${b.length}`)
+  }
 }
 function ahash (h: IHash): void {
   if (typeof h !== 'function' || typeof h.create !== 'function') { throw new Error('Hash should be wrapped by utils.createHasher') }
@@ -1643,14 +1648,16 @@ function ahash (h: IHash): void {
   anumber(h.blockLen)
 }
 function aexists (instance: any, checkFinished = true): void {
-  if (instance.destroyed) throw new Error('Hash instance has been destroyed')
-  if (checkFinished && instance.finished) throw new Error('Hash#digest() has already been called')
+  if (instance.destroyed === true) throw new Error('Hash instance has been destroyed')
+  if (checkFinished && instance.finished === true) {
+    throw new Error('Hash#digest() has already been called')
+  }
 }
 function aoutput (out: any, instance: any): void {
   abytes(out)
-  const min = instance.outputLen
+  const min: number = instance.outputLen as number
   if (out.length < min) {
-    throw new Error('digestInto() expects output buffer of length at least ' + min)
+    throw new Error(`digestInto() expects output buffer of length at least ${min}`)
   }
 }
 type TypedArray =
@@ -1662,20 +1669,11 @@ type TypedArray =
   | Uint32Array
   | Int32Array
 
-function u8 (arr: TypedArray): Uint8Array {
-  return new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
-}
-function u32 (arr: TypedArray): Uint32Array {
-  return new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4))
-}
 function clean (...arrays: TypedArray[]): void {
   for (let i = 0; i < arrays.length; i++) arrays[i].fill(0)
 }
 function createView (arr: TypedArray): DataView {
   return new DataView(arr.buffer, arr.byteOffset, arr.byteLength)
-}
-function rotr (word: number, shift: number): number {
-  return (word << (32 - shift)) | (word >>> shift)
 }
 function toBytes (data: Input): Uint8Array {
   if (typeof data === 'string') data = utf8ToBytes(data)
@@ -1699,6 +1697,13 @@ interface IHash {
   outputLen: number
   create: any
 }
+
+interface Hasher<T extends Hash<T>> {
+  (msg: Input): Uint8Array
+  blockLen: number
+  outputLen: number
+  create: () => Hash<T>
+}
 abstract class Hash<T extends Hash<T>> {
   abstract blockLen: number
   abstract outputLen: number
@@ -1709,7 +1714,7 @@ abstract class Hash<T extends Hash<T>> {
   abstract _cloneInto (to?: T): T
   abstract clone (): T
 }
-function createHasher<T extends Hash<T>> (hashCons: () => Hash<T>) {
+function createHasher<T extends Hash<T>> (hashCons: () => Hash<T>): Hasher<T> {
   const hashC = (msg: Input): Uint8Array => hashCons().update(toBytes(msg)).digest()
   const tmp = hashCons()
   hashC.outputLen = tmp.outputLen
@@ -1721,7 +1726,7 @@ function createHasher<T extends Hash<T>> (hashCons: () => Hash<T>) {
 // u64 helpers
 const U32_MASK64 = BigInt(2 ** 32 - 1)
 const _32n = BigInt(32)
-function fromBig (n: bigint, le = false) {
+function fromBig (n: bigint, le = false): { h: number, l: number } {
   if (le) return { h: Number(n & U32_MASK64), l: Number((n >> _32n) & U32_MASK64) }
   return { h: Number((n >> _32n) & U32_MASK64) | 0, l: Number(n & U32_MASK64) | 0 }
 }
@@ -1736,20 +1741,13 @@ function split (lst: bigint[], le = false): Uint32Array[] {
   }
   return [Ah, Al]
 }
-const toBig = (h: number, l: number): bigint => (BigInt(h >>> 0) << _32n) | BigInt(l >>> 0)
 const shrSH = (h: number, _l: number, s: number): number => h >>> s
 const shrSL = (h: number, l: number, s: number): number => (h << (32 - s)) | (l >>> s)
 const rotrSH = (h: number, l: number, s: number): number => (h >>> s) | (l << (32 - s))
 const rotrSL = (h: number, l: number, s: number): number => (h << (32 - s)) | (l >>> s)
 const rotrBH = (h: number, l: number, s: number): number => (h << (64 - s)) | (l >>> (s - 32))
 const rotrBL = (h: number, l: number, s: number): number => (h >>> (s - 32)) | (l << (64 - s))
-const rotr32H = (_h: number, l: number): number => l
-const rotr32L = (h: number, _l: number): number => h
-const rotlSH = (h: number, l: number, s: number): number => (h << s) | (l >>> (32 - s))
-const rotlSL = (h: number, l: number, s: number): number => (l << s) | (h >>> (32 - s))
-const rotlBH = (h: number, l: number, s: number): number => (l << (s - 32)) | (h >>> (64 - s))
-const rotlBL = (h: number, l: number, s: number): number => (h << (s - 32)) | (l >>> (64 - s))
-function add (Ah: number, Al: number, Bh: number, Bl: number) {
+function add (Ah: number, Al: number, Bh: number, Bl: number): { h: number, l: number } {
   const l = (Al >>> 0) + (Bl >>> 0)
   return { h: (Ah + Bh + ((l / 2 ** 32) | 0)) | 0, l: l | 0 }
 }
@@ -1763,12 +1761,6 @@ const add5H = (low: number, Ah: number, Bh: number, Ch: number, Dh: number, Eh: 
   (Ah + Bh + Ch + Dh + Eh + ((low / 2 ** 32) | 0)) | 0
 
 // _md helpers
-function Chi (a: number, b: number, c: number): number {
-  return (a & b) ^ (~a & c)
-}
-function Maj (a: number, b: number, c: number): number {
-  return (a & b) ^ (a & c) ^ (b & c)
-}
 abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
   readonly blockLen: number
   readonly outputLen: number
@@ -1838,7 +1830,7 @@ abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
     this.process(view, 0)
     const oview = createView(out)
     const len = this.outputLen
-    if (len % 4) throw new Error('_sha2: outputLen should be aligned to 32bit')
+    if (len % 4 !== 0) throw new Error('_sha2: outputLen should be aligned to 32bit')
     const outLen = len / 4
     const state = this.get()
     if (outLen > state.length) throw new Error('_sha2: outputLen bigger than state')
@@ -1861,7 +1853,7 @@ abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
     to.finished = finished
     to.length = length
     to.pos = pos
-    if (length % blockLen) to.buffer.set(buffer)
+    if (length % blockLen !== 0) to.buffer.set(buffer)
     return to
   }
 
@@ -1996,7 +1988,7 @@ class FastSHA512 extends HashMD<FastSHA512> {
     super(128, outputLen, 16, false)
   }
 
-  protected get () {
+  protected get (): number[] {
     const { Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl } = this
     return [Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl]
   }
@@ -2164,8 +2156,8 @@ class HMAC<T extends Hash<T>> extends Hash<HMAC<T>> {
     to.destroyed = destroyed
     to.blockLen = blockLen
     to.outputLen = outputLen
-    to.oHash = oHash._cloneInto((to.oHash) || undefined)
-    to.iHash = iHash._cloneInto((to.iHash) || undefined)
+    to.oHash = oHash._cloneInto(to.oHash ?? undefined)
+    to.iHash = iHash._cloneInto(to.iHash ?? undefined)
     return to
   }
 
@@ -2207,7 +2199,7 @@ function pbkdf2Core (hash: (msg: Input) => Uint8Array & { create: () => FastSHA5
   }
   PRF.destroy()
   PRFSalt.destroy()
-  if (prfW) prfW.destroy()
+  if (prfW != null) prfW.destroy()
   clean(u)
   return DK
 }
