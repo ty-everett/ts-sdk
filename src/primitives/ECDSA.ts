@@ -1,7 +1,7 @@
 import BigNumber from './BigNumber.js'
 import Signature from './Signature.js'
 import Curve from './Curve.js'
-import Point from './Point.js'
+import Point, { scalarMultiplyWNAF, biModInv, BI_ZERO, biModMul, GX_BIGINT, GY_BIGINT, jpAdd, N_BIGINT, modInvN, modMulN, modN } from './Point.js'
 import DRBG from './DRBG.js'
 
 /**
@@ -161,177 +161,7 @@ export const sign = (
  * const isVerified = verify(msg, sig, key)
  */
 export const verify = (msg: BigNumber, sig: Signature, key: Point): boolean => {
-  // Curve parameters for secp256k1
-  const zero = BigInt(0)
-  const one = BigInt(1)
-  const two = BigInt(2)
-  const three = BigInt(3)
-  const p = BigInt(
-    '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F'
-  ) // Field prime
-  const n = BigInt(
-    '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-  ) // Order of the curve
-  const G = {
-    x: BigInt(
-      '0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798'
-    ),
-    y: BigInt(
-      '0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8'
-    )
-  }
-
-  // Modular arithmetic functions
-  const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m
-  const modInv = (a: bigint, m: bigint): bigint => {
-    // Extended Euclidean Algorithm for modular inverse
-    let [oldr, r] = [a, m]
-    let [olds, s] = [BigInt(1), BigInt(0)]
-    while (r !== zero) {
-      const q = oldr / r;
-      [oldr, r] = [r, oldr - q * r];
-      [olds, s] = [s, olds - q * s]
-    }
-    if (oldr > one) return zero // No inverse
-    return mod(olds, m)
-  }
-  const modMul = (a: bigint, b: bigint, m: bigint): bigint => mod(a * b, m)
-  const modSub = (a: bigint, b: bigint, m: bigint): bigint => mod(a - b, m)
-
-  // Define constants
-  const four = BigInt(4)
-  const eight = BigInt(8)
-
-  // Elliptic curve point operations in Jacobian coordinates
-  interface JacobianPoint {
-    X: bigint
-    Y: bigint
-    Z: bigint
-  }
-
-  // Point Doubling
-  const pointDouble = (P: JacobianPoint): JacobianPoint => {
-    const { X: X1, Y: Y1, Z: Z1 } = P
-
-    if (Y1 === zero) {
-      return { X: zero, Y: one, Z: zero } // Point at infinity
-    }
-
-    const Y1sq = modMul(Y1, Y1, p) // Y1^2
-    const S = modMul(four, modMul(X1, Y1sq, p), p) // S = 4 * X1 * Y1^2
-    const M = modMul(three, modMul(X1, X1, p), p) // M = 3 * X1^2
-    const X3 = modSub(modMul(M, M, p), modMul(two, S, p), p) // X3 = M^2 - 2 * S
-    const Y3 = modSub(
-      modMul(M, modSub(S, X3, p), p),
-      modMul(eight, modMul(Y1sq, Y1sq, p), p),
-      p
-    ) // Y3 = M * (S - X3) - 8 * Y1^4
-    const Z3 = modMul(two, modMul(Y1, Z1, p), p) // Z3 = 2 * Y1 * Z1
-
-    return { X: X3, Y: Y3, Z: Z3 }
-  }
-
-  // Point Addition
-  const pointAdd = (P: JacobianPoint, Q: JacobianPoint): JacobianPoint => {
-    if (P.Z === zero) return Q
-    if (Q.Z === zero) return P
-
-    const Z1Z1 = modMul(P.Z, P.Z, p)
-    const Z2Z2 = modMul(Q.Z, Q.Z, p)
-    const U1 = modMul(P.X, Z2Z2, p)
-    const U2 = modMul(Q.X, Z1Z1, p)
-    const S1 = modMul(P.Y, modMul(Z2Z2, Q.Z, p), p)
-    const S2 = modMul(Q.Y, modMul(Z1Z1, P.Z, p), p)
-
-    const H = modSub(U2, U1, p)
-    const r = modSub(S2, S1, p)
-
-    if (H === zero) {
-      if (r === zero) {
-        // P == Q
-        return pointDouble(P)
-      } else {
-        // Point at infinity
-        return { X: zero, Y: one, Z: zero }
-      }
-    }
-
-    const HH = modMul(H, H, p)
-    const HHH = modMul(H, HH, p)
-    const V = modMul(U1, HH, p)
-
-    const X3 = modSub(modSub(modMul(r, r, p), HHH, p), modMul(two, V, p), p)
-    const Y3 = modSub(modMul(r, modSub(V, X3, p), p), modMul(S1, HHH, p), p)
-    const Z3 = modMul(H, modMul(P.Z, Q.Z, p), p)
-
-    return { X: X3, Y: Y3, Z: Z3 }
-  }
-
-  // Scalar Multiplication
-  const scalarMultiply = (
-    k: bigint,
-    P: { x: bigint, y: bigint }
-  ): JacobianPoint => {
-    const N: JacobianPoint = { X: P.x, Y: P.y, Z: one }
-    let Q: JacobianPoint = { X: zero, Y: one, Z: zero } // Point at infinity
-
-    const kBin = k.toString(2)
-    for (let i = 0; i < kBin.length; i++) {
-      Q = pointDouble(Q)
-      if (kBin[i] === '1') {
-        Q = pointAdd(Q, N)
-      }
-    }
-    return Q
-  }
-
-  // Verify Function Using Jacobian Coordinates
-  const verifyECDSA = (
-    hash: bigint,
-    publicKey: { x: bigint, y: bigint },
-    signature: { r: bigint, s: bigint }
-  ): boolean => {
-    const { r, s } = signature
-    const z = hash
-
-    // Check r and s are in [1, n - 1]
-    if (r <= zero || r >= n || s <= zero || s >= n) {
-      return false
-    }
-
-    const w = modInv(s, n) // w = s^-1 mod n
-    if (w === zero) {
-      return false // No inverse exists
-    }
-    const u1 = modMul(z, w, n)
-    const u2 = modMul(r, w, n)
-
-    // Compute point R = u1 * G + u2 * Q
-    const RG = scalarMultiply(u1, G)
-    const RQ = scalarMultiply(u2, publicKey)
-    const R = pointAdd(RG, RQ)
-
-    if (R.Z === zero) {
-      // Point at infinity
-      return false
-    }
-
-    // Compute affine x-coordinate x1 = X / Z^2 mod p
-    const ZInv = modInv(R.Z, p)
-    if (ZInv === zero) {
-      return false // No inverse exists
-    }
-    const ZInv2 = modMul(ZInv, ZInv, p)
-    const x1affine = modMul(R.X, ZInv2, p)
-
-    // Compute v = x1_affine mod n
-    const v = mod(x1affine, n)
-
-    // Signature is valid if v == r mod n
-    return v === r
-  }
-
-  // Convert inputs to BigInt
+// Convert inputs to BigInt
   const hash = BigInt('0x' + msg.toString(16))
   if ((key.x == null) || (key.y == null)) {
     throw new Error('Invalid public key: missing coordinates.')
@@ -346,5 +176,32 @@ export const verify = (msg: BigNumber, sig: Signature, key: Point): boolean => {
     s: BigInt('0x' + sig.s.toString(16))
   }
 
-  return verifyECDSA(hash, publicKey, signature)
+  const { r, s } = signature
+  const z = hash
+
+  // Check r and s are in [1, n - 1]
+  if (r <= BI_ZERO || r >= N_BIGINT || s <= BI_ZERO || s >= N_BIGINT) {
+    return false
+  }
+
+  // ── compute u₁ = z·s⁻¹ mod n  and  u₂ = r·s⁻¹ mod n ───────────────────────
+  const w = modInvN(s) // s⁻¹ mod n
+  if (w === 0n) return false // should never happen
+  const u1 = modMulN(z, w)
+  const u2 = modMulN(r, w)
+
+  // ── R = u₁·G + u₂·Q  (Jacobian, window‑NAF) ──────────────────────────────
+  const RG = scalarMultiplyWNAF(u1, { x: GX_BIGINT, y: GY_BIGINT })
+  const RQ = scalarMultiplyWNAF(u2, publicKey)
+  const R = jpAdd(RG, RQ)
+  if (R.Z === 0n) return false // point at infinity
+
+  // ── affine x‑coordinate of R  (mod p) ─────────────────────────────────────
+  const zInv = biModInv(R.Z) // (Z⁻¹ mod p)
+  const zInv2 = biModMul(zInv, zInv) // Z⁻²
+  const xAff = biModMul(R.X, zInv2) // X / Z²  mod p
+
+  // ── v = xAff mod n  and final check ───────────────────────────────────────
+  const v = modN(xAff)
+  return v === r
 }

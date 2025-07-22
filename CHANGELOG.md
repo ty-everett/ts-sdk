@@ -154,6 +154,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - Improve performance of PBKDF2-SHA512 by 5x
 - Improve build performance by 5x with rspack
+- ECDSA signature verification speed increased by 50%
 - Improve performance for sha256, sha512, sha256hmac, and sha512hmac with native BigInt logic
 - Fix remaining lint errors, removing final two files from the ignore-list
 
