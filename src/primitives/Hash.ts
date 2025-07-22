@@ -1625,38 +1625,588 @@ export const sha512hmac = (
   return new SHA512HMAC(key).update(msg, enc).digest()
 }
 
-function hmacSha512(key: Uint8Array, data: Uint8Array): Uint8Array {
-  const h = new SHA512HMAC(Array.from(key))
-  h.update(Array.from(data))
-  return Uint8Array.from(h.digest())
+// BEGIN fast-pbkdf2 helpers
+// Utils
+function isBytes(a: unknown): a is Uint8Array {
+  return a instanceof Uint8Array || (ArrayBuffer.isView(a) && a.constructor.name === 'Uint8Array')
+}
+function anumber(n: number): void {
+  if (!Number.isSafeInteger(n) || n < 0) throw new Error('positive integer expected, got ' + n)
+}
+function abytes(b: Uint8Array | undefined, ...lengths: number[]): void {
+  if (!isBytes(b)) throw new Error('Uint8Array expected')
+  if (lengths.length > 0 && !lengths.includes(b.length))
+    throw new Error('Uint8Array expected of length ' + lengths + ', got length=' + b.length)
+}
+function ahash(h: IHash): void {
+  if (typeof h !== 'function' || typeof h.create !== 'function')
+    throw new Error('Hash should be wrapped by utils.createHasher')
+  anumber(h.outputLen)
+  anumber(h.blockLen)
+}
+function aexists(instance: any, checkFinished = true): void {
+  if (instance.destroyed) throw new Error('Hash instance has been destroyed')
+  if (checkFinished && instance.finished) throw new Error('Hash#digest() has already been called')
+}
+function aoutput(out: any, instance: any): void {
+  abytes(out)
+  const min = instance.outputLen
+  if (out.length < min) {
+    throw new Error('digestInto() expects output buffer of length at least ' + min)
+  }
+}
+type TypedArray =
+  | Int8Array
+  | Uint8ClampedArray
+  | Uint8Array
+  | Uint16Array
+  | Int16Array
+  | Uint32Array
+  | Int32Array
+
+function u8(arr: TypedArray): Uint8Array {
+  return new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
+}
+function u32(arr: TypedArray): Uint32Array {
+  return new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4))
+}
+function clean(...arrays: TypedArray[]): void {
+  for (let i = 0; i < arrays.length; i++) arrays[i].fill(0)
+}
+function createView(arr: TypedArray): DataView {
+  return new DataView(arr.buffer, arr.byteOffset, arr.byteLength)
+}
+function rotr(word: number, shift: number): number {
+  return (word << (32 - shift)) | (word >>> shift)
+}
+function toBytes(data: Input): Uint8Array {
+  if (typeof data === 'string') data = utf8ToBytes(data)
+  abytes(data)
+  return data
+}
+function utf8ToBytes(str: string): Uint8Array {
+  if (typeof str !== 'string') throw new Error('string expected')
+  return new Uint8Array(new TextEncoder().encode(str))
+}
+type Input = string | Uint8Array
+type KDFInput = string | Uint8Array
+function kdfInputToBytes(data: KDFInput): Uint8Array {
+  if (typeof data === 'string') data = utf8ToBytes(data)
+  abytes(data)
+  return data
+}
+type IHash = {
+  (data: Uint8Array): Uint8Array
+  blockLen: number
+  outputLen: number
+  create: any
+}
+abstract class Hash<T extends Hash<T>> {
+  abstract blockLen: number
+  abstract outputLen: number
+  abstract update(buf: Input): this
+  abstract digestInto(buf: Uint8Array): void
+  abstract digest(): Uint8Array
+  abstract destroy(): void
+  abstract _cloneInto(to?: T): T
+  abstract clone(): T
+}
+function createHasher<T extends Hash<T>>(hashCons: () => Hash<T>) {
+  const hashC = (msg: Input): Uint8Array => hashCons().update(toBytes(msg)).digest()
+  const tmp = hashCons()
+  hashC.outputLen = tmp.outputLen
+  hashC.blockLen = tmp.blockLen
+  hashC.create = () => hashCons()
+  return hashC
 }
 
-function pbkdf2Fast(
-  password: Uint8Array,
-  salt: Uint8Array,
-  iterations: number,
-  keylen: number
-): Uint8Array {
-  const hLen = 64
-  const l = Math.ceil(keylen / hLen)
-  const DK = new Uint8Array(l * hLen)
-  const block = new Uint8Array(salt.length + 4)
-  block.set(salt)
-  for (let i = 1; i <= l; i++) {
-    block[salt.length] = (i >>> 24) & 0xff
-    block[salt.length + 1] = (i >>> 16) & 0xff
-    block[salt.length + 2] = (i >>> 8) & 0xff
-    block[salt.length + 3] = i & 0xff
-    let u = hmacSha512(password, block)
-    const t = u.slice()
-    for (let j = 1; j < iterations; j++) {
-      u = hmacSha512(password, u)
-      for (let k = 0; k < hLen; k++) t[k] ^= u[k]
-    }
-    DK.set(t, (i - 1) * hLen)
-  }
-  return DK.subarray(0, keylen)
+// u64 helpers
+const U32_MASK64 = BigInt(2 ** 32 - 1)
+const _32n = BigInt(32)
+function fromBig(n: bigint, le = false) {
+  if (le) return { h: Number(n & U32_MASK64), l: Number((n >> _32n) & U32_MASK64) }
+  return { h: Number((n >> _32n) & U32_MASK64) | 0, l: Number(n & U32_MASK64) | 0 }
 }
+function split(lst: bigint[], le = false): Uint32Array[] {
+  const len = lst.length
+  const Ah = new Uint32Array(len)
+  const Al = new Uint32Array(len)
+  for (let i = 0; i < len; i++) {
+    const { h, l } = fromBig(lst[i], le)
+    Ah[i] = h
+    Al[i] = l
+  }
+  return [Ah, Al]
+}
+const toBig = (h: number, l: number): bigint => (BigInt(h >>> 0) << _32n) | BigInt(l >>> 0)
+const shrSH = (h: number, _l: number, s: number): number => h >>> s
+const shrSL = (h: number, l: number, s: number): number => (h << (32 - s)) | (l >>> s)
+const rotrSH = (h: number, l: number, s: number): number => (h >>> s) | (l << (32 - s))
+const rotrSL = (h: number, l: number, s: number): number => (h << (32 - s)) | (l >>> s)
+const rotrBH = (h: number, l: number, s: number): number => (h << (64 - s)) | (l >>> (s - 32))
+const rotrBL = (h: number, l: number, s: number): number => (h >>> (s - 32)) | (l << (64 - s))
+const rotr32H = (_h: number, l: number): number => l
+const rotr32L = (h: number, _l: number): number => h
+const rotlSH = (h: number, l: number, s: number): number => (h << s) | (l >>> (32 - s))
+const rotlSL = (h: number, l: number, s: number): number => (l << s) | (h >>> (32 - s))
+const rotlBH = (h: number, l: number, s: number): number => (l << (s - 32)) | (h >>> (64 - s))
+const rotlBL = (h: number, l: number, s: number): number => (h << (s - 32)) | (l >>> (64 - s))
+function add(Ah: number, Al: number, Bh: number, Bl: number) {
+  const l = (Al >>> 0) + (Bl >>> 0)
+  return { h: (Ah + Bh + ((l / 2 ** 32) | 0)) | 0, l: l | 0 }
+}
+const add3L = (Al: number, Bl: number, Cl: number): number => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0)
+const add3H = (low: number, Ah: number, Bh: number, Ch: number): number => (Ah + Bh + Ch + ((low / 2 ** 32) | 0)) | 0
+const add4L = (Al: number, Bl: number, Cl: number, Dl: number): number => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0) + (Dl >>> 0)
+const add4H = (low: number, Ah: number, Bh: number, Ch: number, Dh: number): number => (Ah + Bh + Ch + Dh + ((low / 2 ** 32) | 0)) | 0
+const add5L = (Al: number, Bl: number, Cl: number, Dl: number, El: number): number =>
+  (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0) + (Dl >>> 0) + (El >>> 0)
+const add5H = (low: number, Ah: number, Bh: number, Ch: number, Dh: number, Eh: number): number =>
+  (Ah + Bh + Ch + Dh + Eh + ((low / 2 ** 32) | 0)) | 0
+
+// _md helpers
+function Chi(a: number, b: number, c: number): number {
+  return (a & b) ^ (~a & c)
+}
+function Maj(a: number, b: number, c: number): number {
+  return (a & b) ^ (a & c) ^ (b & c)
+}
+abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
+  readonly blockLen: number
+  readonly outputLen: number
+  readonly padOffset: number
+  readonly isLE: boolean
+  protected buffer: Uint8Array
+  protected view: DataView
+  protected finished = false
+  protected length = 0
+  protected pos = 0
+  protected destroyed = false
+  constructor(blockLen: number, outputLen: number, padOffset: number, isLE: boolean) {
+    super()
+    this.blockLen = blockLen
+    this.outputLen = outputLen
+    this.padOffset = padOffset
+    this.isLE = isLE
+    this.buffer = new Uint8Array(blockLen)
+    this.view = createView(this.buffer)
+  }
+  protected abstract process(buf: DataView, offset: number): void
+  protected abstract get(): number[]
+  protected abstract set(...args: number[]): void
+  abstract destroy(): void
+  protected abstract roundClean(): void
+  update(data: Input): this {
+    aexists(this)
+    data = toBytes(data)
+    abytes(data)
+    const { view, buffer, blockLen } = this
+    const len = data.length
+    for (let pos = 0; pos < len; ) {
+      const take = Math.min(blockLen - this.pos, len - pos)
+      if (take === blockLen) {
+        const dataView = createView(data)
+        for (; blockLen <= len - pos; pos += blockLen) this.process(dataView, pos)
+        continue
+      }
+      buffer.set(data.subarray(pos, pos + take), this.pos)
+      this.pos += take
+      pos += take
+      if (this.pos === blockLen) {
+        this.process(view, 0)
+        this.pos = 0
+      }
+    }
+    this.length += data.length
+    this.roundClean()
+    return this
+  }
+  digestInto(out: Uint8Array): void {
+    aexists(this)
+    aoutput(out, this)
+    this.finished = true
+    const { buffer, view, blockLen, isLE } = this
+    let { pos } = this
+    buffer[pos++] = 0b10000000
+    clean(this.buffer.subarray(pos))
+    if (this.padOffset > blockLen - pos) {
+      this.process(view, 0)
+      pos = 0
+    }
+    for (let i = pos; i < blockLen; i++) buffer[i] = 0
+    setBigUint64(view, blockLen - 8, BigInt(this.length * 8), isLE)
+    this.process(view, 0)
+    const oview = createView(out)
+    const len = this.outputLen
+    if (len % 4) throw new Error('_sha2: outputLen should be aligned to 32bit')
+    const outLen = len / 4
+    const state = this.get()
+    if (outLen > state.length) throw new Error('_sha2: outputLen bigger than state')
+    for (let i = 0; i < outLen; i++) oview.setUint32(4 * i, state[i], isLE)
+  }
+  digest(): Uint8Array {
+    const { buffer, outputLen } = this
+    this.digestInto(buffer)
+    const res = buffer.slice(0, outputLen)
+    this.destroy()
+    return res
+  }
+  _cloneInto(to?: T): T {
+    to ||= new (this.constructor as any)() as T
+    to.set(...this.get())
+    const { blockLen, buffer, length, finished, destroyed, pos } = this
+    to.destroyed = destroyed
+    to.finished = finished
+    to.length = length
+    to.pos = pos
+    if (length % blockLen) to.buffer.set(buffer)
+    return to
+  }
+  clone(): T {
+    return this._cloneInto()
+  }
+}
+function setBigUint64(view: DataView, byteOffset: number, value: bigint, isLE: boolean): void {
+  if (typeof view.setBigUint64 === 'function') return view.setBigUint64(byteOffset, value, isLE)
+  const _32n = BigInt(32)
+  const _u32_max = BigInt(0xffffffff)
+  const wh = Number((value >> _32n) & _u32_max)
+  const wl = Number(value & _u32_max)
+  const h = isLE ? 4 : 0
+  const l = isLE ? 0 : 4
+  view.setUint32(byteOffset + h, wh, isLE)
+  view.setUint32(byteOffset + l, wl, isLE)
+}
+
+// sha512
+const SHA512_IV = Uint32Array.from([
+  0x6a09e667, 0xf3bcc908, 0xbb67ae85, 0x84caa73b, 0x3c6ef372, 0xfe94f82b, 0xa54ff53a, 0x5f1d36f1,
+  0x510e527f, 0xade682d1, 0x9b05688c, 0x2b3e6c1f, 0x1f83d9ab, 0xfb41bd6b, 0x5be0cd19, 0x137e2179,
+])
+const K512 = (() =>
+  split([
+    '0x428a2f98d728ae22',
+    '0x7137449123ef65cd',
+    '0xb5c0fbcfec4d3b2f',
+    '0xe9b5dba58189dbbc',
+    '0x3956c25bf348b538',
+    '0x59f111f1b605d019',
+    '0x923f82a4af194f9b',
+    '0xab1c5ed5da6d8118',
+    '0xd807aa98a3030242',
+    '0x12835b0145706fbe',
+    '0x243185be4ee4b28c',
+    '0x550c7dc3d5ffb4e2',
+    '0x72be5d74f27b896f',
+    '0x80deb1fe3b1696b1',
+    '0x9bdc06a725c71235',
+    '0xc19bf174cf692694',
+    '0xe49b69c19ef14ad2',
+    '0xefbe4786384f25e3',
+    '0x0fc19dc68b8cd5b5',
+    '0x240ca1cc77ac9c65',
+    '0x2de92c6f592b0275',
+    '0x4a7484aa6ea6e483',
+    '0x5cb0a9dcbd41fbd4',
+    '0x76f988da831153b5',
+    '0x983e5152ee66dfab',
+    '0xa831c66d2db43210',
+    '0xb00327c898fb213f',
+    '0xbf597fc7beef0ee4',
+    '0xc6e00bf33da88fc2',
+    '0xd5a79147930aa725',
+    '0x06ca6351e003826f',
+    '0x142929670a0e6e70',
+    '0x27b70a8546d22ffc',
+    '0x2e1b21385c26c926',
+    '0x4d2c6dfc5ac42aed',
+    '0x53380d139d95b3df',
+    '0x650a73548baf63de',
+    '0x766a0abb3c77b2a8',
+    '0x81c2c92e47edaee6',
+    '0x92722c851482353b',
+    '0xa2bfe8a14cf10364',
+    '0xa81a664bbc423001',
+    '0xc24b8b70d0f89791',
+    '0xc76c51a30654be30',
+    '0xd192e819d6ef5218',
+    '0xd69906245565a910',
+    '0xf40e35855771202a',
+    '0x106aa07032bbd1b8',
+    '0x19a4c116b8d2d0c8',
+    '0x1e376c085141ab53',
+    '0x2748774cdf8eeb99',
+    '0x34b0bcb5e19b48a8',
+    '0x391c0cb3c5c95a63',
+    '0x4ed8aa4ae3418acb',
+    '0x5b9cca4f7763e373',
+    '0x682e6ff3d6b2b8a3',
+    '0x748f82ee5defb2fc',
+    '0x78a5636f43172f60',
+    '0x84c87814a1f0ab72',
+    '0x8cc702081a6439ec',
+    '0x90befffa23631e28',
+    '0xa4506cebde82bde9',
+    '0xbef9a3f7b2c67915',
+    '0xc67178f2e372532b',
+    '0xca273eceea26619c',
+    '0xd186b8c721c0c207',
+    '0xeada7dd6cde0eb1e',
+    '0xf57d4f7fee6ed178',
+    '0x06f067aa72176fba',
+    '0x0a637dc5a2c898a6',
+    '0x113f9804bef90dae',
+    '0x1b710b35131c471b',
+    '0x28db77f523047d84',
+    '0x32caab7b40c72493',
+    '0x3c9ebe0a15c9bebc',
+    '0x431d67c49c100d4c',
+    '0x4cc5d4becb3e42b6',
+    '0x597f299cfc657e2a',
+    '0x5fcb6fab3ad6faec',
+    '0x6c44198c4a475817',
+  ].map((n) => BigInt(n)))
+)()
+const SHA512_Kh = (() => K512[0])()
+const SHA512_Kl = (() => K512[1])()
+const SHA512_W_H = new Uint32Array(80)
+const SHA512_W_L = new Uint32Array(80)
+
+class FastSHA512 extends HashMD<FastSHA512> {
+  protected Ah = SHA512_IV[0] | 0
+  protected Al = SHA512_IV[1] | 0
+  protected Bh = SHA512_IV[2] | 0
+  protected Bl = SHA512_IV[3] | 0
+  protected Ch = SHA512_IV[4] | 0
+  protected Cl = SHA512_IV[5] | 0
+  protected Dh = SHA512_IV[6] | 0
+  protected Dl = SHA512_IV[7] | 0
+  protected Eh = SHA512_IV[8] | 0
+  protected El = SHA512_IV[9] | 0
+  protected Fh = SHA512_IV[10] | 0
+  protected Fl = SHA512_IV[11] | 0
+  protected Gh = SHA512_IV[12] | 0
+  protected Gl = SHA512_IV[13] | 0
+  protected Hh = SHA512_IV[14] | 0
+  protected Hl = SHA512_IV[15] | 0
+  constructor(outputLen = 64) {
+    super(128, outputLen, 16, false)
+  }
+  protected get() {
+    const { Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl } = this
+    return [Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl]
+  }
+  protected set(
+    Ah: number,
+    Al: number,
+    Bh: number,
+    Bl: number,
+    Ch: number,
+    Cl: number,
+    Dh: number,
+    Dl: number,
+    Eh: number,
+    El: number,
+    Fh: number,
+    Fl: number,
+    Gh: number,
+    Gl: number,
+    Hh: number,
+    Hl: number
+  ): void {
+    this.Ah = Ah | 0
+    this.Al = Al | 0
+    this.Bh = Bh | 0
+    this.Bl = Bl | 0
+    this.Ch = Ch | 0
+    this.Cl = Cl | 0
+    this.Dh = Dh | 0
+    this.Dl = Dl | 0
+    this.Eh = Eh | 0
+    this.El = El | 0
+    this.Fh = Fh | 0
+    this.Fl = Fl | 0
+    this.Gh = Gh | 0
+    this.Gl = Gl | 0
+    this.Hh = Hh | 0
+    this.Hl = Hl | 0
+  }
+  protected process(view: DataView, offset: number): void {
+    for (let i = 0; i < 16; i++, offset += 4) {
+      SHA512_W_H[i] = view.getUint32(offset)
+      SHA512_W_L[i] = view.getUint32((offset += 4))
+    }
+    for (let i = 16; i < 80; i++) {
+      const W15h = SHA512_W_H[i - 15] | 0
+      const W15l = SHA512_W_L[i - 15] | 0
+      const s0h = rotrSH(W15h, W15l, 1) ^ rotrSH(W15h, W15l, 8) ^ shrSH(W15h, W15l, 7)
+      const s0l = rotrSL(W15h, W15l, 1) ^ rotrSL(W15h, W15l, 8) ^ shrSL(W15h, W15l, 7)
+      const W2h = SHA512_W_H[i - 2] | 0
+      const W2l = SHA512_W_L[i - 2] | 0
+      const s1h = rotrSH(W2h, W2l, 19) ^ rotrBH(W2h, W2l, 61) ^ shrSH(W2h, W2l, 6)
+      const s1l = rotrSL(W2h, W2l, 19) ^ rotrBL(W2h, W2l, 61) ^ shrSL(W2h, W2l, 6)
+      const SUMl = add4L(s0l, s1l, SHA512_W_L[i - 7], SHA512_W_L[i - 16])
+      const SUMh = add4H(SUMl, s0h, s1h, SHA512_W_H[i - 7], SHA512_W_H[i - 16])
+      SHA512_W_H[i] = SUMh | 0
+      SHA512_W_L[i] = SUMl | 0
+    }
+    let { Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl } = this
+    for (let i = 0; i < 80; i++) {
+      const sigma1h = rotrSH(Eh, El, 14) ^ rotrSH(Eh, El, 18) ^ rotrBH(Eh, El, 41)
+      const sigma1l = rotrSL(Eh, El, 14) ^ rotrSL(Eh, El, 18) ^ rotrBL(Eh, El, 41)
+      const CHIh = (Eh & Fh) ^ (~Eh & Gh)
+      const CHIl = (El & Fl) ^ (~El & Gl)
+      const T1ll = add5L(Hl, sigma1l, CHIl, SHA512_Kl[i], SHA512_W_L[i])
+      const T1h = add5H(T1ll, Hh, sigma1h, CHIh, SHA512_Kh[i], SHA512_W_H[i])
+      const T1l = T1ll | 0
+      const sigma0h = rotrSH(Ah, Al, 28) ^ rotrBH(Ah, Al, 34) ^ rotrBH(Ah, Al, 39)
+      const sigma0l = rotrSL(Ah, Al, 28) ^ rotrBL(Ah, Al, 34) ^ rotrBL(Ah, Al, 39)
+      const MAJh = (Ah & Bh) ^ (Ah & Ch) ^ (Bh & Ch)
+      const MAJl = (Al & Bl) ^ (Al & Cl) ^ (Bl & Cl)
+      Hh = Gh | 0
+      Hl = Gl | 0
+      Gh = Fh | 0
+      Gl = Fl | 0
+      Fh = Eh | 0
+      Fl = El | 0
+      ;({ h: Eh, l: El } = add(Dh | 0, Dl | 0, T1h | 0, T1l | 0))
+      Dh = Ch | 0
+      Dl = Cl | 0
+      Ch = Bh | 0
+      Cl = Bl | 0
+      Bh = Ah | 0
+      Bl = Al | 0
+      const T2l = add3L(sigma0l, MAJl, T1l)
+      Ah = add3H(T2l, sigma0h, MAJh, T1h)
+      Al = T2l | 0
+    }
+    ;({ h: Ah, l: Al } = add(Ah, Al, this.Ah, this.Al))
+    ;({ h: Bh, l: Bl } = add(Bh, Bl, this.Bh, this.Bl))
+    ;({ h: Ch, l: Cl } = add(Ch, Cl, this.Ch, this.Cl))
+    ;({ h: Dh, l: Dl } = add(Dh, Dl, this.Dh, this.Dl))
+    ;({ h: Eh, l: El } = add(Eh, El, this.Eh, this.El))
+    ;({ h: Fh, l: Fl } = add(Fh, Fl, this.Fh, this.Fl))
+    ;({ h: Gh, l: Gl } = add(Gh, Gl, this.Gh, this.Gl))
+    ;({ h: Hh, l: Hl } = add(Hh, Hl, this.Hh, this.Hl))
+    this.set(Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl)
+  }
+  protected roundClean(): void {
+    clean(SHA512_W_H, SHA512_W_L)
+  }
+  destroy(): void {
+    clean(this.buffer)
+    this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+  }
+}
+const sha512Fast = createHasher(() => new FastSHA512())
+
+class HMAC<T extends Hash<T>> extends Hash<HMAC<T>> {
+  oHash: T
+  iHash: T
+  blockLen: number
+  outputLen: number
+  private finished = false
+  private destroyed = false
+  constructor(hash: (msg: Input) => Uint8Array & { create: () => T; blockLen: number; outputLen: number }, _key: Input) {
+    super()
+    ahash(hash)
+    const key = toBytes(_key)
+    this.iHash = hash.create() as T
+    if (typeof (this.iHash as any).update !== 'function')
+      throw new Error('Expected instance of class which extends utils.Hash')
+    this.blockLen = this.iHash.blockLen
+    this.outputLen = this.iHash.outputLen
+    const blockLen = this.blockLen
+    const pad = new Uint8Array(blockLen)
+    pad.set(key.length > blockLen ? hash.create().update(key).digest() : key)
+    for (let i = 0; i < pad.length; i++) pad[i] ^= 0x36
+    this.iHash.update(pad)
+    this.oHash = hash.create() as T
+    for (let i = 0; i < pad.length; i++) pad[i] ^= 0x36 ^ 0x5c
+    this.oHash.update(pad)
+    clean(pad)
+  }
+  update(buf: Input): this {
+    aexists(this)
+    this.iHash.update(buf)
+    return this
+  }
+  digestInto(out: Uint8Array): void {
+    aexists(this)
+    abytes(out, this.outputLen)
+    this.finished = true
+    this.iHash.digestInto(out)
+    this.oHash.update(out)
+    this.oHash.digestInto(out)
+    this.destroy()
+  }
+  digest(): Uint8Array {
+    const out = new Uint8Array(this.oHash.outputLen)
+    this.digestInto(out)
+    return out
+  }
+  _cloneInto(to?: HMAC<T>): HMAC<T> {
+    to ||= Object.create(Object.getPrototypeOf(this), {})
+    const { oHash, iHash, finished, destroyed, blockLen, outputLen } = this
+    to = to as this
+    to.finished = finished
+    to.destroyed = destroyed
+    to.blockLen = blockLen
+    to.outputLen = outputLen
+    to.oHash = oHash._cloneInto((to.oHash as T) || undefined)
+    to.iHash = iHash._cloneInto((to.iHash as T) || undefined)
+    return to
+  }
+  clone(): HMAC<T> {
+    return this._cloneInto()
+  }
+  destroy(): void {
+    this.destroyed = true
+    this.oHash.destroy()
+    this.iHash.destroy()
+  }
+}
+
+function pbkdf2Core(hash: (msg: Input) => Uint8Array & { create: () => FastSHA512; blockLen: number; outputLen: number }, password: KDFInput, salt: KDFInput, opts: { c: number; dkLen?: number }) {
+  ahash(hash)
+  const { c, dkLen } = Object.assign({ dkLen: 32 }, opts)
+  anumber(c)
+  anumber(dkLen)
+  if (c < 1) throw new Error('iterations (c) should be >= 1')
+  const pwd = kdfInputToBytes(password)
+  const slt = kdfInputToBytes(salt)
+  const DK = new Uint8Array(dkLen)
+  const PRF = hmac.create(hash, pwd)
+  const PRFSalt = PRF._cloneInto().update(slt)
+  let prfW: any
+  const arr = new Uint8Array(4)
+  const view = createView(arr)
+  const u = new Uint8Array(PRF.outputLen)
+  for (let ti = 1, pos = 0; pos < dkLen; ti++, pos += PRF.outputLen) {
+    const Ti = DK.subarray(pos, pos + PRF.outputLen)
+    view.setInt32(0, ti, false)
+    ;(prfW = PRFSalt._cloneInto(prfW)).update(arr).digestInto(u)
+    Ti.set(u.subarray(0, Ti.length))
+    for (let ui = 1; ui < c; ui++) {
+      PRF._cloneInto(prfW).update(u).digestInto(u)
+      for (let i = 0; i < Ti.length; i++) Ti[i] ^= u[i]
+    }
+  }
+  PRF.destroy()
+  PRFSalt.destroy()
+  if (prfW) prfW.destroy()
+  clean(u)
+  return DK
+}
+
+const hmac = (hash: any, key: Input, message: Input): Uint8Array =>
+  new HMAC<any>(hash, key).update(message).digest()
+hmac.create = (hash: any, key: Input) => new HMAC<any>(hash, key)
+
+function pbkdf2Fast(password: Uint8Array, salt: Uint8Array, iterations: number, keylen: number): Uint8Array {
+  return pbkdf2Core(sha512Fast, password, salt, { c: iterations, dkLen: keylen })
+}
+// END fast-pbkdf2 helpers
 
 /**
  * Limited SHA-512-only PBKDF2 function for use in deprecated BIP39 code.
