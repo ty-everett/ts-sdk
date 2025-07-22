@@ -1627,28 +1627,26 @@ export const sha512hmac = (
 
 // BEGIN fast-pbkdf2 helpers
 // Utils
-function isBytes(a: unknown): a is Uint8Array {
+function isBytes (a: unknown): a is Uint8Array {
   return a instanceof Uint8Array || (ArrayBuffer.isView(a) && a.constructor.name === 'Uint8Array')
 }
-function anumber(n: number): void {
+function anumber (n: number): void {
   if (!Number.isSafeInteger(n) || n < 0) throw new Error('positive integer expected, got ' + n)
 }
-function abytes(b: Uint8Array | undefined, ...lengths: number[]): void {
+function abytes (b: Uint8Array | undefined, ...lengths: number[]): void {
   if (!isBytes(b)) throw new Error('Uint8Array expected')
-  if (lengths.length > 0 && !lengths.includes(b.length))
-    throw new Error('Uint8Array expected of length ' + lengths + ', got length=' + b.length)
+  if (lengths.length > 0 && !lengths.includes(b.length)) { throw new Error('Uint8Array expected of length ' + lengths + ', got length=' + b.length) }
 }
-function ahash(h: IHash): void {
-  if (typeof h !== 'function' || typeof h.create !== 'function')
-    throw new Error('Hash should be wrapped by utils.createHasher')
+function ahash (h: IHash): void {
+  if (typeof h !== 'function' || typeof h.create !== 'function') { throw new Error('Hash should be wrapped by utils.createHasher') }
   anumber(h.outputLen)
   anumber(h.blockLen)
 }
-function aexists(instance: any, checkFinished = true): void {
+function aexists (instance: any, checkFinished = true): void {
   if (instance.destroyed) throw new Error('Hash instance has been destroyed')
   if (checkFinished && instance.finished) throw new Error('Hash#digest() has already been called')
 }
-function aoutput(out: any, instance: any): void {
+function aoutput (out: any, instance: any): void {
   abytes(out)
   const min = instance.outputLen
   if (out.length < min) {
@@ -1664,38 +1662,38 @@ type TypedArray =
   | Uint32Array
   | Int32Array
 
-function u8(arr: TypedArray): Uint8Array {
+function u8 (arr: TypedArray): Uint8Array {
   return new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
 }
-function u32(arr: TypedArray): Uint32Array {
+function u32 (arr: TypedArray): Uint32Array {
   return new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4))
 }
-function clean(...arrays: TypedArray[]): void {
+function clean (...arrays: TypedArray[]): void {
   for (let i = 0; i < arrays.length; i++) arrays[i].fill(0)
 }
-function createView(arr: TypedArray): DataView {
+function createView (arr: TypedArray): DataView {
   return new DataView(arr.buffer, arr.byteOffset, arr.byteLength)
 }
-function rotr(word: number, shift: number): number {
+function rotr (word: number, shift: number): number {
   return (word << (32 - shift)) | (word >>> shift)
 }
-function toBytes(data: Input): Uint8Array {
+function toBytes (data: Input): Uint8Array {
   if (typeof data === 'string') data = utf8ToBytes(data)
   abytes(data)
   return data
 }
-function utf8ToBytes(str: string): Uint8Array {
+function utf8ToBytes (str: string): Uint8Array {
   if (typeof str !== 'string') throw new Error('string expected')
   return new Uint8Array(new TextEncoder().encode(str))
 }
 type Input = string | Uint8Array
 type KDFInput = string | Uint8Array
-function kdfInputToBytes(data: KDFInput): Uint8Array {
+function kdfInputToBytes (data: KDFInput): Uint8Array {
   if (typeof data === 'string') data = utf8ToBytes(data)
   abytes(data)
   return data
 }
-type IHash = {
+interface IHash {
   (data: Uint8Array): Uint8Array
   blockLen: number
   outputLen: number
@@ -1704,14 +1702,14 @@ type IHash = {
 abstract class Hash<T extends Hash<T>> {
   abstract blockLen: number
   abstract outputLen: number
-  abstract update(buf: Input): this
-  abstract digestInto(buf: Uint8Array): void
-  abstract digest(): Uint8Array
-  abstract destroy(): void
-  abstract _cloneInto(to?: T): T
-  abstract clone(): T
+  abstract update (buf: Input): this
+  abstract digestInto (buf: Uint8Array): void
+  abstract digest (): Uint8Array
+  abstract destroy (): void
+  abstract _cloneInto (to?: T): T
+  abstract clone (): T
 }
-function createHasher<T extends Hash<T>>(hashCons: () => Hash<T>) {
+function createHasher<T extends Hash<T>> (hashCons: () => Hash<T>) {
   const hashC = (msg: Input): Uint8Array => hashCons().update(toBytes(msg)).digest()
   const tmp = hashCons()
   hashC.outputLen = tmp.outputLen
@@ -1723,11 +1721,11 @@ function createHasher<T extends Hash<T>>(hashCons: () => Hash<T>) {
 // u64 helpers
 const U32_MASK64 = BigInt(2 ** 32 - 1)
 const _32n = BigInt(32)
-function fromBig(n: bigint, le = false) {
+function fromBig (n: bigint, le = false) {
   if (le) return { h: Number(n & U32_MASK64), l: Number((n >> _32n) & U32_MASK64) }
   return { h: Number((n >> _32n) & U32_MASK64) | 0, l: Number(n & U32_MASK64) | 0 }
 }
-function split(lst: bigint[], le = false): Uint32Array[] {
+function split (lst: bigint[], le = false): Uint32Array[] {
   const len = lst.length
   const Ah = new Uint32Array(len)
   const Al = new Uint32Array(len)
@@ -1751,7 +1749,7 @@ const rotlSH = (h: number, l: number, s: number): number => (h << s) | (l >>> (3
 const rotlSL = (h: number, l: number, s: number): number => (l << s) | (h >>> (32 - s))
 const rotlBH = (h: number, l: number, s: number): number => (l << (s - 32)) | (h >>> (64 - s))
 const rotlBL = (h: number, l: number, s: number): number => (h << (s - 32)) | (l >>> (64 - s))
-function add(Ah: number, Al: number, Bh: number, Bl: number) {
+function add (Ah: number, Al: number, Bh: number, Bl: number) {
   const l = (Al >>> 0) + (Bl >>> 0)
   return { h: (Ah + Bh + ((l / 2 ** 32) | 0)) | 0, l: l | 0 }
 }
@@ -1765,10 +1763,10 @@ const add5H = (low: number, Ah: number, Bh: number, Ch: number, Dh: number, Eh: 
   (Ah + Bh + Ch + Dh + Eh + ((low / 2 ** 32) | 0)) | 0
 
 // _md helpers
-function Chi(a: number, b: number, c: number): number {
+function Chi (a: number, b: number, c: number): number {
   return (a & b) ^ (~a & c)
 }
-function Maj(a: number, b: number, c: number): number {
+function Maj (a: number, b: number, c: number): number {
   return (a & b) ^ (a & c) ^ (b & c)
 }
 abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
@@ -1782,7 +1780,7 @@ abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
   protected length = 0
   protected pos = 0
   protected destroyed = false
-  constructor(blockLen: number, outputLen: number, padOffset: number, isLE: boolean) {
+  constructor (blockLen: number, outputLen: number, padOffset: number, isLE: boolean) {
     super()
     this.blockLen = blockLen
     this.outputLen = outputLen
@@ -1791,18 +1789,19 @@ abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
     this.buffer = new Uint8Array(blockLen)
     this.view = createView(this.buffer)
   }
-  protected abstract process(buf: DataView, offset: number): void
-  protected abstract get(): number[]
-  protected abstract set(...args: number[]): void
-  abstract destroy(): void
-  protected abstract roundClean(): void
-  update(data: Input): this {
+
+  protected abstract process (buf: DataView, offset: number): void
+  protected abstract get (): number[]
+  protected abstract set (...args: number[]): void
+  abstract destroy (): void
+  protected abstract roundClean (): void
+  update (data: Input): this {
     aexists(this)
     data = toBytes(data)
     abytes(data)
     const { view, buffer, blockLen } = this
     const len = data.length
-    for (let pos = 0; pos < len; ) {
+    for (let pos = 0; pos < len;) {
       const take = Math.min(blockLen - this.pos, len - pos)
       if (take === blockLen) {
         const dataView = createView(data)
@@ -1821,7 +1820,8 @@ abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
     this.roundClean()
     return this
   }
-  digestInto(out: Uint8Array): void {
+
+  digestInto (out: Uint8Array): void {
     aexists(this)
     aoutput(out, this)
     this.finished = true
@@ -1844,14 +1844,16 @@ abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
     if (outLen > state.length) throw new Error('_sha2: outputLen bigger than state')
     for (let i = 0; i < outLen; i++) oview.setUint32(4 * i, state[i], isLE)
   }
-  digest(): Uint8Array {
+
+  digest (): Uint8Array {
     const { buffer, outputLen } = this
     this.digestInto(buffer)
     const res = buffer.slice(0, outputLen)
     this.destroy()
     return res
   }
-  _cloneInto(to?: T): T {
+
+  _cloneInto (to?: T): T {
     to ||= new (this.constructor as any)() as T
     to.set(...this.get())
     const { blockLen, buffer, length, finished, destroyed, pos } = this
@@ -1862,11 +1864,12 @@ abstract class HashMD<T extends HashMD<T>> extends Hash<T> {
     if (length % blockLen) to.buffer.set(buffer)
     return to
   }
-  clone(): T {
+
+  clone (): T {
     return this._cloneInto()
   }
 }
-function setBigUint64(view: DataView, byteOffset: number, value: bigint, isLE: boolean): void {
+function setBigUint64 (view: DataView, byteOffset: number, value: bigint, isLE: boolean): void {
   if (typeof view.setBigUint64 === 'function') return view.setBigUint64(byteOffset, value, isLE)
   const _32n = BigInt(32)
   const _u32_max = BigInt(0xffffffff)
@@ -1881,7 +1884,7 @@ function setBigUint64(view: DataView, byteOffset: number, value: bigint, isLE: b
 // sha512
 const SHA512_IV = Uint32Array.from([
   0x6a09e667, 0xf3bcc908, 0xbb67ae85, 0x84caa73b, 0x3c6ef372, 0xfe94f82b, 0xa54ff53a, 0x5f1d36f1,
-  0x510e527f, 0xade682d1, 0x9b05688c, 0x2b3e6c1f, 0x1f83d9ab, 0xfb41bd6b, 0x5be0cd19, 0x137e2179,
+  0x510e527f, 0xade682d1, 0x9b05688c, 0x2b3e6c1f, 0x1f83d9ab, 0xfb41bd6b, 0x5be0cd19, 0x137e2179
 ])
 const K512 = (() =>
   split([
@@ -1964,7 +1967,7 @@ const K512 = (() =>
     '0x4cc5d4becb3e42b6',
     '0x597f299cfc657e2a',
     '0x5fcb6fab3ad6faec',
-    '0x6c44198c4a475817',
+    '0x6c44198c4a475817'
   ].map((n) => BigInt(n)))
 )()
 const SHA512_Kh = (() => K512[0])()
@@ -1989,14 +1992,16 @@ class FastSHA512 extends HashMD<FastSHA512> {
   protected Gl = SHA512_IV[13] | 0
   protected Hh = SHA512_IV[14] | 0
   protected Hl = SHA512_IV[15] | 0
-  constructor(outputLen = 64) {
+  constructor (outputLen = 64) {
     super(128, outputLen, 16, false)
   }
-  protected get() {
+
+  protected get () {
     const { Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl } = this
     return [Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl]
   }
-  protected set(
+
+  protected set (
     Ah: number,
     Al: number,
     Bh: number,
@@ -2031,7 +2036,8 @@ class FastSHA512 extends HashMD<FastSHA512> {
     this.Hh = Hh | 0
     this.Hl = Hl | 0
   }
-  protected process(view: DataView, offset: number): void {
+
+  protected process (view: DataView, offset: number): void {
     for (let i = 0; i < 16; i++, offset += 4) {
       SHA512_W_H[i] = view.getUint32(offset)
       SHA512_W_L[i] = view.getUint32((offset += 4))
@@ -2090,10 +2096,12 @@ class FastSHA512 extends HashMD<FastSHA512> {
     ;({ h: Hh, l: Hl } = add(Hh, Hl, this.Hh, this.Hl))
     this.set(Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl)
   }
-  protected roundClean(): void {
+
+  protected roundClean (): void {
     clean(SHA512_W_H, SHA512_W_L)
   }
-  destroy(): void {
+
+  destroy (): void {
     clean(this.buffer)
     this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
   }
@@ -2107,13 +2115,12 @@ class HMAC<T extends Hash<T>> extends Hash<HMAC<T>> {
   outputLen: number
   private finished = false
   private destroyed = false
-  constructor(hash: (msg: Input) => Uint8Array & { create: () => T; blockLen: number; outputLen: number }, _key: Input) {
+  constructor (hash: (msg: Input) => Uint8Array & { create: () => T, blockLen: number, outputLen: number }, _key: Input) {
     super()
     ahash(hash)
     const key = toBytes(_key)
     this.iHash = hash.create() as T
-    if (typeof (this.iHash as any).update !== 'function')
-      throw new Error('Expected instance of class which extends utils.Hash')
+    if (typeof (this.iHash as any).update !== 'function') { throw new Error('Expected instance of class which extends utils.Hash') }
     this.blockLen = this.iHash.blockLen
     this.outputLen = this.iHash.outputLen
     const blockLen = this.blockLen
@@ -2126,12 +2133,14 @@ class HMAC<T extends Hash<T>> extends Hash<HMAC<T>> {
     this.oHash.update(pad)
     clean(pad)
   }
-  update(buf: Input): this {
+
+  update (buf: Input): this {
     aexists(this)
     this.iHash.update(buf)
     return this
   }
-  digestInto(out: Uint8Array): void {
+
+  digestInto (out: Uint8Array): void {
     aexists(this)
     abytes(out, this.outputLen)
     this.finished = true
@@ -2140,12 +2149,14 @@ class HMAC<T extends Hash<T>> extends Hash<HMAC<T>> {
     this.oHash.digestInto(out)
     this.destroy()
   }
-  digest(): Uint8Array {
+
+  digest (): Uint8Array {
     const out = new Uint8Array(this.oHash.outputLen)
     this.digestInto(out)
     return out
   }
-  _cloneInto(to?: HMAC<T>): HMAC<T> {
+
+  _cloneInto (to?: HMAC<T>): HMAC<T> {
     to ||= Object.create(Object.getPrototypeOf(this), {})
     const { oHash, iHash, finished, destroyed, blockLen, outputLen } = this
     to = to as this
@@ -2153,21 +2164,23 @@ class HMAC<T extends Hash<T>> extends Hash<HMAC<T>> {
     to.destroyed = destroyed
     to.blockLen = blockLen
     to.outputLen = outputLen
-    to.oHash = oHash._cloneInto((to.oHash as T) || undefined)
-    to.iHash = iHash._cloneInto((to.iHash as T) || undefined)
+    to.oHash = oHash._cloneInto((to.oHash) || undefined)
+    to.iHash = iHash._cloneInto((to.iHash) || undefined)
     return to
   }
-  clone(): HMAC<T> {
+
+  clone (): HMAC<T> {
     return this._cloneInto()
   }
-  destroy(): void {
+
+  destroy (): void {
     this.destroyed = true
     this.oHash.destroy()
     this.iHash.destroy()
   }
 }
 
-function pbkdf2Core(hash: (msg: Input) => Uint8Array & { create: () => FastSHA512; blockLen: number; outputLen: number }, password: KDFInput, salt: KDFInput, opts: { c: number; dkLen?: number }) {
+function pbkdf2Core (hash: (msg: Input) => Uint8Array & { create: () => FastSHA512, blockLen: number, outputLen: number }, password: KDFInput, salt: KDFInput, opts: { c: number, dkLen?: number }) {
   ahash(hash)
   const { c, dkLen } = Object.assign({ dkLen: 32 }, opts)
   anumber(c)
@@ -2203,7 +2216,7 @@ const hmac = (hash: any, key: Input, message: Input): Uint8Array =>
   new HMAC<any>(hash, key).update(message).digest()
 hmac.create = (hash: any, key: Input) => new HMAC<any>(hash, key)
 
-function pbkdf2Fast(password: Uint8Array, salt: Uint8Array, iterations: number, keylen: number): Uint8Array {
+function pbkdf2Fast (password: Uint8Array, salt: Uint8Array, iterations: number, keylen: number): Uint8Array {
   return pbkdf2Core(sha512Fast, password, salt, { c: iterations, dkLen: keylen })
 }
 // END fast-pbkdf2 helpers
