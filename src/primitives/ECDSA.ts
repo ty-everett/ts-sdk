@@ -39,6 +39,11 @@ function truncateToN (
   }
 }
 
+const curve = new Curve()
+const bytes = curve.n.byteLength()
+const ns1 = curve.n.subn(1)
+const halfN = N_BIGINT >> 1n
+
 /**
  * Generates a digital signature for a given message.
  *
@@ -60,84 +65,80 @@ export const sign = (
   forceLowS: boolean = false,
   customK?: BigNumber | ((iter: number) => BigNumber)
 ): Signature => {
-  const curve = new Curve()
+  // —— prepare inputs ────────────────────────────────────────────────────────
   msg = truncateToN(msg)
+  const msgBig = BigInt('0x' + msg.toString(16))
+  const keyBig = BigInt('0x' + key.toString(16))
 
-  // Zero-extend key to provide enough entropy
-  const bytes = curve.n.byteLength()
+  // DRBG seeding identical to previous implementation
   const bkey = key.toArray('be', bytes)
-
-  // Zero-extend nonce to have the same byte size as N
   const nonce = msg.toArray('be', bytes)
-
-  // Instantiate Hmac_DRBG
   const drbg = new DRBG(bkey, nonce)
 
-  // Number of bytes to generate
-  const ns1 = curve.n.subn(1)
-
   for (let iter = 0; ; iter++) {
-    // Compute the k-value
-    let k =
+    // —— k generation & basic validity checks ───────────────────────────────
+    let kBN =
       typeof customK === 'function'
         ? customK(iter)
         : BigNumber.isBN(customK)
           ? customK
           : new BigNumber(drbg.generate(bytes), 16)
-    if (k != null) {
-      k = truncateToN(k, true)
-    } else {
-      throw new Error('k is undefined')
-    }
-    if (k.cmpn(1) <= 0 || k.cmp(ns1) >= 0) {
+
+    if (kBN == null) throw new Error('k is undefined')
+    kBN = truncateToN(kBN, true)
+
+    if (kBN.cmpn(1) <= 0 || kBN.cmp(ns1) >= 0) {
       if (BigNumber.isBN(customK)) {
-        throw new Error(
-          'Invalid fixed custom K value (must be more than 1 and less than N-1)'
-        )
-      } else {
-        continue
+        throw new Error('Invalid fixed custom K value (must be >1 and <N‑1)')
       }
+      continue
     }
 
-    const kp = curve.g.mul(k)
-    if (kp.isInfinity()) {
+    const kBig = BigInt('0x' + kBN.toString(16))
+
+    // —— R = k·G (Jacobian, window‑NAF) ──────────────────────────────────────
+    const R = scalarMultiplyWNAF(kBig, { x: GX_BIGINT, y: GY_BIGINT })
+    if (R.Z === 0n) { // point at infinity – should never happen for valid k
       if (BigNumber.isBN(customK)) {
-        throw new Error(
-          'Invalid fixed custom K value (must not create a point at infinity when multiplied by the generator point)'
-        )
-      } else {
-        continue
+        throw new Error('Invalid fixed custom K value (k·G at infinity)')
       }
+      continue
     }
 
-    const kpX = kp.getX()
-    const r = kpX.umod(curve.n)
-    if (r.cmpn(0) === 0) {
+    // affine X coordinate of R
+    const zInv = biModInv(R.Z)
+    const zInv2 = biModMul(zInv, zInv)
+    const xAff = biModMul(R.X, zInv2)
+    const rBig = modN(xAff)
+
+    if (rBig === 0n) {
       if (BigNumber.isBN(customK)) {
-        throw new Error(
-          'Invalid fixed custom K value (when multiplied by G, the resulting x coordinate mod N must not be zero)'
-        )
-      } else {
-        continue
+        throw new Error('Invalid fixed custom K value (r == 0)')
       }
+      continue
     }
 
-    let s = k.invm(curve.n).mul(r.mul(key).iadd(msg))
-    s = s.umod(curve.n)
-    if (s.cmpn(0) === 0) {
+    // —— s = k⁻¹ · (msg + r·key)  mod n ─────────────────────────────────────
+    const kInv = modInvN(kBig)
+    const rTimesKey = modMulN(rBig, keyBig)
+    const sum = modN(msgBig + rTimesKey)
+    let sBig = modMulN(kInv, sum)
+
+    if (sBig === 0n) {
       if (BigNumber.isBN(customK)) {
-        throw new Error(
-          'Invalid fixed custom K value (when used with the key, it cannot create a zero value for S)'
-        )
-      } else {
-        continue
+        throw new Error('Invalid fixed custom K value (s == 0)')
       }
+      continue
     }
 
-    // Use complement of `s`, if it is > `n / 2`
-    if (forceLowS && s.cmp(curve.n.ushrn(1)) > 0) {
-      s = curve.n.sub(s)
+    // low‑S mitigation (BIP‑62/BIP‑340 style)
+    if (forceLowS && sBig > halfN) {
+      sBig = N_BIGINT - sBig
     }
+
+    // —— convert back to BigNumber & return ─────────────────────────────────
+    const r = new BigNumber(rBig.toString(16), 16)
+    const s = new BigNumber(sBig.toString(16), 16)
     return new Signature(r, s)
   }
 }

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.20 - 2025-07-22](#1620---2025-07-22)
 - [1.6.19 - 2025-07-21](#1619---2025-07-21)
 - [1.6.18 - 2025-07-20](#1618---2025-07-20)
 - [1.6.17 - 2025-07-18](#1617---2025-07-18)
@@ -147,6 +148,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Security
 
 ---
+
+### [1.6.20] - 2025-07-22
+
+### Fixed
+
+- Small ECDSA optimizations
+- Proper types for script evaluation errors (useful for programmatic access)
+- Clear rspack errors and use latest version
 
 ### [1.6.19] - 2025-07-21
 
