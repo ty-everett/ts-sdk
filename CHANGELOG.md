@@ -149,7 +149,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
-### [1.6.21] - 2025-08-06
+### [1.6.22] - 2025-08-06
 
 ### Fixed
 

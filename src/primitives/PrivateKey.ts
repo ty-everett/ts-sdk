@@ -411,12 +411,12 @@ export default class PrivateKey extends BigNumber {
 
     const points: PointInFiniteField[] = []
     const usedXCoordinates = new Set<string>()
-    
+
     for (let i = 0; i < totalShares; i++) {
       let x: BigNumber
       let attempts = 0
       const maxAttempts = 1000 // Prevent infinite loops
-      
+
       do {
         // Use a combination of counter and random value to ensure uniqueness
         // Transform x-coordinate to ensure it's never zero: x = 2^(counter + random_offset)
@@ -424,13 +424,13 @@ export default class PrivateKey extends BigNumber {
         const randomOffset = new BigNumber(PrivateKey.fromRandom().toArray())
         const exponent = counter.add(randomOffset.mod(new BigNumber(1000))) // Limit random offset
         x = new BigNumber(2).pow(exponent.mod(new BigNumber(256))) // Keep exponent reasonable
-        
+
         attempts++
         if (attempts > maxAttempts) {
           throw new Error('Failed to generate unique x-coordinates after maximum attempts')
         }
       } while (x.isZero() || usedXCoordinates.has(x.toString()))
-      
+
       usedXCoordinates.add(x.toString())
       const y = poly.valueAt(x)
       points.push(new PointInFiniteField(x, y))
