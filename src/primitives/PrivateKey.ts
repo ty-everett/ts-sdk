@@ -4,7 +4,7 @@ import PublicKey from './PublicKey.js'
 import Point from './Point.js'
 import Curve from './Curve.js'
 import { sign, verify } from './ECDSA.js'
-import { sha256, sha256hmac } from './Hash.js'
+import { sha256, sha256hmac, sha512hmac } from './Hash.js'
 import Random from './Random.js'
 import { fromBase58Check, toArray, toBase58Check } from './utils.js'
 import Polynomial, { PointInFiniteField } from './Polynomial.js'
@@ -411,24 +411,18 @@ export default class PrivateKey extends BigNumber {
 
     const points: PointInFiniteField[] = []
     const usedXCoordinates = new Set<string>()
+    const curve = new Curve()
 
     for (let i = 0; i < totalShares; i++) {
       let x: BigNumber
-      let attempts = 0
-      const maxAttempts = 1000 // Prevent infinite loops
-
       do {
-        // Use a combination of counter and random value to ensure uniqueness
-        // Transform x-coordinate to ensure it's never zero: x = 2^(counter + random_offset)
-        const counter = new BigNumber(i + 1) // Start from 1 to avoid zero
-        const randomOffset = new BigNumber(PrivateKey.fromRandom().toArray())
-        const exponent = counter.add(randomOffset.mod(new BigNumber(1000))) // Limit random offset
-        x = new BigNumber(2).pow(exponent.mod(new BigNumber(256))) // Keep exponent reasonable
-
-        attempts++
-        if (attempts > maxAttempts) {
-          throw new Error('Failed to generate unique x-coordinates after maximum attempts')
-        }
+        const r = Random(32)
+        // To ensure no two points are ever the same, even if the system RNG is compromised, 
+        // we'll use a different counter value for each point and use SHA-512 HMAC.
+        const counter = i.toString()
+        const h = sha512hmac(r, counter)
+        x = new BigNumber(h).umod(curve.p)
+        // repeat generation if x is zero or has already been used (insanely unlikely)
       } while (x.isZero() || usedXCoordinates.has(x.toString()))
 
       usedXCoordinates.add(x.toString())
