@@ -149,6 +149,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.6.21] - 2025-08-06
+
+### Fixed
+
+- TOB-BSV-2: Fix vulnerability in toKeyShares function which allowed for repeated x-coordinates and zeroed x-coordinates which would have lead to privateKey leaks and unrecoverable shares.
+- Fix platform specific build errors on Apple Silicon
+
+---
+
 ### [1.6.20] - 2025-07-22
 
 ### Fixed
