@@ -431,7 +431,7 @@ export default class PrivateKey extends BigNumber {
       let x: BigNumber
       let attempts = 0
       do {
-        // To ensure no two points are ever the same, even if the system RNG is compromised, 
+        // To ensure no two points are ever the same, even if the system RNG is compromised,
         // we'll use a different counter value for each point and use SHA-512 HMAC.
         const counter = [i, attempts, ...Random(32)]
         const h = sha512hmac(seed, counter)
