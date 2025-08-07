@@ -413,16 +413,34 @@ export default class PrivateKey extends BigNumber {
     const usedXCoordinates = new Set<string>()
     const curve = new Curve()
 
+    /**
+     * Cryptographically secure x-coordinate generation for Shamir's Secret Sharing (toKeyShares)
+     *
+     * - Each x-coordinate is derived using a master seed (Random(64)) as the HMAC key and a per-attempt counter array as the message.
+     * - The counter array includes the share index, the attempt number (to handle rare collisions), and 32 bytes of fresh randomness for each attempt.
+     * - This ensures:
+     *   1. **Non-determinism**: Each split is unique, even for the same key and parameters, due to the per-attempt randomness.
+     *   2. **Uniqueness**: x-coordinates are checked for zero and duplication; retry logic ensures no repeats or invalid values.
+     *   3. **Cryptographic strength**: HMAC-SHA-512 is robust, and combining deterministic and random values protects against RNG compromise or bias.
+     *   4. **Defensive programming**: Attempts are capped (5 per share) to prevent infinite loops in pathological cases.
+     *
+     * This approach is robust against all practical attacks and is suitable for high-security environments where deterministic splits are not desired.
+     */
+    const seed = Random(64)
     for (let i = 0; i < totalShares; i++) {
       let x: BigNumber
+      let attempts = 0
       do {
-        const r = Random(32)
         // To ensure no two points are ever the same, even if the system RNG is compromised, 
         // we'll use a different counter value for each point and use SHA-512 HMAC.
-        const counter = i.toString()
-        const h = sha512hmac(r, counter)
+        const counter = [i, attempts, ...Random(32)]
+        const h = sha512hmac(seed, counter)
         x = new BigNumber(h).umod(curve.p)
         // repeat generation if x is zero or has already been used (insanely unlikely)
+        attempts++
+        if (attempts > 5) {
+          throw new Error('Failed to generate unique x coordinate after 5 attempts')
+        }
       } while (x.isZero() || usedXCoordinates.has(x.toString()))
 
       usedXCoordinates.add(x.toString())
