@@ -334,12 +334,12 @@ export default class Script {
    * @throws {Error} Throws an error if the data is too large to be pushed.
    */
   writeBin (bin: number[]): Script {
-    let op
+    let op: number
+    let data = bin.length > 0 ? bin : undefined
     if (bin.length > 0 && bin.length < OP.OP_PUSHDATA1) {
       op = bin.length
     } else if (bin.length === 0) {
       op = OP.OP_0
-      bin = undefined // special case
     } else if (bin.length < Math.pow(2, 8)) {
       op = OP.OP_PUSHDATA1
     } else if (bin.length < Math.pow(2, 16)) {
@@ -350,7 +350,7 @@ export default class Script {
       throw new Error("You can't push that much data")
     }
     this.chunks.push({
-      data: bin,
+      data,
       op
     })
     return this

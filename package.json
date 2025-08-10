@@ -263,5 +263,8 @@
     "ignore": [
       "dist"
     ]
+  },
+  "dependencies": {
+    "@rspack/core": "^1.4.11"
   }
 }
