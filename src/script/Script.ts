@@ -335,7 +335,7 @@ export default class Script {
    */
   writeBin (bin: number[]): Script {
     let op: number
-    let data = bin.length > 0 ? bin : undefined
+    const data = bin.length > 0 ? bin : undefined
     if (bin.length > 0 && bin.length < OP.OP_PUSHDATA1) {
       op = bin.length
     } else if (bin.length === 0) {
