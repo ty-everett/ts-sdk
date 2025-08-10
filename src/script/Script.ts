@@ -338,10 +338,8 @@ export default class Script {
     if (bin.length > 0 && bin.length < OP.OP_PUSHDATA1) {
       op = bin.length
     } else if (bin.length === 0) {
-      this.chunks.push({
-        op: OP.OP_0 // Data is undefined
-      })
-      return this // Return special case early
+      op = OP.OP_0
+      bin = undefined // special case
     } else if (bin.length < Math.pow(2, 8)) {
       op = OP.OP_PUSHDATA1
     } else if (bin.length < Math.pow(2, 16)) {
