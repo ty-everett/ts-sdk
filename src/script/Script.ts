@@ -338,7 +338,10 @@ export default class Script {
     if (bin.length > 0 && bin.length < OP.OP_PUSHDATA1) {
       op = bin.length
     } else if (bin.length === 0) {
-      op = OP.OP_0
+      this.chunks.push({
+        op: OP.OP_0 // Data is undefined
+      })
+      return this // Return special case early
     } else if (bin.length < Math.pow(2, 8)) {
       op = OP.OP_PUSHDATA1
     } else if (bin.length < Math.pow(2, 16)) {
@@ -445,7 +448,7 @@ export default class Script {
   private _chunkToString (chunk: ScriptChunk): string {
     const op = chunk.op
     let str = ''
-    if (typeof chunk.data === 'undefined' || chunk.data.length === 0) {
+    if (typeof chunk.data === 'undefined') {
       const val = OP[op] as string
       str = `${str} ${val}`
     } else {
