@@ -445,7 +445,7 @@ export default class Script {
   private _chunkToString (chunk: ScriptChunk): string {
     const op = chunk.op
     let str = ''
-    if (typeof chunk.data === 'undefined') {
+    if (typeof chunk.data === 'undefined' || chunk.data.length === 0) {
       const val = OP[op] as string
       str = `${str} ${val}`
     } else {
