@@ -668,12 +668,12 @@ export interface ListOutputsArgs {
     includeTags?: BooleanDefaultFalse;
     includeLabels?: BooleanDefaultFalse;
     limit?: PositiveIntegerDefault10Max10000;
-    offset?: PositiveIntegerOrZero;
+    offset?: number;
     seekPermission?: BooleanDefaultTrue;
 }
 ```
 
-See also: [BasketStringUnder300Bytes](./wallet.md#type-basketstringunder300bytes), [BooleanDefaultFalse](./wallet.md#type-booleandefaultfalse), [BooleanDefaultTrue](./wallet.md#type-booleandefaulttrue), [OutputTagStringUnder300Bytes](./wallet.md#type-outputtagstringunder300bytes), [PositiveIntegerDefault10Max10000](./wallet.md#type-positiveintegerdefault10max10000), [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero)
+See also: [BasketStringUnder300Bytes](./wallet.md#type-basketstringunder300bytes), [BooleanDefaultFalse](./wallet.md#type-booleandefaultfalse), [BooleanDefaultTrue](./wallet.md#type-booleandefaulttrue), [OutputTagStringUnder300Bytes](./wallet.md#type-outputtagstringunder300bytes), [PositiveIntegerDefault10Max10000](./wallet.md#type-positiveintegerdefault10max10000)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
