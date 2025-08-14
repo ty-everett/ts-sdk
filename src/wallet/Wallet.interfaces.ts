@@ -563,7 +563,10 @@ export interface InternalizeActionResult {
  * @param {BooleanDefaultFalse} [includeTags] - Whether the tags associated with the output should be returned.
  * @param {BooleanDefaultFalse} [includeLabels] - Whether the labels associated with the transaction containing the output should be returned.
  * @param {PositiveIntegerDefault10Max10000} [limit] - Optional limit on the number of outputs to return.
- * @param {PositiveIntegerOrZero} [offset] - Number of outputs to skip before starting to return results.
+ * @param {number} [offset] - If positive or zero: Number of outputs to skip before starting to return results, oldest first.
+ * If negative: Outputs are returned newest first and offset of -1 is the newest output.
+ * When using negative offsets, caution is required as new outputs may be added between calls,
+ * potentially causing outputs to be duplicated across calls.
  * @param {BooleanDefaultTrue} [seekPermission] — Whether to seek permission from the user for this operation if required. Default true, will return an error rather than proceed if set to false.
  */
 export interface ListOutputsArgs {
@@ -575,7 +578,7 @@ export interface ListOutputsArgs {
   includeTags?: BooleanDefaultFalse
   includeLabels?: BooleanDefaultFalse
   limit?: PositiveIntegerDefault10Max10000
-  offset?: PositiveIntegerOrZero
+  offset?: number
   seekPermission?: BooleanDefaultTrue
 }
 

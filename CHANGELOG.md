@@ -149,6 +149,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.6.23] - 2025-08-13
+
+### Change
+
+- ListOutputsArgs offset is now number, negative values sort newest first, newest output is offset -1.
+
+---
+
 ### [1.6.22] - 2025-08-06
 
 ### Fixed
