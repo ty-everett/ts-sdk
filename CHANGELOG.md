@@ -157,6 +157,15 @@ All notable changes to this project will be documented in this file. The format 
 - Modified Script.writeBin so that when passed an empty array the chunk is correctly written as OP_0 when toASM() is called
 
 ---
+
+### [1.6.23] - 2025-08-13
+
+### Change
+
+- ListOutputsArgs offset is now number, negative values sort newest first, newest output is offset -1.
+
+---
+
 ### [1.6.22] - 2025-08-06
 
 ### Fixed
