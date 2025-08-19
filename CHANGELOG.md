@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.6.24 - 2025-08-19](#1620---2025-07-22)
 - [1.6.20 - 2025-07-22](#1620---2025-07-22)
 - [1.6.19 - 2025-07-21](#1619---2025-07-21)
 - [1.6.18 - 2025-07-20](#1618---2025-07-20)
@@ -149,6 +150,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.6.24] - 2025-08-19
+
+### Fixed
+
+- Modified Script.writeBin so that when passed an empty array the chunk is correctly written as OP_0 when toASM() is called
+
+---
 ### [1.6.22] - 2025-08-06
 
 ### Fixed
