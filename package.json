@@ -1,6 +1,6 @@
 {
   "name": "@bsv/sdk",
-  "version": "1.6.23",
+  "version": "1.6.24",
   "type": "module",
   "description": "BSV Blockchain Software Development Kit",
   "main": "dist/cjs/mod.js",
@@ -256,7 +256,8 @@
     "ts2md": "^0.2.8",
     "tsconfig-to-dual-package": "^1.2.0",
     "typescript": "5.1",
-    "typescript-eslint": "^8.29.0"
+    "typescript-eslint": "^8.29.0",
+    "@rspack/core": "^1.4.11"
   },
   "ts-standard": {
     "project": "tsconfig.eslint.json",

@@ -417,4 +417,13 @@ describe('Script', () => {
       })
     })
   })
+
+  describe('Empty binarys should equal OP_0', () => {
+    it('should correctly write empty binary arrays', () => {
+      const script = new Script().writeBin([])
+      expect(
+        script.toASM()
+      ).toEqual('OP_0')
+    })
+  })
 })
