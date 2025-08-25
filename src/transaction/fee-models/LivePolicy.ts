@@ -6,6 +6,7 @@ import Transaction from '../Transaction.js'
  */
 export default class LivePolicy implements FeeModel {
   private static readonly ARC_POLICY_URL = 'https://arc.gorillapool.io/v1/policy'
+  private static instance: LivePolicy | null = null
   private cachedRate: number | null = null
   private cacheTimestamp: number = 0
   private readonly cacheValidityMs: number
@@ -17,6 +18,19 @@ export default class LivePolicy implements FeeModel {
    */
   constructor(cacheValidityMs: number = 5 * 60 * 1000) {
     this.cacheValidityMs = cacheValidityMs
+  }
+
+  /**
+   * Gets the singleton instance of LivePolicy to ensure cache sharing across the application.
+   *
+   * @param {number} cacheValidityMs - How long to cache the fee rate in milliseconds (default: 5 minutes)
+   * @returns The singleton LivePolicy instance
+   */
+  static getInstance(cacheValidityMs: number = 5 * 60 * 1000): LivePolicy {
+    if (!LivePolicy.instance) {
+      LivePolicy.instance = new LivePolicy(cacheValidityMs)
+    }
+    return LivePolicy.instance
   }
 
   /**
