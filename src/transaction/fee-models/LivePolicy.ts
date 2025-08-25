@@ -1,10 +1,11 @@
-import FeeModel from '../FeeModel.js'
+import SatoshisPerKilobyte from './SatoshisPerKilobyte.js'
 import Transaction from '../Transaction.js'
 
 /**
  * Represents a live fee policy that fetches current rates from ARC GorillaPool.
+ * Extends SatoshisPerKilobyte to reuse transaction size calculation logic.
  */
-export default class LivePolicy implements FeeModel {
+export default class LivePolicy extends SatoshisPerKilobyte {
   private static readonly ARC_POLICY_URL = 'https://arc.gorillapool.io/v1/policy'
   private static instance: LivePolicy | null = null
   private cachedRate: number | null = null
@@ -17,6 +18,7 @@ export default class LivePolicy implements FeeModel {
    * @param {number} cacheValidityMs - How long to cache the fee rate in milliseconds (default: 5 minutes)
    */
   constructor(cacheValidityMs: number = 5 * 60 * 1000) {
+    super(100) // Initialize with dummy value, will be overridden by fetchFeeRate
     this.cacheValidityMs = cacheValidityMs
   }
 
@@ -81,55 +83,15 @@ export default class LivePolicy implements FeeModel {
 
   /**
    * Computes the fee for a given transaction using the current live rate.
+   * Overrides the parent method to use dynamic rate fetching.
    *
    * @param tx The transaction for which a fee is to be computed.
    * @returns The fee in satoshis for the transaction.
    */
   async computeFee(tx: Transaction): Promise<number> {
     const rate = await this.fetchFeeRate()
-    const getVarIntSize = (i: number): number => {
-      if (i > 2 ** 32) {
-        return 9
-      } else if (i > 2 ** 16) {
-        return 5
-      } else if (i > 253) {
-        return 3
-      } else {
-        return 1
-      }
-    }
-    // Compute the (potentially estimated) size of the transaction
-    let size = 4 // version
-    size += getVarIntSize(tx.inputs.length) // number of inputs
-    for (let i = 0; i < tx.inputs.length; i++) {
-      const input = tx.inputs[i]
-      size += 40 // txid, output index, sequence number
-      let scriptLength: number
-      if (typeof input.unlockingScript === 'object') {
-        scriptLength = input.unlockingScript.toBinary().length
-      } else if (typeof input.unlockingScriptTemplate === 'object') {
-        scriptLength = await input.unlockingScriptTemplate.estimateLength(
-          tx,
-          i
-        )
-      } else {
-        throw new Error(
-          'All inputs must have an unlocking script or an unlocking script template for sat/kb fee computation.'
-        )
-      }
-      size += getVarIntSize(scriptLength) // unlocking script length
-      size += scriptLength // unlocking script
-    }
-    size += getVarIntSize(tx.outputs.length) // number of outputs
-    for (const out of tx.outputs) {
-      size += 8 // satoshis
-      const length = out.lockingScript.toBinary().length
-      size += getVarIntSize(length) // script length
-      size += length // script
-    }
-    size += 4 // lock time
-    // We'll use Math.ceil to ensure the miners get the extra satoshi.
-    const fee = Math.ceil((size / 1000) * rate)
-    return fee
+    // Update the value property so parent's computeFee uses the live rate
+    this.value = rate
+    return super.computeFee(tx)
   }
 }
