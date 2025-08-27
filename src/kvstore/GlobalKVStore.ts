@@ -1,12 +1,11 @@
 import Transaction from '../transaction/Transaction.js'
 import * as Utils from '../primitives/utils.js'
 import { Hash } from '../primitives/index.js'
-import { TopicBroadcaster } from '../overlay-tools/index.js'
+import { TopicBroadcaster, LookupResolver } from '../overlay-tools/index.js'
 import { BroadcastResponse, BroadcastFailure } from '../transaction/Broadcaster.js'
 import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString } from '../wallet/Wallet.interfaces.js'
 import { PushDrop } from '../script/index.js'
 import WalletClient from '../wallet/WalletClient.js'
-import { LookupResolver } from '../overlay-tools/index.js'
 import { Beef } from '../transaction/Beef.js'
 import PubKeyHex from '../primitives/PublicKey.js'
 import { Historian } from './Historian.js'
@@ -17,7 +16,7 @@ import { createKVStoreInterpreter } from './interpreters/createKVStoreInterprete
  * Defines all options for connecting to overlay services and managing KVStore behavior.
  */
 export interface KVStoreConfig {
-  /** The overlay service host URL */ 
+  /** The overlay service host URL */
   overlayHost?: string
   /** Protocol ID for the KVStore protocol */
   protocolID?: WalletProtocol
@@ -325,18 +324,16 @@ export class GlobalKVStore {
 
     if (history) {
       // Use Historian to extract complete history by traversing the input chain
-      const historian = new Historian(
-        createKVStoreInterpreter({
-          protectedKey,
-          key,
-          encrypt: this.config.encrypt,
-          wallet: this.wallet,
-          protocolID: this.config.protocolID
-        }),
-        { debug: false }
-      )
-      
-      const valueHistory = await historian.interpret(result.beef)
+      const interpreter = createKVStoreInterpreter({
+        protectedKey,
+        key,
+        encrypt: this.config.encrypt,
+        wallet: this.wallet,
+        protocolID: this.config.protocolID
+      })
+
+      const historian = new Historian<string>(interpreter, { debug: false })
+      const valueHistory = await historian.buildHistory(tx)
 
       return {
         token: {
@@ -384,7 +381,7 @@ export class GlobalKVStore {
    * @param {string} key - The key to retrieve the value for.
    * @param {string | undefined} [defaultValue=undefined] - The value to return if the key is not found.
    * @param {boolean} [history=false] - Whether to include the complete value history.
-   * @returns {Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }>} 
+   * @returns {Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }>}
    *   A promise that resolves to the value as a string, the defaultValue if the key is not found,
    *   or a history object if history=true and the key exists.
    * @throws {Error} If the key is invalid or the overlay service is unreachable.
@@ -426,7 +423,7 @@ export class GlobalKVStore {
    *
    * @param {string} key - The key to retrieve the value and history for.
    * @param {string | undefined} [defaultValue=undefined] - The value to return if the key is not found.
-   * @returns {Promise<{ token: KVStoreToken, value: string, valueHistory: string[] } | undefined>} 
+   * @returns {Promise<{ token: KVStoreToken, value: string, valueHistory: string[] } | undefined>}
    *   A promise that resolves to a history object with the current value and all previous values,
    *   or undefined if the key is not found.
    * @throws {Error} If the key is invalid or the overlay service is unreachable.
