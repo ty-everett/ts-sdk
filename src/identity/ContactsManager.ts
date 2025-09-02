@@ -4,7 +4,6 @@ import { DisplayableIdentity } from './types/index.js'
 import { PushDrop } from '../script/index.js'
 import { Transaction } from '../transaction/index.js'
 export type Contact = DisplayableIdentity & { metadata?: Record<string, any> }
-export type ContactsBook = Record<string, Contact>
 
 const CONTACT_PROTOCOL_ID: WalletProtocol = [2, 'contact']
 // Local cache key for performance
@@ -76,7 +75,7 @@ export class ContactsManager {
 
           // Decode the PushDrop data
           const decoded = PushDrop.decode(lockingScript)
-          if (!output.customInstructions) continue
+          if (output.customInstructions == null) continue
           const keyID = JSON.parse(output.customInstructions).keyID
 
           // Decrypt the contact data
@@ -174,7 +173,7 @@ export class ContactsManager {
             const [txid, outputIndex] = output.outpoint.split('.')
             const tx = Transaction.fromBEEF(outputs.BEEF as number[], txid)
             const decoded = PushDrop.decode(tx.outputs[Number(outputIndex)].lockingScript)
-            if (!output.customInstructions) continue
+            if (output.customInstructions == null) continue
             keyID = JSON.parse(output.customInstructions).keyID
 
             const { plaintext } = await this.wallet.decrypt({
@@ -315,7 +314,7 @@ export class ContactsManager {
           const [txid, outputIndex] = String(output.outpoint).split('.')
           const tx = Transaction.fromBEEF(outputs.BEEF as number[], txid)
           const decoded = PushDrop.decode(tx.outputs[Number(outputIndex)].lockingScript)
-          if (!output.customInstructions) continue
+          if (output.customInstructions == null) continue
           const keyID = JSON.parse(output.customInstructions).keyID
 
           const { plaintext } = await this.wallet.decrypt({
