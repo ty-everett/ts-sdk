@@ -6,6 +6,7 @@ import {
   DiscoverByIdentityKeyArgs,
   IdentityCertificate,
   OriginatorDomainNameStringUnder250Bytes,
+  PubKeyHex,
   WalletCertificate,
   WalletClient,
   WalletInterface
@@ -15,6 +16,7 @@ import Certificate from '../auth/certificates/Certificate.js'
 import { PushDrop } from '../script/index.js'
 import { PrivateKey, Utils } from '../primitives/index.js'
 import { TopicBroadcaster } from '../overlay-tools/index.js'
+import { ContactsManager, Contact } from './ContactsManager.js'
 
 /**
  * IdentityClient lets you discover who others are, and let the world know who you are.
@@ -22,6 +24,7 @@ import { TopicBroadcaster } from '../overlay-tools/index.js'
 export class IdentityClient {
   private readonly authClient: AuthFetch
   private readonly wallet: WalletInterface
+  private readonly contactsManager: ContactsManager
   constructor (
     wallet?: WalletInterface,
     private readonly options = DEFAULT_IDENTITY_CLIENT_OPTIONS,
@@ -29,6 +32,7 @@ export class IdentityClient {
   ) {
     this.wallet = wallet ?? new WalletClient()
     this.authClient = new AuthFetch(this.wallet)
+    this.contactsManager = new ContactsManager(this.wallet)
   }
 
   /**
@@ -212,6 +216,33 @@ export class IdentityClient {
   //   const broadcaster = new SHIPBroadcaster(['tm_identity'])
   //   return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
   // }
+
+  /**
+   * Load all records from the contacts basket
+   * @param identityKey Optional specific identity key to fetch
+   * @param forceRefresh Whether to force a check for new contact data
+   * @returns A promise that resolves with an array of contacts
+   */
+  public async getContacts (identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> {
+    return await this.contactsManager.getContacts(identityKey, forceRefresh)
+  }
+
+  /**
+   * Save or update a Metanet contact
+   * @param contact The displayable identity information for the contact
+   * @param metadata Optional metadata to store with the contact (ex. notes, aliases, etc)
+   */
+  public async saveContact (contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> {
+    return await this.contactsManager.saveContact(contact, metadata)
+  }
+
+  /**
+   * Remove a contact from the contacts basket
+   * @param identityKey The identity key of the contact to remove
+   */
+  public async removeContact (identityKey: PubKeyHex): Promise<void> {
+    return await this.contactsManager.removeContact(identityKey)
+  }
 
   /**
    * Parse out identity and certifier attributes to display from an IdentityCertificate

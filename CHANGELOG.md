@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
-- [1.6.24 - 2025-08-19](#1620---2025-07-22)
+- [1.6.25 - 2025-09-02](#1625---2025-09-02)
+- [1.6.24 - 2025-08-19](#1624---2025-08-19)
 - [1.6.20 - 2025-07-22](#1620---2025-07-22)
 - [1.6.19 - 2025-07-21](#1619---2025-07-21)
 - [1.6.18 - 2025-07-20](#1618---2025-07-20)
@@ -147,6 +148,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.6.25] - 2025-09-02
+
+### Added
+
+- IdentityClient now supports saving, getting, and removing encrypted personal contacts.
 
 ---
 
