@@ -527,7 +527,7 @@ describe('IdentityClient', () => {
         expect(result).toEqual([mockContact])
       })
 
-      it('should fallback to cache on listOutputs error', async () => {
+      it('should throw error on listOutputs failure', async () => {
         ; (localStorage.getItem as jest.Mock).mockReturnValue(
           JSON.stringify([mockContact])
         )
@@ -535,9 +535,9 @@ describe('IdentityClient', () => {
             new Error('List outputs error')
           )
 
-        const result = await identityClient.getContacts(undefined, true)
-
-        expect(result).toEqual([mockContact])
+        await expect(
+          identityClient.getContacts(undefined, true)
+        ).rejects.toThrow('List outputs error')
       })
     })
 
