@@ -40,7 +40,7 @@ export class ContactsManager {
     }
 
     try {
-      const tags = []
+      const tags: string[] = []
       if (identityKey != null) {
         // Hash the identity key to use as a tag for quick lookup
         const { hmac: hashedIdentityKey } = await this.wallet.createHmac({
@@ -76,6 +76,7 @@ export class ContactsManager {
 
           // Decode the PushDrop data
           const decoded = PushDrop.decode(lockingScript)
+          if (!output.customInstructions) continue
           const keyID = JSON.parse(output.customInstructions).keyID
 
           // Decrypt the contact data
@@ -164,7 +165,7 @@ export class ContactsManager {
         tags: [`identityKey ${Utils.toHex(hashedIdentityKey)}`]
       })
 
-      let existingOutput = null
+      let existingOutput: any = null
       let keyID = Utils.toBase64(Random(32))
       if (outputs.outputs != null) {
         // Find output by trying to decrypt and checking identityKey in payload
@@ -173,6 +174,7 @@ export class ContactsManager {
             const [txid, outputIndex] = output.outpoint.split('.')
             const tx = Transaction.fromBEEF(outputs.BEEF as number[], txid)
             const decoded = PushDrop.decode(tx.outputs[Number(outputIndex)].lockingScript)
+            if (!output.customInstructions) continue
             keyID = JSON.parse(output.customInstructions).keyID
 
             const { plaintext } = await this.wallet.decrypt({
@@ -313,6 +315,7 @@ export class ContactsManager {
           const [txid, outputIndex] = String(output.outpoint).split('.')
           const tx = Transaction.fromBEEF(outputs.BEEF as number[], txid)
           const decoded = PushDrop.decode(tx.outputs[Number(outputIndex)].lockingScript)
+          if (!output.customInstructions) continue
           const keyID = JSON.parse(output.customInstructions).keyID
 
           const { plaintext } = await this.wallet.decrypt({
