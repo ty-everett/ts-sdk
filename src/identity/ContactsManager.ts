@@ -7,7 +7,6 @@ export type Contact = DisplayableIdentity & { metadata?: Record<string, any> }
 export type ContactsBook = Record<string, Contact>
 
 const CONTACT_PROTOCOL_ID: WalletProtocol = [2, 'contact']
-
 // Local cache key for performance
 const CONTACTS_CACHE_KEY = 'metanet-contacts'
 
@@ -43,8 +42,9 @@ export class ContactsManager {
     try {
       const tags = []
       if (identityKey != null) {
+        // Hash the identity key to use as a tag for quick lookup
         const { hmac: hashedIdentityKey } = await this.wallet.createHmac({
-          protocolID: [2, 'contact'],
+          protocolID: CONTACT_PROTOCOL_ID,
           keyID: identityKey,
           counterparty: 'self',
           data: Utils.toArray(identityKey, 'utf8')
@@ -150,7 +150,7 @@ export class ContactsManager {
       localStorage.setItem(CONTACTS_CACHE_KEY, JSON.stringify(contacts))
 
       const { hmac: hashedIdentityKey } = await this.wallet.createHmac({
-        protocolID: [2, 'contact'],
+        protocolID: CONTACT_PROTOCOL_ID,
         keyID: contact.identityKey,
         counterparty: 'self',
         data: Utils.toArray(contact.identityKey, 'utf8')
@@ -173,14 +173,13 @@ export class ContactsManager {
             const [txid, outputIndex] = output.outpoint.split('.')
             const tx = Transaction.fromBEEF(outputs.BEEF as number[], txid)
             const decoded = PushDrop.decode(tx.outputs[Number(outputIndex)].lockingScript)
-
             keyID = JSON.parse(output.customInstructions).keyID
 
-            // Try to decrypt with shared keyID '1'
             const { plaintext } = await this.wallet.decrypt({
               ciphertext: decoded.fields[0],
               protocolID: CONTACT_PROTOCOL_ID,
-              keyID
+              keyID,
+              counterparty: 'self'
             })
 
             const storedContact: Contact = JSON.parse(Utils.toUTF8(plaintext))
@@ -234,7 +233,8 @@ export class ContactsManager {
             satoshis: 1,
             lockingScript: lockingScript.toHex(),
             outputDescription: `Updated Contact: ${contact.name ?? contact.identityKey.slice(0, 10)}`,
-            tags: [`identityKey ${Utils.toHex(hashedIdentityKey)}`]
+            tags: [`identityKey ${Utils.toHex(hashedIdentityKey)}`],
+            customInstructions: JSON.stringify({ keyID })
           }],
           options: { acceptDelayedBroadcast: false, randomizeOutputs: false } // TODO: Support custom config as needed.
         })
@@ -262,7 +262,8 @@ export class ContactsManager {
             satoshis: 1,
             lockingScript: lockingScript.toHex(),
             outputDescription: `Contact: ${contact.name ?? contact.identityKey.slice(0, 10)}`,
-            tags: [`identityKey ${Utils.toHex(hashedIdentityKey)}`]
+            tags: [`identityKey ${Utils.toHex(hashedIdentityKey)}`],
+            customInstructions: JSON.stringify({ keyID })
           }],
           options: { acceptDelayedBroadcast: false, randomizeOutputs: false } // TODO: Support custom config as needed.
         })
@@ -317,7 +318,8 @@ export class ContactsManager {
           const { plaintext } = await this.wallet.decrypt({
             ciphertext: decoded.fields[0],
             protocolID: CONTACT_PROTOCOL_ID,
-            keyID
+            keyID,
+            counterparty: 'self'
           })
 
           const storedContact: Contact = JSON.parse(Utils.toUTF8(plaintext))

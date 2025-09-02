@@ -25,7 +25,7 @@ export class IdentityClient {
   private readonly authClient: AuthFetch
   private readonly wallet: WalletInterface
   private readonly contactsManager: ContactsManager
-  constructor(
+  constructor (
     wallet?: WalletInterface,
     private readonly options = DEFAULT_IDENTITY_CLIENT_OPTIONS,
     private readonly originator?: OriginatorDomainNameStringUnder250Bytes
@@ -45,7 +45,7 @@ export class IdentityClient {
    * @returns {Promise<object>} A promise that resolves with the broadcast result from the overlay network.
    * @throws {Error} Throws an error if the certificate is invalid, the fields cannot be revealed, or if the broadcast fails.
    */
-  async publiclyRevealAttributes(
+  async publiclyRevealAttributes (
     certificate: WalletCertificate,
     fieldsToReveal: CertificateFieldNameUnder50Bytes[]
   ): Promise<BroadcastResponse | BroadcastFailure> {
@@ -118,7 +118,7 @@ export class IdentityClient {
   * @param {DiscoverByIdentityKeyArgs} args - Arguments for requesting the discovery based on the identity key.
   * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
   */
-  async resolveByIdentityKey(
+  async resolveByIdentityKey (
     args: DiscoverByIdentityKeyArgs
   ): Promise<DisplayableIdentity[]> {
     const { certificates } = await this.wallet.discoverByIdentityKey(args, this.originator)
@@ -133,7 +133,7 @@ export class IdentityClient {
    * @param {DiscoverByAttributesArgs} args - Attributes and optional parameters used to discover certificates.
    * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
    */
-  async resolveByAttributes(
+  async resolveByAttributes (
     args: DiscoverByAttributesArgs
   ): Promise<DisplayableIdentity[]> {
     const { certificates } = await this.wallet.discoverByAttributes(args, this.originator)
@@ -223,7 +223,7 @@ export class IdentityClient {
    * @param forceRefresh Whether to force a check for new contact data
    * @returns A promise that resolves with an array of contacts
    */
-  public async getContacts(identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> {
+  public async getContacts (identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> {
     return await this.contactsManager.getContacts(identityKey, forceRefresh)
   }
 
@@ -232,7 +232,7 @@ export class IdentityClient {
    * @param contact The displayable identity information for the contact
    * @param metadata Optional metadata to store with the contact (ex. notes, aliases, etc)
    */
-  public async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> {
+  public async saveContact (contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> {
     return await this.contactsManager.saveContact(contact, metadata)
   }
 
@@ -240,7 +240,7 @@ export class IdentityClient {
    * Remove a contact from the contacts basket
    * @param identityKey The identity key of the contact to remove
    */
-  public async removeContact(identityKey: PubKeyHex): Promise<void> {
+  public async removeContact (identityKey: PubKeyHex): Promise<void> {
     return await this.contactsManager.removeContact(identityKey)
   }
 
@@ -249,7 +249,7 @@ export class IdentityClient {
    * @param identityToParse - The Identity Certificate to parse
    * @returns - IdentityToDisplay
    */
-  static parseIdentity(identityToParse: IdentityCertificate): DisplayableIdentity {
+  static parseIdentity (identityToParse: IdentityCertificate): DisplayableIdentity {
     const { type, decryptedFields, certifierInfo } = identityToParse
     let name, avatarURL, badgeLabel, badgeIconURL, badgeClickURL
 
