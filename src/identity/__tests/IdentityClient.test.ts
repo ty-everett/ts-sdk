@@ -29,8 +29,51 @@ jest.mock('../../transaction/index.js', () => {
       fromAtomicBEEF: jest.fn().mockImplementation((tx) => ({
         toHexBEEF: () => 'transactionHex'
       })),
-      fromBEEF: jest.fn()
+      fromBEEF: jest.fn().mockReturnValue({
+        outputs: [{ lockingScript: { toHex: () => 'mockLockingScript' } }]
+      })
     }
+  }
+})
+
+jest.mock('../../script', () => {
+  const mockPushDropInstance = {
+    lock: jest.fn().mockResolvedValue({
+      toHex: () => 'lockingScriptHex'
+    }),
+    unlock: jest.fn().mockReturnValue({
+      sign: jest.fn().mockResolvedValue({
+        toHex: () => 'unlockingScriptHex'
+      })
+    })
+  }
+
+  const mockPushDrop: any = jest.fn().mockImplementation(() => mockPushDropInstance)
+  mockPushDrop.decode = jest.fn().mockReturnValue({
+    fields: [new Uint8Array([1, 2, 3, 4])]
+  })
+
+  return {
+    PushDrop: mockPushDrop
+  }
+})
+
+jest.mock('../../primitives/index.js', () => {
+  return {
+    Utils: {
+      toBase64: jest.fn().mockReturnValue('mockKeyID'),
+      toArray: jest.fn().mockReturnValue(new Uint8Array()),
+      toUTF8: jest.fn().mockImplementation((data) => {
+        return new TextDecoder().decode(data)
+      }),
+      toHex: jest.fn().mockReturnValue('0102030405060708')
+    },
+    Random: jest.fn().mockReturnValue(new Uint8Array(32)),
+    PrivateKey: jest.fn().mockImplementation(() => ({
+      toPublicKey: jest.fn().mockReturnValue({
+        toString: jest.fn().mockReturnValue('mockPublicKeyString')
+      })
+    }))
   }
 })
 
@@ -40,6 +83,17 @@ describe('IdentityClient', () => {
   let identityClient: IdentityClient
 
   beforeEach(() => {
+    // Mock localStorage for Node.js environment
+    const localStorageMock = {
+      getItem: jest.fn(),
+      setItem: jest.fn(),
+      removeItem: jest.fn()
+    }
+    Object.defineProperty(global, 'localStorage', {
+      value: localStorageMock,
+      writable: true
+    })
+
     // Create a fake wallet implementing the methods used by IdentityClient.
     walletMock = {
       proveCertificate: jest.fn().mockResolvedValue({ keyringForVerifier: 'fakeKeyring' }),
@@ -55,7 +109,12 @@ describe('IdentityClient', () => {
       signAction: jest.fn().mockResolvedValue({ tx: [4, 5, 6] }),
       getNetwork: jest.fn().mockResolvedValue({ network: 'testnet' }),
       discoverByIdentityKey: jest.fn(),
-      discoverByAttributes: jest.fn()
+      discoverByAttributes: jest.fn(),
+      // ContactsManager specific methods
+      listOutputs: jest.fn().mockResolvedValue({ outputs: [], BEEF: [] }),
+      createHmac: jest.fn().mockResolvedValue({ hmac: new Uint8Array([1, 2, 3, 4]) }),
+      decrypt: jest.fn().mockResolvedValue({ plaintext: new Uint8Array() }),
+      encrypt: jest.fn().mockResolvedValue({ ciphertext: new Uint8Array([5, 6, 7, 8]) })
     }
 
     identityClient = new IdentityClient(walletMock as WalletInterface)
@@ -272,6 +331,271 @@ describe('IdentityClient', () => {
         badgeLabel: defaultIdentity.badgeLabel,
         badgeIconURL: defaultIdentity.badgeIconURL,
         badgeClickURL: defaultIdentity.badgeClickURL
+      })
+    })
+  })
+
+  describe('ContactsManager Integration', () => {
+    const mockContact = {
+      name: 'Alice Smith',
+      identityKey: 'abcdef1234567890abcdef1234567890',
+      avatarURL: 'https://example.com/avatar.jpg',
+      abbreviatedKey: 'abcdef1234...',
+      badgeLabel: 'Verified User',
+      badgeIconURL: 'https://example.com/badge.png',
+      badgeClickURL: 'https://example.com/verify'
+    }
+
+    const mockContactWithMetadata = {
+      ...mockContact,
+      metadata: { notes: 'Met at conference' }
+    }
+
+    beforeEach(() => {
+      // Clear localStorage mocks
+      ; (localStorage.getItem as jest.Mock).mockClear()
+        ; (localStorage.setItem as jest.Mock).mockClear()
+    })
+
+    describe('saveContact', () => {
+      it('should save a contact without metadata', async () => {
+        // Mock empty contacts list (new contact)
+        ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+          outputs: [],
+          BEEF: []
+        })
+
+        await identityClient.saveContact(mockContact)
+
+        // Verify cache was updated
+        expect(localStorage.setItem).toHaveBeenCalledWith(
+          'metanet-contacts',
+          JSON.stringify([mockContact])
+        )
+
+        // Verify HMAC was created for tagging
+        expect(walletMock.createHmac).toHaveBeenCalledWith({
+          protocolID: [2, 'contact'],
+          keyID: mockContact.identityKey,
+          counterparty: 'self',
+          data: expect.any(Uint8Array)
+        })
+
+        // Verify contact data was encrypted
+        expect(walletMock.encrypt).toHaveBeenCalledWith({
+          plaintext: expect.any(Uint8Array),
+          protocolID: [2, 'contact'],
+          keyID: expect.any(String),
+          counterparty: 'self'
+        })
+
+        // Verify transaction was created
+        expect(walletMock.createAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            description: 'Add Contact',
+            outputs: expect.arrayContaining([
+              expect.objectContaining({
+                basket: 'contacts',
+                outputDescription: `Contact: ${mockContact.name}`
+              })
+            ])
+          })
+        )
+      })
+
+      it('should save a contact with metadata', async () => {
+        ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+          outputs: [],
+          BEEF: []
+        })
+
+        await identityClient.saveContact(mockContact, { notes: 'Met at conference' })
+
+        // Verify cache includes metadata
+        expect(localStorage.setItem).toHaveBeenCalledWith(
+          'metanet-contacts',
+          JSON.stringify([mockContactWithMetadata])
+        )
+      })
+
+      it('should update existing contact', async () => {
+        const existingOutput = {
+          outpoint: 'txid.0',
+          customInstructions: JSON.stringify({ keyID: 'existingKeyID' })
+        }
+
+          // Mock existing contact found - return on specific query with tags
+          ; (walletMock.listOutputs as jest.Mock)
+            .mockResolvedValueOnce({
+              outputs: [existingOutput],
+              BEEF: [1, 2, 3]
+            })
+
+          // Mock decrypt returning existing contact with same identityKey
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
+
+        const updatedContact = { ...mockContact, name: 'Alice Updated' }
+        await identityClient.saveContact(updatedContact)
+
+        // Since identityKey matches, should create update action
+        expect(walletMock.createAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            description: 'Update Contact',
+            inputBEEF: [1, 2, 3],
+            inputs: expect.arrayContaining([
+              expect.objectContaining({
+                outpoint: 'txid.0'
+              })
+            ])
+          })
+        )
+      })
+    })
+
+    describe('getContacts', () => {
+      it('should return cached contacts when available', async () => {
+        const cachedContacts = [mockContact]
+          ; (localStorage.getItem as jest.Mock).mockReturnValue(
+            JSON.stringify(cachedContacts)
+          )
+
+        const result = await identityClient.getContacts()
+
+        expect(result).toEqual(cachedContacts)
+        expect(walletMock.listOutputs).not.toHaveBeenCalled()
+      })
+
+      it('should load contacts from wallet basket when cache is empty', async () => {
+        ; (localStorage.getItem as jest.Mock).mockReturnValue(null)
+
+        const mockOutput = {
+          outpoint: 'txid.0',
+          customInstructions: JSON.stringify({ keyID: 'mockKeyID' })
+        }
+
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+            outputs: [mockOutput],
+            BEEF: [1, 2, 3]
+          })
+
+          // Mock decrypt to return the contact data directly as it would be stored
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
+
+        const result = await identityClient.getContacts()
+
+        expect(result).toEqual([mockContact])
+        expect(walletMock.listOutputs).toHaveBeenCalledWith({
+          basket: 'contacts',
+          include: 'entire transactions',
+          tags: []
+        })
+        expect(localStorage.setItem).toHaveBeenCalledWith(
+          'metanet-contacts',
+          JSON.stringify([mockContact])
+        )
+      })
+
+      it('should force refresh when requested', async () => {
+        const cachedContacts = [mockContact]
+          ; (localStorage.getItem as jest.Mock).mockReturnValue(
+            JSON.stringify(cachedContacts)
+          )
+
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+            outputs: [],
+            BEEF: []
+          })
+
+        const result = await identityClient.getContacts(undefined, true)
+
+        expect(result).toEqual([])
+        expect(walletMock.listOutputs).toHaveBeenCalled()
+      })
+
+      it('should filter by identity key when provided', async () => {
+        const contacts = [mockContact, { ...mockContact, identityKey: 'different-key' }]
+          ; (localStorage.getItem as jest.Mock).mockReturnValue(
+            JSON.stringify(contacts)
+          )
+
+        const result = await identityClient.getContacts(mockContact.identityKey)
+
+        expect(result).toEqual([mockContact])
+      })
+
+      it('should fallback to cache on listOutputs error', async () => {
+        ; (localStorage.getItem as jest.Mock).mockReturnValue(
+          JSON.stringify([mockContact])
+        )
+          ; (walletMock.listOutputs as jest.Mock).mockRejectedValue(
+            new Error('List outputs error')
+          )
+
+        const result = await identityClient.getContacts(undefined, true)
+
+        expect(result).toEqual([mockContact])
+      })
+    })
+
+    describe('removeContact', () => {
+      it('should remove contact from cache and spend UTXO', async () => {
+        const contacts = [mockContact, { ...mockContact, identityKey: 'other-key' }]
+          ; (localStorage.getItem as jest.Mock).mockReturnValue(
+            JSON.stringify(contacts)
+          )
+
+        const mockOutput = {
+          outpoint: 'txid.0',
+          customInstructions: JSON.stringify({ keyID: 'mockKeyID' })
+        }
+
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+            outputs: [mockOutput],
+            BEEF: [1, 2, 3]
+          })
+
+          // Mock decrypt to return the contact that matches the identityKey
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
+
+        await identityClient.removeContact(mockContact.identityKey)
+
+        // Verify cache was updated (contact removed)
+        expect(localStorage.setItem).toHaveBeenCalledWith(
+          'metanet-contacts',
+          JSON.stringify([{ ...mockContact, identityKey: 'other-key' }])
+        )
+
+        // Verify delete action was created
+        expect(walletMock.createAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            description: 'Delete Contact',
+            inputBEEF: [1, 2, 3],
+            inputs: expect.arrayContaining([
+              expect.objectContaining({
+                outpoint: 'txid.0'
+              })
+            ]),
+            outputs: [] // No outputs for deletion
+          })
+        )
+      })
+
+      it('should handle contact not found gracefully', async () => {
+        ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+          outputs: [],
+          BEEF: []
+        })
+
+        // Should not throw
+        await expect(
+          identityClient.removeContact('non-existent-key')
+        ).resolves.toBeUndefined()
       })
     })
   })
