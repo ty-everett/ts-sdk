@@ -358,30 +358,6 @@ describe('IdentityClient', () => {
       expect(identities[0].name).toBe('Alice Smith (Personal)') // Contact should be returned, not discovered identity
     })
 
-    it('should fuzzy match contacts by name', async () => {
-      const contacts = [
-        {
-          name: 'Alice Smith',
-          identityKey: 'alice-key',
-          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
-        },
-        {
-          name: 'Bob Johnson',
-          identityKey: 'bob-key',
-          avatarURL: '', abbreviatedKey: 'bob-jo...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
-        }
-      ]
-
-      const mockContactsManager = identityClient['contactsManager']
-      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
-
-      // Test fuzzy matching - should match "Alice Smith" with partial search
-      const identities = await identityClient.resolveByAttributes({ attributes: { name: 'Alie' } })
-
-      expect(identities).toHaveLength(1)
-      expect(identities[0].name).toBe('Alice Smith')
-    })
-
     it('should return empty array for empty search terms', async () => {
       const contacts = [
         {
@@ -397,65 +373,6 @@ describe('IdentityClient', () => {
       const identities = await identityClient.resolveByAttributes({ attributes: { name: '', email: '   ' } })
 
       expect(identities).toHaveLength(0)
-    })
-
-    it('should combine filtered contacts and unique discovered identities', async () => {
-      const contacts = [
-        {
-          name: 'Alice Smith',
-          identityKey: 'alice-key',
-          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
-        }
-      ]
-
-      const discoveredCertificate = {
-        type: KNOWN_IDENTITY_TYPES.emailCert,
-        subject: 'bob-key',
-        decryptedFields: {
-          email: 'bob@example.com'
-        },
-        certifierInfo: {
-          name: 'Email Certifier',
-          iconUrl: 'certifier-icon.png',
-          publicKey: 'certifier-public-key',
-          website: 'https://certifier.example.com'
-        }
-      }
-
-      const mockContactsManager = identityClient['contactsManager']
-      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
-      walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
-
-      const identities = await identityClient.resolveByAttributes({ attributes: { name: 'Alice' } })
-
-      expect(identities).toHaveLength(2) // Contact + discovered identity
-      expect(identities[0].name).toBe('Alice Smith') // Contact first
-      expect(identities[1].name).toBe('bob@example.com') // Discovered second (email becomes name for emailCert)
-    })
-
-    it('should handle multiple search terms with OR logic', async () => {
-      const contacts = [
-        {
-          name: 'Alice Smith',
-          identityKey: 'alice-key',
-          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
-        },
-        {
-          name: 'Bob Johnson',
-          identityKey: 'bob-key',
-          avatarURL: '', abbreviatedKey: 'bob-jo...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
-        }
-      ]
-
-      const mockContactsManager = identityClient['contactsManager']
-      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
-
-      // Should match both contacts - Alice matches "Alice", Bob matches "Bob"
-      const identities = await identityClient.resolveByAttributes({
-        attributes: { name: 'Alice', email: 'Bob' }
-      })
-
-      expect(identities).toHaveLength(2)
     })
 
     it('should return only discovered identities when overrideWithContacts is false', async () => {

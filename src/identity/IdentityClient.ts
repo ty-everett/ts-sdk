@@ -150,45 +150,22 @@ export class IdentityClient {
   ): Promise<DisplayableIdentity[]> {
     // Run both queries in parallel for better performance
     const [contacts, certificatesResult] = await Promise.all([
-      overrideWithContacts ? this.contactsManager.getContacts() : [],
+      overrideWithContacts ? this.contactsManager.getContacts() : Promise.resolve([]),
       this.wallet.discoverByAttributes(args, this.originator)
     ])
 
-    const discoveredIdentities = certificatesResult.certificates.map(cert => {
-      return IdentityClient.parseIdentity(cert)
-    })
-
-    // Step 2: Filter contacts by fuzzy matching on name field
-    const getFuzzyRegex = (input: string): RegExp => {
-      const escapedInput = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      return new RegExp(escapedInput.split('').join('.*'), 'i')
-    }
-
-    // Pre-compile regex patterns for better performance (filter out empty values)
-    const searchRegexes = Object.values(args.attributes)
-      .filter(value => value.trim().length > 0)
-      .map(getFuzzyRegex)
-
-    const filteredContacts = contacts.filter(contact => {
-      const contactName = contact.name ?? ''
-
-      // If no valid search terms, return no contacts for performance
-      if (searchRegexes.length === 0) return false
-
-      // Check if any pre-compiled regex matches the contact name
-      return searchRegexes.some(regex => regex.test(contactName))
-    })
-
-    // Step 3: Create sets for deduplication
-    const filteredContactKeys = new Set(filteredContacts.map(contact => contact.identityKey))
-
-    // Filter out discovered identities that already exist in filtered contacts
-    const uniqueDiscoveredIdentities = discoveredIdentities.filter(
-      identity => !filteredContactKeys.has(identity.identityKey)
+    // Fast lookup by identityKey
+    const contactByKey = new Map<PubKeyHex, Contact>(
+      contacts.map(contact => [contact.identityKey, contact] as const)
     )
 
-    // Step 4: Return combined list of filtered contacts and discovered identities
-    return [...filteredContacts, ...uniqueDiscoveredIdentities]
+    // Guard if certificates might be absent
+    const certs = certificatesResult?.certificates ?? []
+
+    // Parse certificates and substitute with contacts where available
+    return certs.map(cert =>
+      contactByKey.get(cert.subject) ?? IdentityClient.parseIdentity(cert)
+    )
   }
 
   /**
