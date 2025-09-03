@@ -71,7 +71,7 @@ async function basicFileUpload() {
   // Create sample file
   const fileData = new TextEncoder().encode('Hello, UHRP storage!')
   const file = {
-    data: Array.from(fileData),
+    data: fileData,
     type: 'text/plain'
   }
   
@@ -116,7 +116,7 @@ async function basicFileDownload(uhrpUrl: string) {
     
     // Convert to string if text file
     if (result.mimeType?.startsWith('text/')) {
-      const content = new TextDecoder().decode(new Uint8Array(result.data))
+      const content = new TextDecoder().decode(result.data)
       console.log('Content:', content)
     }
     
@@ -172,7 +172,7 @@ class UHRPFileManager {
     tags: string[] = []
   ): Promise<FileMetadata> {
     const file = {
-      data: Array.from(fileData),
+      data: fileData,
       type: mimeType
     }
     
@@ -217,7 +217,7 @@ class UHRPFileManager {
       console.log('File downloaded:', uhrpUrl)
       
       return {
-        data: new Uint8Array(result.data),
+        data: result.data,
         metadata
       }
     } catch (error) {
@@ -371,7 +371,7 @@ class BatchFileOperations {
     const results = await Promise.allSettled(
       files.map(async (file) => {
         const fileObj = {
-          data: Array.from(file.data),
+          data: file.data,
           type: file.type
         }
         
@@ -422,7 +422,7 @@ class BatchFileOperations {
         return {
           success: true,
           url,
-          data: new Uint8Array(result.value.data)
+          data: result.value.data
         }
       } else {
         return {

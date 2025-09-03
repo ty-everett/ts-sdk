@@ -1,5 +1,5 @@
-import { sha256 } from '../primitives/Hash.js'
 import { toHex, fromBase58Check, toBase58Check, toArray } from '../primitives/utils.js'
+import { Hash } from '../primitives/index.js'
 
 /**
  * Takes a UHRP URL and removes any prefixes.
@@ -26,11 +26,19 @@ export const getURLForHash = (hash: number[]): string => {
 
 /**
  * Generates a UHRP URL for a given file.
- * @param {number[] | string} file - File content as number array or string.
+ * Uses a streaming hash to avoid excessive memory usage with large files.
+ * @param {Uint8Array | number[]} file - File content as a typed array or number array.
  * @returns {string} - Base58Check encoded URL.
  */
-export const getURLForFile = (file: number[]): string => {
-  const hash = sha256(file)
+export const getURLForFile = (file: Uint8Array | number[]): string => {
+  const data = file instanceof Uint8Array ? file : Uint8Array.from(file)
+  const hasher = new Hash.SHA256()
+  const chunkSize = 1024 * 1024
+  for (let i = 0; i < data.length; i += chunkSize) {
+    const chunk = data.subarray(i, i + chunkSize)
+    hasher.update(Array.from(chunk))
+  }
+  const hash = hasher.digest()
   return getURLForHash(hash)
 }
 
