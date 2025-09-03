@@ -151,6 +151,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.6.26] - 2025-09-02
+
+### Fixed
+
+- Fixed bug with ContactsManager caching system.
+
+---
+
 ### [1.6.25] - 2025-09-02
 
 ### Added
