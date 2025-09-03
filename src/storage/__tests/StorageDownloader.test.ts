@@ -3,8 +3,9 @@ import { StorageUtils } from '../index.js'
 import { LookupResolver } from '../../overlay-tools/index.js'
 import Transaction from '../../transaction/Transaction.js'
 import PushDrop from '../../script/templates/PushDrop.js'
-import { Hash, PublicKey } from '../../primitives/index.js'
+import { PublicKey } from '../../primitives/index.js'
 import { Utils } from '../../primitives/index.js'
+import { ReadableStream } from 'stream/web'
 
 beforeEach(() => {
     jest.restoreAllMocks()
@@ -125,7 +126,7 @@ describe('StorageDownloader', () => {
             const result = await downloader.download('validUrl')
             expect(fetchSpy).toHaveBeenCalledTimes(2)
             expect(result).toEqual({
-                data: new Array(32).fill(0),
+                data: new Uint8Array(32).fill(0),
                 mimeType: 'application/test'
             })
         })
@@ -199,6 +200,37 @@ describe('StorageDownloader', () => {
             await expect(downloader.resolve('expiredUhrpUrl'))
                 .resolves
                 .toEqual(["", ""])
+        })
+
+        it('downloads and verifies large streamed content', async () => {
+            const size = 5 * 1024 * 1024
+            const data = new Uint8Array(size)
+            for (let i = 0; i < size; i++) data[i] = i % 256
+            const uhrpUrl = StorageUtils.getURLForFile(data)
+
+            jest.spyOn(downloader, 'resolve').mockResolvedValue(['http://large-file'])
+
+            const chunkSize = 64 * 1024
+            const stream = new ReadableStream<Uint8Array>({
+                start (controller) {
+                    for (let offset = 0; offset < data.length; offset += chunkSize) {
+                        controller.enqueue(data.subarray(offset, offset + chunkSize))
+                    }
+                    controller.close()
+                }
+            })
+
+            jest.spyOn(global, 'fetch').mockResolvedValue(
+                new Response(stream as any, {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/octet-stream' }
+                })
+            )
+
+            const result = await downloader.download(uhrpUrl)
+            expect(result.mimeType).toBe('application/octet-stream')
+            expect(result.data.length).toBe(size)
+            expect(result.data).toEqual(data)
         })
     })
 })

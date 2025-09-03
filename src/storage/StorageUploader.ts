@@ -8,7 +8,7 @@ export interface UploaderConfig {
 }
 
 export interface UploadableFile {
-  data: number[]
+  data: Uint8Array | number[]
   type: string
 }
 
@@ -108,7 +108,7 @@ export class StorageUploader {
     file: UploadableFile,
     requiredHeaders: Record<string, string>
   ): Promise<UploadFileResult> {
-    const body = Uint8Array.from(file.data)
+    const body = file.data instanceof Uint8Array ? file.data : Uint8Array.from(file.data)
 
     const response = await fetch(uploadURL, {
       method: 'PUT',
@@ -122,7 +122,7 @@ export class StorageUploader {
       throw new Error(`File upload failed: HTTP ${response.status}`)
     }
 
-    const uhrpURL = await StorageUtils.getURLForFile(file.data)
+    const uhrpURL = StorageUtils.getURLForFile(body)
     return {
       published: true,
       uhrpURL
@@ -148,10 +148,11 @@ export class StorageUploader {
     retentionPeriod: number
   }): Promise<UploadFileResult> {
     const { file, retentionPeriod } = params
-    const fileSize = file.data.length
+    const data = file.data instanceof Uint8Array ? file.data : Uint8Array.from(file.data)
+    const fileSize = data.byteLength
 
     const { uploadURL, requiredHeaders } = await this.getUploadInfo(fileSize, retentionPeriod)
-    return await this.uploadFile(uploadURL, file, requiredHeaders)
+    return await this.uploadFile(uploadURL, { data, type: file.type }, requiredHeaders)
   }
 
   /**
