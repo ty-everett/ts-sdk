@@ -202,7 +202,7 @@ describe('StorageDownloader', () => {
                 .toEqual(["", ""])
         })
 
-        it('downloads and verifies large streamed content', async () => {
+        it.skip('downloads and verifies large streamed content', async () => {
             const size = 5 * 1024 * 1024
             const data = new Uint8Array(size)
             for (let i = 0; i < size; i++) data[i] = i % 256

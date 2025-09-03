@@ -58,7 +58,7 @@ export class StorageDownloader {
       throw new Error('Invalid parameter UHRP url')
     }
     const hash = StorageUtils.getHashFromURL(uhrpUrl)
-    const expected = Buffer.from(hash)
+    const expected = Utils.toHex(hash)
     const downloadURLs = await this.resolve(uhrpUrl)
 
     if (!Array.isArray(downloadURLs) || downloadURLs.length === 0) {
@@ -88,9 +88,9 @@ export class StorageDownloader {
           totalLength += value.length
         }
 
-        const digest = Buffer.from(hashStream.digest())
-        if (!digest.equals(expected)) {
-          throw new Error('Value of content does not match hash of the url given')
+        const digest = Utils.toHex(hashStream.digest())
+        if (digest !== expected) {
+          throw new Error('Data integrity error: value of content does not match hash of the url given')
         }
 
         const data = new Uint8Array(totalLength)
