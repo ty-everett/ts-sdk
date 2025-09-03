@@ -116,11 +116,21 @@ export class IdentityClient {
   * Resolves displayable identity certificates, issued to a given identity key by a trusted certifier.
   *
   * @param {DiscoverByIdentityKeyArgs} args - Arguments for requesting the discovery based on the identity key.
+  * @param {boolean} [overrideWithContacts=true] - Whether to override the results with personal contacts if available.
   * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
   */
   async resolveByIdentityKey (
-    args: DiscoverByIdentityKeyArgs
+    args: DiscoverByIdentityKeyArgs,
+    overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
+    if (overrideWithContacts) {
+      // Override results with personal contacts if available
+      const contacts = await this.contactsManager.getContacts(args.identityKey)
+      if (contacts.length > 0) {
+        return contacts
+      }
+    }
+
     const { certificates } = await this.wallet.discoverByIdentityKey(args, this.originator)
     return certificates.map(cert => {
       return IdentityClient.parseIdentity(cert)
@@ -131,15 +141,31 @@ export class IdentityClient {
    * Resolves displayable identity certificates by specific identity attributes, issued by a trusted entity.
    *
    * @param {DiscoverByAttributesArgs} args - Attributes and optional parameters used to discover certificates.
+   * @param {boolean} [overrideWithContacts=true] - Whether to override the results with personal contacts if available.
    * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
    */
   async resolveByAttributes (
-    args: DiscoverByAttributesArgs
+    args: DiscoverByAttributesArgs,
+    overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
-    const { certificates } = await this.wallet.discoverByAttributes(args, this.originator)
-    return certificates.map(cert => {
-      return IdentityClient.parseIdentity(cert)
-    })
+    // Run both queries in parallel for better performance
+    const [contacts, certificatesResult] = await Promise.all([
+      overrideWithContacts ? this.contactsManager.getContacts() : Promise.resolve([]),
+      this.wallet.discoverByAttributes(args, this.originator)
+    ])
+
+    // Fast lookup by identityKey
+    const contactByKey = new Map<PubKeyHex, Contact>(
+      contacts.map(contact => [contact.identityKey, contact] as const)
+    )
+
+    // Guard if certificates might be absent
+    const certs = certificatesResult?.certificates ?? []
+
+    // Parse certificates and substitute with contacts where available
+    return certs.map(cert =>
+      contactByKey.get(cert.subject) ?? IdentityClient.parseIdentity(cert)
+    )
   }
 
   /**

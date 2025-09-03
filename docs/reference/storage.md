@@ -354,7 +354,7 @@ getURLForFile = (file: Uint8Array | number[]): string => {
 }
 ```
 
-See also: [getURLForHash](./storage.md#variable-geturlforhash)
+See also: [SHA256](./primitives.md#class-sha256), [getURLForHash](./storage.md#variable-geturlforhash)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
