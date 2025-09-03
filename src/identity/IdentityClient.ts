@@ -116,11 +116,21 @@ export class IdentityClient {
   * Resolves displayable identity certificates, issued to a given identity key by a trusted certifier.
   *
   * @param {DiscoverByIdentityKeyArgs} args - Arguments for requesting the discovery based on the identity key.
+  * @param {boolean} [overrideWithContacts=true] - Whether to override the results with personal contacts if available.
   * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
   */
   async resolveByIdentityKey (
-    args: DiscoverByIdentityKeyArgs
+    args: DiscoverByIdentityKeyArgs,
+    overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
+    if (overrideWithContacts) {
+      // Override results with personal contacts if available
+      const contacts = await this.contactsManager.getContacts(args.identityKey)
+      if (contacts.length > 0) {
+        return contacts
+      }
+    }
+
     const { certificates } = await this.wallet.discoverByIdentityKey(args, this.originator)
     return certificates.map(cert => {
       return IdentityClient.parseIdentity(cert)
@@ -131,15 +141,54 @@ export class IdentityClient {
    * Resolves displayable identity certificates by specific identity attributes, issued by a trusted entity.
    *
    * @param {DiscoverByAttributesArgs} args - Attributes and optional parameters used to discover certificates.
+   * @param {boolean} [overrideWithContacts=true] - Whether to override the results with personal contacts if available.
    * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
    */
   async resolveByAttributes (
-    args: DiscoverByAttributesArgs
+    args: DiscoverByAttributesArgs,
+    overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
-    const { certificates } = await this.wallet.discoverByAttributes(args, this.originator)
-    return certificates.map(cert => {
+    // Run both queries in parallel for better performance
+    const [contacts, certificatesResult] = await Promise.all([
+      overrideWithContacts ? this.contactsManager.getContacts() : [],
+      this.wallet.discoverByAttributes(args, this.originator)
+    ])
+
+    const discoveredIdentities = certificatesResult.certificates.map(cert => {
       return IdentityClient.parseIdentity(cert)
     })
+
+    // Step 2: Filter contacts by fuzzy matching on name field
+    const getFuzzyRegex = (input: string): RegExp => {
+      const escapedInput = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return new RegExp(escapedInput.split('').join('.*'), 'i')
+    }
+
+    // Pre-compile regex patterns for better performance (filter out empty values)
+    const searchRegexes = Object.values(args.attributes)
+      .filter(value => value.trim().length > 0)
+      .map(getFuzzyRegex)
+
+    const filteredContacts = contacts.filter(contact => {
+      const contactName = contact.name ?? ''
+
+      // If no valid search terms, return no contacts for performance
+      if (searchRegexes.length === 0) return false
+
+      // Check if any pre-compiled regex matches the contact name
+      return searchRegexes.some(regex => regex.test(contactName))
+    })
+
+    // Step 3: Create sets for deduplication
+    const filteredContactKeys = new Set(filteredContacts.map(contact => contact.identityKey))
+
+    // Filter out discovered identities that already exist in filtered contacts
+    const uniqueDiscoveredIdentities = discoveredIdentities.filter(
+      identity => !filteredContactKeys.has(identity.identityKey)
+    )
+
+    // Step 4: Return combined list of filtered contacts and discovered identities
+    return [...filteredContacts, ...uniqueDiscoveredIdentities]
   }
 
   /**

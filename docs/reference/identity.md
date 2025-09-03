@@ -130,8 +130,8 @@ IdentityClient lets you discover who others are, and let the world know who you 
 export class IdentityClient {
     constructor(wallet?: WalletInterface, private readonly options = DEFAULT_IDENTITY_CLIENT_OPTIONS, private readonly originator?: OriginatorDomainNameStringUnder250Bytes) 
     async publiclyRevealAttributes(certificate: WalletCertificate, fieldsToReveal: CertificateFieldNameUnder50Bytes[]): Promise<BroadcastResponse | BroadcastFailure> 
-    async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs): Promise<DisplayableIdentity[]> 
-    async resolveByAttributes(args: DiscoverByAttributesArgs): Promise<DisplayableIdentity[]> 
+    async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
+    async resolveByAttributes(args: DiscoverByAttributesArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
     public async getContacts(identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> 
     public async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
     public async removeContact(identityKey: PubKeyHex): Promise<void> 
@@ -228,7 +228,7 @@ Argument Details
 Resolves displayable identity certificates by specific identity attributes, issued by a trusted entity.
 
 ```ts
-async resolveByAttributes(args: DiscoverByAttributesArgs): Promise<DisplayableIdentity[]> 
+async resolveByAttributes(args: DiscoverByAttributesArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
 ```
 See also: [DiscoverByAttributesArgs](./wallet.md#interface-discoverbyattributesargs), [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
@@ -240,13 +240,15 @@ Argument Details
 
 + **args**
   + Attributes and optional parameters used to discover certificates.
++ **overrideWithContacts**
+  + Whether to override the results with personal contacts if available.
 
 #### Method resolveByIdentityKey
 
 Resolves displayable identity certificates, issued to a given identity key by a trusted certifier.
 
 ```ts
-async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs): Promise<DisplayableIdentity[]> 
+async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
 ```
 See also: [DiscoverByIdentityKeyArgs](./wallet.md#interface-discoverbyidentitykeyargs), [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
@@ -258,6 +260,8 @@ Argument Details
 
 + **args**
   + Arguments for requesting the discovery based on the identity key.
++ **overrideWithContacts**
+  + Whether to override the results with personal contacts if available.
 
 #### Method saveContact
 

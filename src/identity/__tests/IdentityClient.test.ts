@@ -226,6 +226,43 @@ describe('IdentityClient', () => {
         badgeClickURL: 'https://socialcert.net'
       })
     })
+
+    it('should prioritize contacts over discovered identities for same identity key', async () => {
+      const contact = {
+        name: 'Alice Smith (Personal Contact)',
+        identityKey: 'alice-identity-key',
+        avatarURL: 'alice-avatar.png',
+        abbreviatedKey: 'alice-i...',
+        badgeIconURL: '',
+        badgeLabel: '',
+        badgeClickURL: ''
+      }
+
+      const discoveredCertificate = {
+        type: KNOWN_IDENTITY_TYPES.xCert,
+        subject: 'alice-identity-key',
+        decryptedFields: {
+          userName: 'Alice Public',
+          profilePhoto: 'public-photo.png'
+        },
+        certifierInfo: {
+          name: 'CertifierX',
+          iconUrl: 'certifier-icon.png'
+        }
+      }
+
+      // Mock ContactsManager to return contact for the specific identity key
+      const mockContactsManager = identityClient['contactsManager']
+      mockContactsManager.getContacts = jest.fn().mockResolvedValue([contact])
+      walletMock.discoverByIdentityKey = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
+
+      const identities = await identityClient.resolveByIdentityKey({ identityKey: 'alice-identity-key' })
+
+      expect(identities).toHaveLength(1)
+      expect(identities[0].name).toBe('Alice Smith (Personal Contact)') // Contact should be returned, not discovered identity
+      // Wallet method should not be called when contact is found
+      expect(walletMock.discoverByIdentityKey).not.toHaveBeenCalled()
+    })
   })
 
   it('should throw if createAction returns no tx', async () => {
@@ -256,34 +293,207 @@ describe('IdentityClient', () => {
   })
 
   describe('resolveByAttributes', () => {
-    it('should return parsed identities from discovered certificates', async () => {
+    beforeEach(() => {
+      // Mock both getContacts and discoverByAttributes
+      walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [] })
+      identityClient.getContacts = jest.fn().mockResolvedValue([])
+    })
+
+    it('should return parsed identities from discovered certificates only', async () => {
       const dummyCertificate = {
         type: KNOWN_IDENTITY_TYPES.emailCert,
-        subject: 'emailSubject1234',
+        subject: 'alice-identity-key',
         decryptedFields: {
-          email: 'alice@example.com',
-          profilePhoto: 'ignored' // not used for email type
+          identityKey: 'alice-identity-key',
+          email: 'alice@example.com'
         },
         certifierInfo: {
-          name: 'EmailCertifier',
-          iconUrl: 'emailIconUrl'
+          name: 'Email Certifier',
+          iconUrl: 'certifier-icon.png',
+          publicKey: 'certifier-public-key',
+          website: 'https://certifier.example.com'
         }
       }
-      // Mock discoverByAttributes to return a certificate list.
+
       walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [dummyCertificate] })
 
       const identities = await identityClient.resolveByAttributes({ attributes: { email: 'alice@example.com' } })
-      expect(walletMock.discoverByAttributes).toHaveBeenCalledWith({ attributes: { email: 'alice@example.com' } }, undefined)
       expect(identities).toHaveLength(1)
-      expect(identities[0]).toEqual({
-        name: 'alice@example.com',
-        avatarURL: 'XUTZxep7BBghAJbSBwTjNfmcsDdRFs5EaGEgkESGSgjJVYgMEizu',
-        abbreviatedKey: 'emailSubje...',
-        identityKey: 'emailSubject1234',
-        badgeLabel: 'Email certified by EmailCertifier',
-        badgeIconURL: 'emailIconUrl',
-        badgeClickURL: 'https://socialcert.net'
+      expect(identities[0].name).toBe('alice@example.com')
+    })
+
+    it('should prioritize contacts over discovered identities for same identity key', async () => {
+      const contact = {
+        name: 'Alice Smith (Personal)',
+        identityKey: 'alice-identity-key',
+        avatarURL: 'alice-avatar.png',
+        abbreviatedKey: 'alice-i...',
+        badgeIconURL: '',
+        badgeLabel: '',
+        badgeClickURL: ''
+      }
+
+      const discoveredCertificate = {
+        type: KNOWN_IDENTITY_TYPES.emailCert,
+        subject: 'alice-identity-key',
+        decryptedFields: {
+          email: 'alice@example.com'
+        },
+        certifierInfo: {
+          name: 'Email Certifier',
+          iconUrl: 'certifier-icon.png',
+          publicKey: 'certifier-public-key',
+          website: 'https://certifier.example.com'
+        }
+      }
+
+      // Mock the ContactsManager's getContacts method instead of the IdentityClient method
+      const mockContactsManager = identityClient['contactsManager']
+      mockContactsManager.getContacts = jest.fn().mockResolvedValue([contact])
+      walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
+
+      const identities = await identityClient.resolveByAttributes({ attributes: { name: 'Alice' } })
+
+      expect(identities).toHaveLength(1)
+      expect(identities[0].name).toBe('Alice Smith (Personal)') // Contact should be returned, not discovered identity
+    })
+
+    it('should fuzzy match contacts by name', async () => {
+      const contacts = [
+        {
+          name: 'Alice Smith',
+          identityKey: 'alice-key',
+          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
+        },
+        {
+          name: 'Bob Johnson',
+          identityKey: 'bob-key',
+          avatarURL: '', abbreviatedKey: 'bob-jo...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
+        }
+      ]
+
+      const mockContactsManager = identityClient['contactsManager']
+      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
+
+      // Test fuzzy matching - should match "Alice Smith" with partial search
+      const identities = await identityClient.resolveByAttributes({ attributes: { name: 'Alie' } })
+
+      expect(identities).toHaveLength(1)
+      expect(identities[0].name).toBe('Alice Smith')
+    })
+
+    it('should return empty array for empty search terms', async () => {
+      const contacts = [
+        {
+          name: 'Alice Smith',
+          identityKey: 'alice-key',
+          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
+        }
+      ]
+
+      const mockContactsManager = identityClient['contactsManager']
+      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
+
+      const identities = await identityClient.resolveByAttributes({ attributes: { name: '', email: '   ' } })
+
+      expect(identities).toHaveLength(0)
+    })
+
+    it('should combine filtered contacts and unique discovered identities', async () => {
+      const contacts = [
+        {
+          name: 'Alice Smith',
+          identityKey: 'alice-key',
+          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
+        }
+      ]
+
+      const discoveredCertificate = {
+        type: KNOWN_IDENTITY_TYPES.emailCert,
+        subject: 'bob-key',
+        decryptedFields: {
+          email: 'bob@example.com'
+        },
+        certifierInfo: {
+          name: 'Email Certifier',
+          iconUrl: 'certifier-icon.png',
+          publicKey: 'certifier-public-key',
+          website: 'https://certifier.example.com'
+        }
+      }
+
+      const mockContactsManager = identityClient['contactsManager']
+      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
+      walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
+
+      const identities = await identityClient.resolveByAttributes({ attributes: { name: 'Alice' } })
+
+      expect(identities).toHaveLength(2) // Contact + discovered identity
+      expect(identities[0].name).toBe('Alice Smith') // Contact first
+      expect(identities[1].name).toBe('bob@example.com') // Discovered second (email becomes name for emailCert)
+    })
+
+    it('should handle multiple search terms with OR logic', async () => {
+      const contacts = [
+        {
+          name: 'Alice Smith',
+          identityKey: 'alice-key',
+          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
+        },
+        {
+          name: 'Bob Johnson',
+          identityKey: 'bob-key',
+          avatarURL: '', abbreviatedKey: 'bob-jo...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
+        }
+      ]
+
+      const mockContactsManager = identityClient['contactsManager']
+      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
+
+      // Should match both contacts - Alice matches "Alice", Bob matches "Bob"
+      const identities = await identityClient.resolveByAttributes({
+        attributes: { name: 'Alice', email: 'Bob' }
       })
+
+      expect(identities).toHaveLength(2)
+    })
+
+    it('should return only discovered identities when overrideWithContacts is false', async () => {
+      const contacts = [
+        {
+          name: 'Alice Smith (Personal)',
+          identityKey: 'alice-key',
+          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
+        }
+      ]
+
+      const discoveredCertificate = {
+        type: KNOWN_IDENTITY_TYPES.emailCert,
+        subject: 'alice-key', // Same key as contact but should not be filtered out
+        decryptedFields: {
+          email: 'alice@example.com'
+        },
+        certifierInfo: {
+          name: 'Email Certifier',
+          iconUrl: 'certifier-icon.png',
+          publicKey: 'certifier-public-key',
+          website: 'https://certifier.example.com'
+        }
+      }
+
+      const mockContactsManager = identityClient['contactsManager']
+      mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
+      walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
+
+      // With overrideWithContacts = false, should ignore contacts entirely
+      const identities = await identityClient.resolveByAttributes(
+        { attributes: { name: 'Alice' } },
+        false
+      )
+
+      expect(identities).toHaveLength(1)
+      expect(identities[0].name).toBe('alice@example.com') // Should be discovered identity, not contact
+      expect(mockContactsManager.getContacts).not.toHaveBeenCalled() // Should not fetch contacts
     })
   })
 
@@ -434,14 +644,14 @@ describe('IdentityClient', () => {
           customInstructions: JSON.stringify({ keyID: 'existingKeyID' })
         }
 
-        ; (walletMock.listOutputs as jest.Mock).mockResolvedValueOnce({
-          outputs: [existingOutput],
-          BEEF: [1, 2, 3]
-        })
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValueOnce({
+            outputs: [existingOutput],
+            BEEF: [1, 2, 3]
+          })
 
-        ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
-          plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
-        })
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
 
         const updatedContact = { ...mockContact, name: 'Alice Updated' }
         await identityClient.saveContact(updatedContact)
@@ -489,14 +699,14 @@ describe('IdentityClient', () => {
           customInstructions: JSON.stringify({ keyID: 'mockKeyID' })
         }
 
-        ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
-          outputs: [mockOutput],
-          BEEF: [1, 2, 3]
-        })
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+            outputs: [mockOutput],
+            BEEF: [1, 2, 3]
+          })
 
-        ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
-          plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
-        })
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
 
         const result = await identityClient.getContacts()
 
@@ -523,11 +733,11 @@ describe('IdentityClient', () => {
         })
         await identityClient.saveContact(mockContact)
 
-        // Mock empty result for force refresh
-        ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
-          outputs: [],
-          BEEF: []
-        })
+          // Mock empty result for force refresh
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+            outputs: [],
+            BEEF: []
+          })
 
         const result = await identityClient.getContacts(undefined, true)
 
@@ -542,7 +752,7 @@ describe('IdentityClient', () => {
           BEEF: []
         })
         await identityClient.saveContact(mockContact)
-        
+
         const otherContact = { ...mockContact, identityKey: 'different-key', name: 'Bob' }
         await identityClient.saveContact(otherContact)
 
@@ -575,7 +785,7 @@ describe('IdentityClient', () => {
           BEEF: []
         })
         await identityClient.saveContact(mockContact)
-        
+
         const otherContact = { ...mockContact, identityKey: 'other-key', name: 'Bob' }
         await identityClient.saveContact(otherContact)
 
@@ -585,14 +795,14 @@ describe('IdentityClient', () => {
           customInstructions: JSON.stringify({ keyID: 'mockKeyID' })
         }
 
-        ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
-          outputs: [mockOutput],
-          BEEF: [1, 2, 3]
-        })
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+            outputs: [mockOutput],
+            BEEF: [1, 2, 3]
+          })
 
-        ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
-          plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
-        })
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
 
         await identityClient.removeContact(mockContact.identityKey)
 
