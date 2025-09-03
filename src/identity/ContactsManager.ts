@@ -6,11 +6,32 @@ import { Transaction } from '../transaction/index.js'
 export type Contact = DisplayableIdentity & { metadata?: Record<string, any> }
 
 const CONTACT_PROTOCOL_ID: WalletProtocol = [2, 'contact']
-// Local cache key for performance
-const CONTACTS_CACHE_KEY = 'metanet-contacts'
+
+// In-memory cache for cross-platform compatibility
+class MemoryCache {
+  private readonly cache = new Map<string, string>()
+
+  getItem (key: string): string | null {
+    return this.cache.get(key) ?? null
+  }
+
+  setItem (key: string, value: string): void {
+    this.cache.set(key, value)
+  }
+
+  removeItem (key: string): void {
+    this.cache.delete(key)
+  }
+
+  clear (): void {
+    this.cache.clear()
+  }
+}
 
 export class ContactsManager {
   private readonly wallet: WalletInterface
+  private readonly cache = new MemoryCache()
+  private readonly CONTACTS_CACHE_KEY = 'metanet-contacts'
 
   constructor (wallet?: WalletInterface) {
     this.wallet = wallet ?? new WalletClient()
@@ -23,9 +44,9 @@ export class ContactsManager {
    * @returns A promise that resolves with an array of contacts
    */
   async getContacts (identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> {
-    // Check localStorage cache first unless forcing refresh
+    // Check in-memory cache first unless forcing refresh
     if (!forceRefresh) {
-      const cached = localStorage.getItem(CONTACTS_CACHE_KEY)
+      const cached = this.cache.getItem(this.CONTACTS_CACHE_KEY)
       if (cached != null && cached !== '') {
         try {
           const cachedContacts: Contact[] = JSON.parse(cached)
@@ -54,11 +75,12 @@ export class ContactsManager {
     const outputs = await this.wallet.listOutputs({
       basket: 'contacts',
       include: 'entire transactions',
+      includeCustomInstructions: true,
       tags
     })
 
     if (outputs.outputs == null || outputs.outputs.length === 0) {
-      localStorage.setItem(CONTACTS_CACHE_KEY, JSON.stringify([]))
+      this.cache.setItem(this.CONTACTS_CACHE_KEY, JSON.stringify([]))
       return []
     }
 
@@ -95,7 +117,7 @@ export class ContactsManager {
     }
 
     // Cache the loaded contacts
-    localStorage.setItem(CONTACTS_CACHE_KEY, JSON.stringify(contacts))
+    this.cache.setItem(this.CONTACTS_CACHE_KEY, JSON.stringify(contacts))
     const filteredContacts = identityKey != null
       ? contacts.filter(c => c.identityKey === identityKey)
       : contacts
@@ -108,9 +130,16 @@ export class ContactsManager {
    * @param metadata Optional metadata to store with the contact (ex. notes, aliases, etc)
    */
   async saveContact (contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> {
-    // Update localStorage cache immediately
-    const cached = localStorage.getItem(CONTACTS_CACHE_KEY)
-    const contacts: Contact[] = (cached != null && cached !== '') ? JSON.parse(cached) : []
+    // Get current contacts from cache or blockchain
+    const cached = this.cache.getItem(this.CONTACTS_CACHE_KEY)
+    let contacts: Contact[]
+    if (cached != null && cached !== '') {
+      contacts = JSON.parse(cached)
+    } else {
+      // If cache is empty, get current data from blockchain
+      contacts = await this.getContacts()
+    }
+
     const existingIndex = contacts.findIndex(c => c.identityKey === contact.identityKey)
     const contactToStore: Contact = {
       ...contact,
@@ -122,7 +151,6 @@ export class ContactsManager {
     } else {
       contacts.push(contactToStore)
     }
-    localStorage.setItem(CONTACTS_CACHE_KEY, JSON.stringify(contacts))
 
     const { hmac: hashedIdentityKey } = await this.wallet.createHmac({
       protocolID: CONTACT_PROTOCOL_ID,
@@ -246,6 +274,7 @@ export class ContactsManager {
 
       if (tx == null) throw new Error('Failed to create contact output')
     }
+    this.cache.setItem(this.CONTACTS_CACHE_KEY, JSON.stringify(contacts))
   }
 
   /**
@@ -253,23 +282,34 @@ export class ContactsManager {
    * @param identityKey The identity key of the contact to remove
    */
   async removeContact (identityKey: string): Promise<void> {
-    // Update localStorage cache
-    const cached = localStorage.getItem(CONTACTS_CACHE_KEY)
+    // Update in-memory cache
+    const cached = this.cache.getItem(this.CONTACTS_CACHE_KEY)
     if (cached != null && cached !== '') {
       try {
         const contacts: Contact[] = JSON.parse(cached)
         const filteredContacts = contacts.filter(c => c.identityKey !== identityKey)
-        localStorage.setItem(CONTACTS_CACHE_KEY, JSON.stringify(filteredContacts))
+        this.cache.setItem(this.CONTACTS_CACHE_KEY, JSON.stringify(filteredContacts))
       } catch (e) {
         console.warn('Failed to update cache after contact removal:', e)
       }
     }
 
+    // Hash the identity key to use as a tag for quick lookup
+    const tags: string[] = []
+    const { hmac: hashedIdentityKey } = await this.wallet.createHmac({
+      protocolID: CONTACT_PROTOCOL_ID,
+      keyID: identityKey,
+      counterparty: 'self',
+      data: Utils.toArray(identityKey, 'utf8')
+    })
+    tags.push(`identityKey ${Utils.toHex(hashedIdentityKey)}`)
+
     // Find and spend the contact's output
     const outputs = await this.wallet.listOutputs({
       basket: 'contacts',
       include: 'entire transactions',
-      includeCustomInstructions: true
+      includeCustomInstructions: true,
+      tags
     })
 
     if (outputs.outputs == null) return
