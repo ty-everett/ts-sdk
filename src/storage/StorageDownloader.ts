@@ -9,7 +9,7 @@ export interface DownloaderConfig {
 }
 
 export interface DownloadResult {
-  data: number[]
+  data: Uint8Array
   mimeType: string | null
 }
 
@@ -58,6 +58,7 @@ export class StorageDownloader {
       throw new Error('Invalid parameter UHRP url')
     }
     const hash = StorageUtils.getHashFromURL(uhrpUrl)
+    const expected = Utils.toHex(hash)
     const downloadURLs = await this.resolve(uhrpUrl)
 
     if (!Array.isArray(downloadURLs) || downloadURLs.length === 0) {
@@ -70,22 +71,37 @@ export class StorageDownloader {
         const result = await fetch(downloadURLs[i], { method: 'GET' })
 
         // If the request fails, continue to the next url
-        if (!result.ok || result.status >= 400) {
+        if (!result.ok || result.status >= 400 || result.body == null) {
           continue
         }
-        const body = await result.arrayBuffer()
 
-        // The body is loaded into a number array
-        const content: number[] = [...new Uint8Array(body)]
-        const contentHash = Hash.sha256(content)
-        for (let i = 0; i < contentHash.length; ++i) {
-          if (contentHash[i] !== hash[i]) {
-            throw new Error('Value of content does not match hash of the url given')
-          }
+        const reader = result.body.getReader()
+        const hashStream = new Hash.SHA256()
+        const chunks: Uint8Array[] = []
+        let totalLength = 0
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          hashStream.update(Array.from(value))
+          chunks.push(value)
+          totalLength += value.length
+        }
+
+        const digest = Utils.toHex(hashStream.digest())
+        if (digest !== expected) {
+          throw new Error('Data integrity error: value of content does not match hash of the url given')
+        }
+
+        const data = new Uint8Array(totalLength)
+        let offset = 0
+        for (const chunk of chunks) {
+          data.set(chunk, offset)
+          offset += chunk.length
         }
 
         return {
-          data: content,
+          data,
           mimeType: result.headers.get('Content-Type')
         }
       } catch (error) {
