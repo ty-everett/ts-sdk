@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.0 - 2025-09-03](#170---2025-09-03)
+- [1.6.26 - 2025-09-02](#1626---2025-09-02)
 - [1.6.25 - 2025-09-02](#1625---2025-09-02)
 - [1.6.24 - 2025-08-19](#1624---2025-08-19)
 - [1.6.20 - 2025-07-22](#1620---2025-07-22)
@@ -148,6 +150,15 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.7.0] - 2025-09-03
+
+### Changed
+
+- Use Uint8Array for storage instead of number arrays
+- Support chunked hashing for more efficient uploads and downloads of large data
 
 ---
 
