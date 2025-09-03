@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.1 - 2025-09-03](#171---2025-09-03)
 - [1.7.0 - 2025-09-03](#170---2025-09-03)
 - [1.6.26 - 2025-09-02](#1626---2025-09-02)
 - [1.6.25 - 2025-09-02](#1625---2025-09-02)
@@ -150,6 +151,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.7.1] - 2025-09-03
+
+### Changed
+
+- Support overriding identity resolution results with personal contacts in IdentityClient.discoverByIdentityKey and IdentityClient.discoverByAttributes
 
 ---
 
