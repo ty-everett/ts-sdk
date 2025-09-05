@@ -161,12 +161,12 @@ export default class LookupResolver {
   private readonly networkPreset: 'mainnet' | 'testnet' | 'local'
 
   // ---- Caches / memoization ----
-  private readonly hostsCache: Map<string, { hosts: string[]; expiresAt: number }>
+  private readonly hostsCache: Map<string, { hosts: string[], expiresAt: number }>
   private readonly hostsInFlight: Map<string, Promise<string[]>>
   private readonly hostsTtlMs: number
   private readonly hostsMaxEntries: number
 
-  private readonly txMemo: Map<string, { txId: string; expiresAt: number }>
+  private readonly txMemo: Map<string, { txId: string, expiresAt: number }>
   private readonly txMemoTtlMs: number
 
   constructor (config: LookupResolverConfig = {}) {

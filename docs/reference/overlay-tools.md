@@ -100,6 +100,7 @@ export interface LookupResolverConfig {
     slapTrackers?: string[];
     hostOverrides?: Record<string, string[]>;
     additionalHosts?: Record<string, string[]>;
+    cache?: CacheOptions;
 }
 ```
 
@@ -111,6 +112,14 @@ Map of lookup service names to arrays of hosts to use in addition to resolving v
 
 ```ts
 additionalHosts?: Record<string, string[]>
+```
+
+#### Property cache
+
+Optional cache tuning.
+
+```ts
+cache?: CacheOptions
 ```
 
 #### Property facilitator
@@ -327,7 +336,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ### Class: LookupResolver
 
-Represents an SHIP transaction broadcaster.
+Represents a Lookup Resolver.
 
 ```ts
 export default class LookupResolver {
