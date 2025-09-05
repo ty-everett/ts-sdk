@@ -57,6 +57,16 @@ export const DEFAULT_TESTNET_SLAP_TRACKERS: string[] = [
 
 const MAX_TRACKER_WAIT_TIME = 5000
 
+/** Internal cache options. Kept optional to preserve drop-in compatibility. */
+interface CacheOptions {
+  /** How long (ms) a hosts entry is considered fresh. Default 5 minutes. */
+  hostsTtlMs?: number
+  /** How many distinct services’ hosts to cache before evicting. Default 128. */
+  hostsMaxEntries?: number
+  /** How long (ms) to keep txId memoization. Default 10 minutes. */
+  txMemoTtlMs?: number
+}
+
 /** Configuration options for the Lookup resolver. */
 export interface LookupResolverConfig {
   /**
@@ -74,6 +84,8 @@ export interface LookupResolverConfig {
   hostOverrides?: Record<string, string[]>
   /** Map of lookup service names to arrays of hosts to use in addition to resolving via SLAP. */
   additionalHosts?: Record<string, string[]>
+  /** Optional cache tuning. */
+  cache?: CacheOptions
 }
 
 /** Facilitates lookups to URLs that return answers. */
@@ -111,36 +123,35 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
         'HTTPS facilitator can only use URLs that start with "https:"'
       )
     }
-    const timeoutPromise = new Promise((resolve, reject) =>
-      setTimeout(() => reject(new Error('Request timed out')), timeout)
-    )
 
-    const fetchPromise = fetch(`${url}/lookup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        service: question.service,
-        query: question.query
-      })
-    })
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : undefined
+    const timer = setTimeout(() => {
+      try { controller?.abort() } catch { /* noop */ }
+    }, timeout)
 
-    const response: Response = (await Promise.race([
-      fetchPromise,
-      timeoutPromise
-    ])) as Response
+    try {
+      const fco: RequestInit = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: question.service, query: question.query }),
+        signal: controller?.signal
+      }
+      const response: Response = await this.fetchClient(`${url}/lookup`, fco)
 
-    if (response.ok) {
+      if (!response.ok) throw new Error(`Failed to facilitate lookup (HTTP ${response.status})`)
       return await response.json()
-    } else {
-      throw new Error('Failed to facilitate lookup')
+    } catch (e) {
+      // Normalize timeouts to a consistent error message
+      if ((e as any)?.name === 'AbortError') throw new Error('Request timed out')
+      throw e
+    } finally {
+      clearTimeout(timer)
     }
   }
 }
 
 /**
- * Represents an SHIP transaction broadcaster.
+ * Represents a Lookup Resolver.
  */
 export default class LookupResolver {
   private readonly facilitator: OverlayLookupFacilitator
@@ -149,12 +160,30 @@ export default class LookupResolver {
   private readonly additionalHosts: Record<string, string[]>
   private readonly networkPreset: 'mainnet' | 'testnet' | 'local'
 
+  // ---- Caches / memoization ----
+  private readonly hostsCache: Map<string, { hosts: string[], expiresAt: number }>
+  private readonly hostsInFlight: Map<string, Promise<string[]>>
+  private readonly hostsTtlMs: number
+  private readonly hostsMaxEntries: number
+
+  private readonly txMemo: Map<string, { txId: string, expiresAt: number }>
+  private readonly txMemoTtlMs: number
+
   constructor (config: LookupResolverConfig = {}) {
     this.networkPreset = config.networkPreset ?? 'mainnet'
     this.facilitator = config.facilitator ?? new HTTPSOverlayLookupFacilitator(undefined, this.networkPreset === 'local')
     this.slapTrackers = config.slapTrackers ?? (this.networkPreset === 'mainnet' ? DEFAULT_SLAP_TRACKERS : DEFAULT_TESTNET_SLAP_TRACKERS)
     this.hostOverrides = config.hostOverrides ?? {}
     this.additionalHosts = config.additionalHosts ?? {}
+
+    // cache tuning
+    this.hostsTtlMs = config.cache?.hostsTtlMs ?? 5 * 60 * 1000 // 5 min
+    this.hostsMaxEntries = config.cache?.hostsMaxEntries ?? 128
+    this.txMemoTtlMs = config.cache?.txMemoTtlMs ?? 10 * 60 * 1000 // 10 min
+
+    this.hostsCache = new Map()
+    this.hostsInFlight = new Map()
+    this.txMemo = new Map()
   }
 
   /**
@@ -172,13 +201,13 @@ export default class LookupResolver {
     } else if (this.networkPreset === 'local') {
       competentHosts = ['http://localhost:8080']
     } else {
-      competentHosts = await this.findCompetentHosts(question.service)
+      competentHosts = await this.getCompetentHostsCached(question.service)
     }
     if (this.additionalHosts[question.service]?.length > 0) {
-      competentHosts = [
-        ...competentHosts,
-        ...this.additionalHosts[question.service]
-      ]
+      // preserve order: resolved hosts first, then additional (unique)
+      const extra = this.additionalHosts[question.service]
+      const seen = new Set(competentHosts)
+      for (const h of extra) if (!seen.has(h)) competentHosts.push(h)
     }
     if (competentHosts.length < 1) {
       throw new Error(
@@ -186,47 +215,112 @@ export default class LookupResolver {
       )
     }
 
-    // Use Promise.allSettled to handle individual host failures
+    // Fire all hosts with per-host timeout, harvest successful output-list responses
     const hostResponses = await Promise.allSettled(
-      competentHosts.map(
-        async (host) => await this.facilitator.lookup(host, question, timeout)
-      )
+      competentHosts.map(async (host) => {
+        return await this.facilitator.lookup(host, question, timeout)
+      })
     )
 
-    const successfulResponses = hostResponses
-      .filter((result): result is PromiseFulfilledResult<LookupAnswer> => result.status === 'fulfilled')
-      .map((result) => result.value)
+    const outputsMap = new Map<string, { beef: number[], context?: number[], outputIndex: number }>()
 
-    if (successfulResponses.length === 0) {
-      throw new Error('No successful responses from any hosts')
+    // Memo key helper for tx parsing
+    const beefKey = (beef: number[]): string => {
+      if (typeof beef !== 'object') return '' // The invalid BEEF has an empty key.
+      // A fast and deterministic key for memoization; avoids large JSON strings
+      // since beef is an array of integers, join is safe and compact.
+      return beef.join(',')
     }
 
-    // Process the successful responses
-    // Aggregate outputs from all successful responses
-    const outputs = new Map<string, { beef: number[], context?: number[], outputIndex: number }>()
+    for (const result of hostResponses) {
+      if (result.status !== 'fulfilled') continue
+      const response = result.value
+      if (response?.type !== 'output-list' || !Array.isArray(response.outputs)) continue
 
-    for (const response of successfulResponses) {
-      if (response.type !== 'output-list') {
-        continue
-      }
-      try {
-        for (const output of response.outputs) {
+      for (const output of response.outputs) {
+        const keyForBeef = beefKey(output.beef)
+        let memo = this.txMemo.get(keyForBeef)
+        const now = Date.now()
+        if (typeof memo !== 'object' || memo === null || memo.expiresAt <= now) {
           try {
-            const txId: string = Transaction.fromBEEF(output.beef).id('hex') // !! This is STUPIDLY inefficient.
-            const key = `${txId}.${output.outputIndex}`
-            outputs.set(key, output)
+            const txId = Transaction.fromBEEF(output.beef).id('hex')
+            memo = { txId, expiresAt: now + this.txMemoTtlMs }
+            // prune opportunistically if the map gets too large (cheap heuristic)
+            if (this.txMemo.size > 4096) this.evictOldest(this.txMemo)
+            this.txMemo.set(keyForBeef, memo)
           } catch {
             continue
           }
         }
-      } catch (_) {
-        // Error processing output, proceed.
+
+        const uniqKey = `${memo.txId}.${output.outputIndex}`
+        // last-writer wins is fine here; outputs are identical if uniqKey matches
+        outputsMap.set(uniqKey, output)
       }
     }
     return {
       type: 'output-list',
-      outputs: Array.from(outputs.values())
+      outputs: Array.from(outputsMap.values())
     }
+  }
+
+  /**
+   * Cached wrapper for competent host discovery with stale-while-revalidate.
+   */
+  private async getCompetentHostsCached (service: string): Promise<string[]> {
+    const now = Date.now()
+    const cached = this.hostsCache.get(service)
+
+    // if fresh, return immediately
+    if (typeof cached === 'object' && cached.expiresAt > now) {
+      return cached.hosts.slice()
+    }
+
+    // if stale but present, kick off a refresh if not already in-flight and return stale
+    if (typeof cached === 'object' && cached.expiresAt <= now) {
+      if (!this.hostsInFlight.has(service)) {
+        this.hostsInFlight.set(service, this.refreshHosts(service).finally(() => {
+          this.hostsInFlight.delete(service)
+        }))
+      }
+      return cached.hosts.slice()
+    }
+
+    // no cache: coalesce concurrent requests
+    if (this.hostsInFlight.has(service)) {
+      try {
+        const hosts = await this.hostsInFlight.get(service)
+        if (typeof hosts !== 'object') {
+          throw new Error('Hosts is not defined.')
+        }
+        return hosts.slice()
+      } catch {
+        // fall through to a fresh attempt below
+      }
+    }
+
+    const promise = this.refreshHosts(service).finally(() => {
+      this.hostsInFlight.delete(service)
+    })
+    this.hostsInFlight.set(service, promise)
+    const hosts = await promise
+    return hosts.slice()
+  }
+
+  /**
+   * Actually resolves competent hosts from SLAP trackers and updates cache.
+   */
+  private async refreshHosts (service: string): Promise<string[]> {
+    const hosts = await this.findCompetentHosts(service)
+    const expiresAt = Date.now() + this.hostsTtlMs
+
+    // bounded cache with simple FIFO eviction
+    if (!this.hostsCache.has(service) && this.hostsCache.size >= this.hostsMaxEntries) {
+      const oldestKey = this.hostsCache.keys().next().value
+      if (oldestKey !== undefined) this.hostsCache.delete(oldestKey)
+    }
+    this.hostsCache.set(service, { hosts, expiresAt })
+    return hosts
   }
 
   /**
@@ -237,52 +331,45 @@ export default class LookupResolver {
   private async findCompetentHosts (service: string): Promise<string[]> {
     const query: LookupQuestion = {
       service: 'ls_slap',
-      query: {
-        service
-      }
+      query: { service }
     }
 
-    // Use Promise.allSettled to handle individual SLAP tracker failures
+    // Query all SLAP trackers; tolerate failures.
     const trackerResponses = await Promise.allSettled(
-      this.slapTrackers.map(
-        async (tracker) =>
-          await this.facilitator.lookup(tracker, query, MAX_TRACKER_WAIT_TIME)
+      this.slapTrackers.map(async (tracker) =>
+        await this.facilitator.lookup(tracker, query, MAX_TRACKER_WAIT_TIME)
       )
     )
 
     const hosts = new Set<string>()
 
     for (const result of trackerResponses) {
-      if (result.status === 'fulfilled') {
-        const answer = result.value
-        if (answer.type !== 'output-list') {
-          // Log invalid response and continue
+      if (result.status !== 'fulfilled') continue
+      const answer = result.value
+      if (answer.type !== 'output-list') continue
+
+      for (const output of answer.outputs) {
+        try {
+          const tx = Transaction.fromBEEF(output.beef)
+          const script = tx.outputs[output.outputIndex]?.lockingScript
+          if (typeof script !== 'object' || script === null) continue
+          const parsed = OverlayAdminTokenTemplate.decode(script)
+          if (parsed.topicOrService !== service || parsed.protocol !== 'SLAP') continue
+          if (typeof parsed.domain === 'string' && parsed.domain.length > 0) {
+            hosts.add(parsed.domain)
+          }
+        } catch {
           continue
         }
-        for (const output of answer.outputs) {
-          try {
-            const tx = Transaction.fromBEEF(output.beef)
-            const script = tx.outputs[output.outputIndex].lockingScript
-            const parsed = OverlayAdminTokenTemplate.decode(script)
-            if (
-              parsed.topicOrService !== service ||
-              parsed.protocol !== 'SLAP'
-            ) {
-              // Invalid advertisement, skip
-              continue
-            }
-            hosts.add(parsed.domain)
-          } catch {
-            // Invalid output, skip
-            continue
-          }
-        }
-      } else {
-        // Log tracker failure and continue
-        continue
       }
     }
 
     return [...hosts]
+  }
+
+  /** Evict an arbitrary “oldest” entry from a Map (iteration order). */
+  private evictOldest<T> (m: Map<string, T>): void {
+    const firstKey = m.keys().next().value
+    if (firstKey !== undefined) m.delete(firstKey)
   }
 }

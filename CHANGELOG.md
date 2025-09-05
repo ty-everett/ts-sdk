@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.2 - 2025-09-05](#172---2025-09-05)
 - [1.7.1 - 2025-09-03](#171---2025-09-03)
 - [1.7.0 - 2025-09-03](#170---2025-09-03)
 - [1.6.26 - 2025-09-02](#1626---2025-09-02)
@@ -154,6 +155,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.7.2] - 2025-09-05
+
+### Changed
+
+- Cache lookup resolver state for faster overlay operations
+
+---
+
 ### [1.7.1] - 2025-09-03
 
 ### Changed
@@ -184,6 +193,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - IdentityClient now supports saving, getting, and removing encrypted personal contacts.
+- SPV verification bugfix
 
 ---
 

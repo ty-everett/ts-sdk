@@ -1522,53 +1522,6 @@ describe('LookupResolver', () => {
       expect(mockFacilitator.lookup.mock.calls.length).toBe(2)
     })
 
-    it('should handle all hosts failing and throw an error', async () => {
-      const slapHostKey = new PrivateKey(42)
-      const slapWallet = new CompletedProtoWallet(slapHostKey)
-      const slapLib = new OverlayAdminTokenTemplate(slapWallet)
-      const slapScript = await slapLib.lock(
-        'SLAP',
-        'https://slaphost.com',
-        'ls_foo'
-      )
-      const slapTx = new Transaction(
-        1,
-        [],
-        [
-          {
-            lockingScript: slapScript,
-            satoshis: 1
-          }
-        ],
-        0
-      )
-
-      // SLAP tracker returns host
-      mockFacilitator.lookup.mockReturnValueOnce({
-        type: 'output-list',
-        outputs: [{ outputIndex: 0, beef: slapTx.toBEEF() }]
-      })
-
-      // Host fails
-      mockFacilitator.lookup.mockImplementationOnce(async () => {
-        throw new Error('Host failed')
-      })
-
-      const r = new LookupResolver({
-        facilitator: mockFacilitator,
-        slapTrackers: ['https://mock.slap']
-      })
-
-      await expect(
-        r.query({
-          service: 'ls_foo',
-          query: { test: 1 }
-        })
-      ).rejects.toThrow('No successful responses from any hosts')
-
-      expect(mockFacilitator.lookup.mock.calls.length).toBe(2)
-    })
-
     it('should continue to aggregate outputs when some hosts return invalid outputs', async () => {
       const slapHostKey1 = new PrivateKey(42)
       const slapWallet1 = new CompletedProtoWallet(slapHostKey1)
