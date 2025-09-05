@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.3 - 2025-09-05](#173---2025-09-05)
 - [1.7.2 - 2025-09-05](#172---2025-09-05)
 - [1.7.1 - 2025-09-03](#171---2025-09-03)
 - [1.7.0 - 2025-09-03](#170---2025-09-03)
@@ -152,6 +153,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.7.3] - 2025-09-05
+
+### Fixed
+
+- Fixed bug with LookupResolver default fetch in browser.
 
 ---
 

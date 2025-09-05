@@ -1,6 +1,9 @@
 import { Transaction } from '../transaction/index.js'
 import OverlayAdminTokenTemplate from './OverlayAdminTokenTemplate.js'
 
+// Only bind window.fetch in the browser
+const defaultFetch = typeof window !== 'undefined' ? fetch.bind(window) : fetch
+
 /**
  * The question asked to the Overlay Services Engine when a consumer of state wishes to look up information.
  */
@@ -108,7 +111,7 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
   fetchClient: typeof fetch
   allowHTTP: boolean
 
-  constructor (httpClient = fetch, allowHTTP: boolean = false) {
+  constructor (httpClient = defaultFetch, allowHTTP: boolean = false) {
     this.fetchClient = httpClient
     this.allowHTTP = allowHTTP
   }
@@ -368,7 +371,7 @@ export default class LookupResolver {
   }
 
   /** Evict an arbitrary “oldest” entry from a Map (iteration order). */
-  private evictOldest<T> (m: Map<string, T>): void {
+  private evictOldest<T>(m: Map<string, T>): void {
     const firstKey = m.keys().next().value
     if (firstKey !== undefined) m.delete(firstKey)
   }
