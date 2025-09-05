@@ -136,7 +136,7 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
         body: JSON.stringify({ service: question.service, query: question.query }),
         signal: controller?.signal
       }
-      const response: Response = await this.fetchClient(`${url.replace(/\/+$/, '')}/lookup`, fco)
+      const response: Response = await this.fetchClient(`${url}/lookup`, fco)
 
       if (!response.ok) throw new Error(`Failed to facilitate lookup (HTTP ${response.status})`)
       return await response.json()
