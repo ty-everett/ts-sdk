@@ -324,7 +324,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
     fetchClient: typeof fetch;
     allowHTTP: boolean;
-    constructor(httpClient = fetch, allowHTTP: boolean = false) 
+    constructor(httpClient = defaultFetch, allowHTTP: boolean = false) 
     async lookup(url: string, question: LookupQuestion, timeout: number = 5000): Promise<LookupAnswer> 
 }
 ```
