@@ -14,7 +14,7 @@ import {
 import { VerifiableCertificate } from './certificates/VerifiableCertificate.js'
 import Random from '../primitives/Random.js'
 import * as Utils from '../primitives/utils.js'
-import { WalletInterface } from '../wallet/Wallet.interfaces.js'
+import { OriginatorDomainNameStringUnder250Bytes, WalletInterface } from '../wallet/Wallet.interfaces.js'
 
 const AUTH_VERSION = '0.1'
 
@@ -62,6 +62,8 @@ export class Peer {
   // Last-interacted-with peer identity key (if the user calls toPeer with no identityKey)
   private lastInteractedWithPeer: string | undefined
 
+  private readonly originator?: OriginatorDomainNameStringUnder250Bytes
+
   /**
    * Creates a new Peer instance
    *
@@ -76,9 +78,11 @@ export class Peer {
     transport: Transport,
     certificatesToRequest?: RequestedCertificateSet,
     sessionManager?: SessionManager,
-    autoPersistLastSession?: boolean
+    autoPersistLastSession?: boolean,
+    originator?: OriginatorDomainNameStringUnder250Bytes
   ) {
     this.wallet = wallet
+    this.originator = originator
     this.transport = transport
     this.certificatesToRequest = certificatesToRequest ?? {
       certifiers: [],
@@ -127,12 +131,12 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${requestNonce} ${peerSession.peerNonce ?? ''}`,
       counterparty: peerSession.peerIdentityKey
-    })
+    }, this.originator)
 
     const generalMessage: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'general',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }))
+      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
         .publicKey,
       nonce: requestNonce,
       yourNonce: peerSession.peerNonce,
@@ -191,12 +195,12 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${requestNonce} ${peerSession.peerNonce ?? ''}`,
       counterparty: peerSession.peerIdentityKey
-    })
+    }, this.originator)
 
     const certRequestMessage: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'certificateRequest',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }))
+      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
         .publicKey,
       nonce: requestNonce,
       initialNonce: peerSession.sessionNonce,
@@ -342,7 +346,7 @@ export class Peer {
     identityKey?: string,
     maxWaitTime = 10000
   ): Promise<string> {
-    const sessionNonce = await createNonce(this.wallet) // Initial request nonce
+    const sessionNonce = await createNonce(this.wallet, undefined, this.originator) // Initial request nonce
 
     // Create the preliminary session (not yet authenticated)
     const now = Date.now()
@@ -356,7 +360,7 @@ export class Peer {
     const initialRequest: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'initialRequest',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }))
+      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
         .publicKey,
       initialNonce: sessionNonce,
       requestedCertificates: this.certificatesToRequest
@@ -473,7 +477,7 @@ export class Peer {
     }
 
     // Create a new sessionNonce for our side
-    const sessionNonce = await createNonce(this.wallet)
+    const sessionNonce = await createNonce(this.wallet, undefined, this.originator)
     const now = Date.now()
 
     // We'll treat this as fully authenticated from *our* perspective (the responding side).
@@ -502,7 +506,8 @@ export class Peer {
         certificatesToInclude = await getVerifiableCertificates(
           this.wallet,
           message.requestedCertificates,
-          message.identityKey
+          message.identityKey,
+          this.originator
         )
       }
     }
@@ -513,12 +518,12 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${message.initialNonce} ${sessionNonce}`,
       counterparty: message.identityKey
-    })
+    }, this.originator)
 
     const initialResponseMessage: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'initialResponse',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }))
+      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
         .publicKey,
       initialNonce: sessionNonce,
       yourNonce: message.initialNonce,
@@ -544,7 +549,7 @@ export class Peer {
    * @throws Will throw an error if nonce or signature verification fails.
    */
   private async processInitialResponse (message: AuthMessage): Promise<void> {
-    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet)
+    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet, undefined, this.originator)
     if (!validNonce) {
       throw new Error(
         `Initial response nonce verification failed from peer: ${message.identityKey}`
@@ -568,7 +573,7 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${peerSession.sessionNonce ?? ''} ${message.initialNonce ?? ''}`,
       counterparty: message.identityKey
-    })
+    }, this.originator)
     if (!valid) {
       throw new Error(
         `Unable to verify initial response signature for peer: ${message.identityKey}`
@@ -587,7 +592,7 @@ export class Peer {
       this.certificatesToRequest?.certifiers?.length > 0 &&
       message.certificates?.length as number > 0
     ) {
-      await validateCertificates(this.wallet, message, this.certificatesToRequest)
+      await validateCertificates(this.wallet, message, this.certificatesToRequest, this.originator)
 
       // Notify listeners
       this.onCertificatesReceivedCallbacks.forEach(cb =>
@@ -621,7 +626,8 @@ export class Peer {
         const verifiableCertificates = await getVerifiableCertificates(
           this.wallet,
           message.requestedCertificates,
-          message.identityKey
+          message.identityKey,
+          this.originator
         )
         await this.sendCertificateResponse(
           message.identityKey,
@@ -639,7 +645,7 @@ export class Peer {
    * @throws {Error} if nonce or signature is invalid.
    */
   private async processCertificateRequest (message: AuthMessage): Promise<void> {
-    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet)
+    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet, undefined, this.originator)
     if (!validNonce) {
       throw new Error(
         `Unable to verify nonce for certificate request message from: ${message.identityKey}`
@@ -656,7 +662,7 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${message.nonce ?? ''} ${peerSession.sessionNonce ?? ''}`,
       counterparty: peerSession.peerIdentityKey
-    })
+    }, this.originator)
     if (!valid) {
       throw new Error(
         `Invalid signature in certificate request message from ${peerSession.peerIdentityKey as string}`
@@ -682,7 +688,8 @@ export class Peer {
         const verifiableCertificates = await getVerifiableCertificates(
           this.wallet,
           message.requestedCertificates,
-          message.identityKey
+          message.identityKey,
+          this.originator
         )
         await this.sendCertificateResponse(message.identityKey, verifiableCertificates)
       }
@@ -707,12 +714,12 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${requestNonce} ${peerSession.peerNonce ?? ''}`,
       counterparty: peerSession.peerIdentityKey
-    })
+    }, this.originator)
 
     const certificateResponse: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'certificateResponse',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }))
+      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
         .publicKey,
       nonce: requestNonce,
       initialNonce: peerSession.sessionNonce,
@@ -744,7 +751,7 @@ export class Peer {
    * @throws Will throw an error if nonce verification or signature verification fails.
    */
   private async processCertificateResponse (message: AuthMessage): Promise<void> {
-    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet)
+    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet, undefined, this.originator)
     if (!validNonce) {
       throw new Error(
         `Unable to verify nonce for certificate response from: ${message.identityKey}`
@@ -763,7 +770,7 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${message.nonce ?? ''} ${peerSession.sessionNonce ?? ''}`,
       counterparty: message.identityKey
-    })
+    }, this.originator)
     if (!valid) {
       throw new Error(
         `Unable to verify certificate response signature for peer: ${message.identityKey}`
@@ -774,7 +781,8 @@ export class Peer {
     await validateCertificates(
       this.wallet,
       message,
-      message.requestedCertificates
+      message.requestedCertificates,
+      this.originator
     )
 
     // Notify any listeners
@@ -794,7 +802,7 @@ export class Peer {
    * @throws Will throw an error if nonce or signature verification fails.
    */
   private async processGeneralMessage (message: AuthMessage): Promise<void> {
-    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet)
+    const validNonce = await verifyNonce(message.yourNonce as string, this.wallet, undefined, this.originator)
     if (!validNonce) {
       throw new Error(
         `Unable to verify nonce for general message from: ${message.identityKey}`
@@ -812,7 +820,7 @@ export class Peer {
       protocolID: [2, 'auth message signature'],
       keyID: `${message.nonce ?? ''} ${peerSession.sessionNonce ?? ''}`,
       counterparty: peerSession.peerIdentityKey
-    })
+    }, this.originator)
     if (!valid) {
       throw new Error(
         `Invalid signature in generalMessage from ${peerSession.peerIdentityKey as string}`

@@ -185,8 +185,7 @@ export class ProtoWallet {
   }
 
   async decrypt (
-    args: WalletDecryptArgs
-  ): Promise<WalletDecryptResult> {
+args: WalletDecryptArgs, originator?: string  ): Promise<WalletDecryptResult> {
     if (this.keyDeriver == null) {
       throw new Error('keyDeriver is undefined')
     }

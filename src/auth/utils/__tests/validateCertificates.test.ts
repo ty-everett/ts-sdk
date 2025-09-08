@@ -79,7 +79,7 @@ describe('validateCertificates', () => {
       message.certificates.length
     )
     expect(mockVerify).toHaveBeenCalledTimes(message.certificates.length)
-    expect(mockDecryptFields).toHaveBeenCalledWith(verifierWallet)
+    expect(mockDecryptFields).toHaveBeenCalledWith(verifierWallet, undefined, undefined, undefined)
   })
 
   it('throws an error for mismatched identity key', async () => {
@@ -127,7 +127,7 @@ describe('validateCertificates', () => {
       validateCertificates(verifierWallet, message)
     ).resolves.not.toThrow()
     for (const instance of mockInstances) {
-      expect(instance.decryptFields).toHaveBeenCalledWith(verifierWallet)
+      expect(instance.decryptFields).toHaveBeenCalledWith(verifierWallet, undefined, undefined, undefined)
     }
   })
 
@@ -158,7 +158,7 @@ describe('validateCertificates', () => {
     expect(VerifiableCertificate).toHaveBeenCalledTimes(2)
     expect(mockVerify).toHaveBeenCalledTimes(2)
     for (const instance of mockInstances) {
-      expect(instance.decryptFields).toHaveBeenCalledWith(verifierWallet)
+      expect(instance.decryptFields).toHaveBeenCalledWith(verifierWallet, undefined, undefined, undefined)
     }
   })
 })
