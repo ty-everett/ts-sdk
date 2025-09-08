@@ -42,11 +42,14 @@ const REGISTRANT_TOKEN_AMOUNT = 1
  * canonical references for baskets, protocols, and certificate types.
  */
 export class RegistryClient {
+  private readonly lookupResolver: LookupResolver
+
   constructor (
     private readonly networkPreset: 'mainnet' | 'testnet' | 'local' = 'mainnet',
-    private readonly wallet: WalletInterface = new WalletClient(),
-    private readonly lookupResolver: LookupResolver = new LookupResolver({ networkPreset: this.networkPreset })
-  ) { }
+    private readonly wallet: WalletInterface = new WalletClient()
+  ) {
+    this.lookupResolver = new LookupResolver({ networkPreset: this.networkPreset })
+  }
 
   /**
    * Publishes a new on-chain definition for baskets, protocols, or certificates.
