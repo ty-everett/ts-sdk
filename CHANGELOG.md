@@ -156,6 +156,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.7.4] - 2025-09-08
+
+### Fixed
+
+- Use shared lookup resolver to benefit from competent host caching.
+
+---
+
 ### [1.7.3] - 2025-09-05
 
 ### Fixed
