@@ -62,7 +62,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ```ts
 export class ContactsManager {
     constructor(wallet?: WalletInterface) 
-    async getContacts(identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> 
+    async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
     async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
     async removeContact(identityKey: string): Promise<void> 
 }
@@ -75,7 +75,7 @@ See also: [Contact](./identity.md#type-contact), [DisplayableIdentity](./identit
 Load all records from the contacts basket
 
 ```ts
-async getContacts(identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> 
+async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
 ```
 See also: [Contact](./identity.md#type-contact), [PubKeyHex](./wallet.md#type-pubkeyhex)
 
@@ -89,6 +89,8 @@ Argument Details
   + Optional specific identity key to fetch
 + **forceRefresh**
   + Whether to force a check for new contact data
++ **limit**
+  + Maximum number of contacts to return
 
 #### Method removeContact
 
@@ -132,7 +134,7 @@ export class IdentityClient {
     async publiclyRevealAttributes(certificate: WalletCertificate, fieldsToReveal: CertificateFieldNameUnder50Bytes[]): Promise<BroadcastResponse | BroadcastFailure> 
     async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
     async resolveByAttributes(args: DiscoverByAttributesArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
-    public async getContacts(identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> 
+    public async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
     public async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
     public async removeContact(identityKey: PubKeyHex): Promise<void> 
     static parseIdentity(identityToParse: IdentityCertificate): DisplayableIdentity 
@@ -149,7 +151,7 @@ Remove public certificate revelation from overlay services by spending the ident
 Load all records from the contacts basket
 
 ```ts
-public async getContacts(identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> 
+public async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
 ```
 See also: [Contact](./identity.md#type-contact), [PubKeyHex](./wallet.md#type-pubkeyhex)
 
@@ -165,6 +167,8 @@ Argument Details
   + Optional specific identity key to fetch
 + **forceRefresh**
   + Whether to force a check for new contact data
++ **limit**
+  + Optional limit on number of contacts to fetch
 
 #### Method parseIdentity
 

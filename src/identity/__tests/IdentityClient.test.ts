@@ -54,7 +54,11 @@ jest.mock('../../script', () => {
   })
 
   return {
-    PushDrop: mockPushDrop
+    PushDrop: mockPushDrop,
+    // Provide LockingScript.fromHex to satisfy ContactsManager.getContacts decode path
+    LockingScript: {
+      fromHex: jest.fn().mockImplementation((hex: string) => ({ toHex: () => hex }))
+    }
   }
 })
 
@@ -613,7 +617,8 @@ describe('IdentityClient', () => {
       it('should load contacts from wallet basket when cache is empty', async () => {
         const mockOutput = {
           outpoint: 'txid.0',
-          customInstructions: JSON.stringify({ keyID: 'mockKeyID' })
+          customInstructions: JSON.stringify({ keyID: 'mockKeyID' }),
+          lockingScript: 'lockingScriptHex'
         }
 
           ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
@@ -630,9 +635,10 @@ describe('IdentityClient', () => {
         expect(result).toEqual([mockContact])
         expect(walletMock.listOutputs).toHaveBeenCalledWith({
           basket: 'contacts',
-          include: 'entire transactions',
+          include: 'locking scripts',
           includeCustomInstructions: true,
-          tags: []
+          tags: [],
+          limit: 1000
         })
 
         // Verify subsequent call uses cache

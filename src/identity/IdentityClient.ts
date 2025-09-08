@@ -247,10 +247,11 @@ export class IdentityClient {
    * Load all records from the contacts basket
    * @param identityKey Optional specific identity key to fetch
    * @param forceRefresh Whether to force a check for new contact data
+   * @param limit Optional limit on number of contacts to fetch
    * @returns A promise that resolves with an array of contacts
    */
-  public async getContacts (identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> {
-    return await this.contactsManager.getContacts(identityKey, forceRefresh)
+  public async getContacts (identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> {
+    return await this.contactsManager.getContacts(identityKey, forceRefresh, limit)
   }
 
   /**

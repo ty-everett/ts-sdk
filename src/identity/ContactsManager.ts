@@ -1,7 +1,7 @@
 import { PubKeyHex, WalletClient, WalletInterface, WalletProtocol } from '../wallet/index.js'
 import { Utils, Random } from '../primitives/index.js'
 import { DisplayableIdentity } from './types/index.js'
-import { PushDrop } from '../script/index.js'
+import { LockingScript, PushDrop } from '../script/index.js'
 import { Transaction } from '../transaction/index.js'
 export type Contact = DisplayableIdentity & { metadata?: Record<string, any> }
 
@@ -41,9 +41,10 @@ export class ContactsManager {
    * Load all records from the contacts basket
    * @param identityKey Optional specific identity key to fetch
    * @param forceRefresh Whether to force a check for new contact data
+   * @param limit Maximum number of contacts to return
    * @returns A promise that resolves with an array of contacts
    */
-  async getContacts (identityKey?: PubKeyHex, forceRefresh = false): Promise<Contact[]> {
+  async getContacts (identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> {
     // Check in-memory cache first unless forcing refresh
     if (!forceRefresh) {
       const cached = this.cache.getItem(this.CONTACTS_CACHE_KEY)
@@ -74,9 +75,10 @@ export class ContactsManager {
     // Get all contact outputs from the contacts basket
     const outputs = await this.wallet.listOutputs({
       basket: 'contacts',
-      include: 'entire transactions',
+      include: 'locking scripts',
       includeCustomInstructions: true,
-      tags
+      tags,
+      limit
     })
 
     if (outputs.outputs == null || outputs.outputs.length === 0) {
@@ -89,12 +91,10 @@ export class ContactsManager {
     // Process each contact output
     for (const output of outputs.outputs) {
       try {
-        const [txid, outputIndex] = output.outpoint.split('.')
-        const tx = Transaction.fromBEEF(outputs.BEEF as number[], txid)
-        const lockingScript = tx.outputs[Number(outputIndex)].lockingScript
+        if (output.lockingScript == null) continue
 
         // Decode the PushDrop data
-        const decoded = PushDrop.decode(lockingScript)
+        const decoded = PushDrop.decode(LockingScript.fromHex(output.lockingScript))
         if (output.customInstructions == null) continue
         const keyID = JSON.parse(output.customInstructions).keyID
 
@@ -164,7 +164,8 @@ export class ContactsManager {
       basket: 'contacts',
       include: 'entire transactions',
       includeCustomInstructions: true,
-      tags: [`identityKey ${Utils.toHex(hashedIdentityKey)}`]
+      tags: [`identityKey ${Utils.toHex(hashedIdentityKey)}`],
+      limit: 100 // Should only be one contact!
     })
 
     let existingOutput: any = null
@@ -309,7 +310,8 @@ export class ContactsManager {
       basket: 'contacts',
       include: 'entire transactions',
       includeCustomInstructions: true,
-      tags
+      tags,
+      limit: 100 // Should only be one contact!
     })
 
     if (outputs.outputs == null) return

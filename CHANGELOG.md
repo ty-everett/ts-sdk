@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.5 - 2025-09-08](#175---2025-09-08)
+- [1.7.4 - 2025-09-08](#174---2025-09-08)
 - [1.7.3 - 2025-09-05](#173---2025-09-05)
 - [1.7.2 - 2025-09-05](#172---2025-09-05)
 - [1.7.1 - 2025-09-03](#171---2025-09-03)
@@ -153,6 +155,15 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.7.5] - 2025-09-08
+
+### Fixed
+
+- Plumbed originator through Peer and AuthFetch to pass to WalletInterface calls.
+- Updated IdentityClient to support limit on getContacts, and only request locking scripts to increase performance.
 
 ---
 
