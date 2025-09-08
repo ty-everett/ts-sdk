@@ -45,8 +45,8 @@ export class RegistryClient {
   private readonly lookupResolver: LookupResolver
 
   constructor (
-    private readonly networkPreset: 'mainnet' | 'testnet' | 'local' = 'mainnet',
-    private readonly wallet: WalletInterface = new WalletClient()
+    private readonly wallet: WalletInterface = new WalletClient(),
+    private readonly networkPreset: 'mainnet' | 'testnet' | 'local' = 'mainnet'
   ) {
     this.lookupResolver = new LookupResolver({ networkPreset: this.networkPreset })
   }
