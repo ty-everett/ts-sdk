@@ -42,9 +42,10 @@ const REGISTRANT_TOKEN_AMOUNT = 1
  * canonical references for baskets, protocols, and certificate types.
  */
 export class RegistryClient {
-  private network: 'mainnet' | 'testnet'
   constructor (
-    private readonly wallet: WalletInterface = new WalletClient()
+    private readonly networkPreset: 'mainnet' | 'testnet' | 'local' = 'mainnet',
+    private readonly wallet: WalletInterface = new WalletClient(),
+    private readonly lookupResolver: LookupResolver = new LookupResolver({ networkPreset: this.networkPreset })
   ) { }
 
   /**
@@ -94,7 +95,8 @@ export class RegistryClient {
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(data.definitionType)],
       {
-        networkPreset: this.network ??= (await this.wallet.getNetwork({})).network
+        networkPreset: this.networkPreset,
+        resolver: this.lookupResolver
       }
     )
     return await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
@@ -119,11 +121,10 @@ export class RegistryClient {
     definitionType: T,
     query: RegistryQueryMapping[T]
   ): Promise<DefinitionData[]> {
-    const resolver = new LookupResolver()
     const serviceName = this.mapDefinitionTypeToServiceName(definitionType)
 
     // Make the lookup query
-    const result = await resolver.query({ service: serviceName, query })
+    const result = await this.lookupResolver.query({ service: serviceName, query })
     if (result.type !== 'output-list') {
       return []
     }
@@ -270,7 +271,8 @@ export class RegistryClient {
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(registryRecord.definitionType)],
       {
-        networkPreset: this.network ??= (await this.wallet.getNetwork({})).network
+        networkPreset: this.networkPreset,
+        resolver: this.lookupResolver
       }
     )
     return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx))

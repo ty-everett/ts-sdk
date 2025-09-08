@@ -15,9 +15,11 @@ export interface DownloadResult {
 
 export class StorageDownloader {
   private readonly networkPreset?: 'mainnet' | 'testnet' | 'local' = 'mainnet'
+  private readonly lookupResolver: LookupResolver
 
   constructor (config?: DownloaderConfig) {
-    this.networkPreset = config?.networkPreset
+    this.networkPreset = config?.networkPreset ?? 'mainnet'
+    this.lookupResolver = new LookupResolver({ networkPreset: this.networkPreset })
   }
 
   /**
@@ -27,8 +29,7 @@ export class StorageDownloader {
    */
   public async resolve (uhrpUrl: string): Promise<string[]> {
     // Use UHRP lookup service
-    const lookupResolver = new LookupResolver({ networkPreset: this.networkPreset })
-    const response = await lookupResolver.query({ service: 'ls_uhrp', query: { uhrpUrl } })
+    const response = await this.lookupResolver.query({ service: 'ls_uhrp', query: { uhrpUrl } })
     if (response.type !== 'output-list') {
       throw new Error('Lookup answer must be an output list')
     }
