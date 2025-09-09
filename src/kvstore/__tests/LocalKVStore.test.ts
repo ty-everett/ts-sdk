@@ -157,15 +157,16 @@ describe('localKVStore', () => {
         BEEF: undefined
       }
 
-      const lookupValueReal = kvStore.lookupValue
-      kvStore.lookupValue = jest.fn().mockResolvedValue({
+      const lookupValueReal = kvStore['lookupValue']
+      kvStore['lookupValue'] = jest.fn().mockResolvedValue({
         value: defaultValue,
         outpoint: undefined,
         lor: mockedLor
       })
 
+
       const result = await kvStore.get(testKey, defaultValue)
-      kvStore.lookupValue = lookupValueReal
+      kvStore['lookupValue'] = lookupValueReal
 
       expect(result).toBe(defaultValue)
     })
@@ -179,15 +180,16 @@ describe('localKVStore', () => {
         BEEF: undefined
       }
 
-      const lookupValueReal = kvStore.lookupValue
-      kvStore.lookupValue = jest.fn().mockResolvedValue({
+      const lookupValueReal = kvStore['lookupValue']
+      kvStore['lookupValue'] = jest.fn().mockResolvedValue({
         value: defaultValue,
         outpoint: undefined,
         lor: mockedLor
       })
 
+
       const result = await kvStore.get(testKey, defaultValue)
-      kvStore.lookupValue = lookupValueReal
+      kvStore['lookupValue'] = lookupValueReal
 
       expect(result).toBe(defaultValue)
     })
@@ -231,7 +233,7 @@ describe('localKVStore', () => {
         testKey,
         'self'
       )
-      // expect(mockWallet.listOutputs).toHaveBeenCalledWith({ basket: testContext, tags: [testKey], include: 'entire transactions' })
+      //expect(mockWallet.listOutputs).toHaveBeenCalledWith({ basket: testContext, tags: [testKey], include: 'entire transactions' })
       // Verify createAction for NEW output
       expect(mockWallet.createAction).toHaveBeenCalledWith({
         description: `Update ${testKey} in ${testContext}`,
@@ -275,13 +277,13 @@ describe('localKVStore', () => {
         testKey,
         'self'
       )
-      // expect(mockWallet.listOutputs).toHaveBeenCalledWith({ basket: testContext, tags: [testKey], include: 'entire transactions' })
+      //expect(mockWallet.listOutputs).toHaveBeenCalledWith({ basket: testContext, tags: [testKey], include: 'entire transactions' })
       expect(mockWallet.createAction).toHaveBeenCalledWith({
         description: `Update ${testKey} in ${testContext}`,
         inputBEEF: undefined,
         inputs: [],
         outputs: [{
-          basket: 'test-kv-context',
+          basket: "test-kv-context",
           tags: ['myTestKey'],
           lockingScript: testLockingScriptHex, // From mock lock
           satoshis: 1,
@@ -299,7 +301,7 @@ describe('localKVStore', () => {
     it('should update an existing output (spend and create)', async () => {
       const existingOutpoint = 'oldTxId.0'
       const existingOutput = { outpoint: existingOutpoint, txid: 'oldTxId', vout: 0, lockingScript: 'oldScriptHex' } // Added script
-      const mockBEEF = [1, 2, 3, 4, 5, 6]
+      const mockBEEF = [1,2,3,4,5,6]
       const signableRef = 'signableTxRef123'
       const signableTx = []
       const updatedTxId = 'updatedTxId'
@@ -335,8 +337,8 @@ describe('localKVStore', () => {
         BEEF: mockBEEF
       }
 
-      const lookupValueReal = kvStore.lookupValue
-      kvStore.lookupValue = jest.fn().mockResolvedValue({
+      const lookupValueReal = kvStore['lookupValue']
+      kvStore['lookupValue'] = jest.fn().mockResolvedValue({
         value: 'oldValue',
         outpoint: existingOutpoint,
         lor: mockedLor
@@ -348,7 +350,7 @@ describe('localKVStore', () => {
        */
       const result = await kvStore.set(testKey, testValue)
 
-      kvStore.lookupValue = lookupValueReal
+      kvStore['lookupValue'] = lookupValueReal
 
       expect(result).toBe(`${updatedTxId}.0`) // Assuming output 0 is the new KV token
       expect(mockWallet.encrypt).toHaveBeenCalled()
@@ -393,7 +395,7 @@ describe('localKVStore', () => {
       const existingOutpoint2 = 'oldTxId2.1'
       const existingOutput1 = { outpoint: existingOutpoint1, txid: 'oldTxId1', vout: 0, lockingScript: 's1' }
       const existingOutput2 = { outpoint: existingOutpoint2, txid: 'oldTxId2', vout: 1, lockingScript: 's2' }
-      const mockBEEF = [1, 2, 3, 4, 5, 6]
+      const mockBEEF = [1,2,3,4,5,6]
       const signableRef = 'signableTxRefMulti'
       const signableTx = []
       const updatedTxId = 'updatedTxIdMulti'
@@ -431,15 +433,15 @@ describe('localKVStore', () => {
         BEEF: mockBEEF
       }
 
-      const lookupValueReal = kvStore.lookupValue
-      kvStore.lookupValue = jest.fn().mockResolvedValue({
+      const lookupValueReal = kvStore['lookupValue']
+      kvStore['lookupValue'] = jest.fn().mockResolvedValue({
         value: 'oldValue',
         outpoint: existingOutpoint2,
         lor: mockedLor
       })
 
       const result = await kvStore.set(testKey, testValue)
-      kvStore.lookupValue = lookupValueReal
+      kvStore['lookupValue'] = lookupValueReal
 
       expect(result).toBe(`${updatedTxId}.0`)
       expect(mockWallet.encrypt).toHaveBeenCalled()
@@ -534,7 +536,7 @@ describe('localKVStore', () => {
       const result = await kvStore.remove(testKey)
 
       expect(result).toEqual([removalTxId])
-      // expect(mockWallet.listOutputs).toHaveBeenCalledWith({ basket: testContext, tags: [testKey], include: 'entire transactions', limit: undefined, tagsQueryMode: 'all' })
+      //expect(mockWallet.listOutputs).toHaveBeenCalledWith({ basket: testContext, tags: [testKey], include: 'entire transactions', limit: undefined, tagsQueryMode: 'all' })
 
       // Verify createAction for REMOVE (no outputs in the action)
       expect(mockWallet.createAction).toHaveBeenCalledWith({
@@ -602,10 +604,11 @@ describe('localKVStore', () => {
       expect(mockWallet.listOutputs).toHaveBeenCalled()
       expect(mockWallet.createAction).toHaveBeenCalled() // createAction called for removal attempt
       expect(MockedTransaction.fromAtomicBEEF).toHaveBeenCalled()
-      // expect(mockPDInstance.unlock).toHaveBeenCalledTimes(1) // unlock was called
+      //expect(mockPDInstance.unlock).toHaveBeenCalledTimes(1) // unlock was called
       const mockUnlocker = (mockPDInstance.unlock as jest.Mock).mock.results[0].value
       expect(mockUnlocker.sign).toHaveBeenCalledTimes(1) // sign was called
       expect(mockWallet.signAction).toHaveBeenCalled() // Called but failed
+
     })
   })
 })

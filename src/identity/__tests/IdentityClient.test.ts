@@ -256,7 +256,7 @@ describe('IdentityClient', () => {
       }
 
       // Mock ContactsManager to return contact for the specific identity key
-      const mockContactsManager = identityClient.contactsManager
+      const mockContactsManager = identityClient['contactsManager']
       mockContactsManager.getContacts = jest.fn().mockResolvedValue([contact])
       walletMock.discoverByIdentityKey = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
 
@@ -352,7 +352,7 @@ describe('IdentityClient', () => {
       }
 
       // Mock the ContactsManager's getContacts method instead of the IdentityClient method
-      const mockContactsManager = identityClient.contactsManager
+      const mockContactsManager = identityClient['contactsManager']
       mockContactsManager.getContacts = jest.fn().mockResolvedValue([contact])
       walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
 
@@ -367,15 +367,11 @@ describe('IdentityClient', () => {
         {
           name: 'Alice Smith',
           identityKey: 'alice-key',
-          avatarURL: '',
-          abbreviatedKey: 'alice-i...',
-          badgeIconURL: '',
-          badgeLabel: '',
-          badgeClickURL: ''
+          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
         }
       ]
 
-      const mockContactsManager = identityClient.contactsManager
+      const mockContactsManager = identityClient['contactsManager']
       mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
 
       const identities = await identityClient.resolveByAttributes({ attributes: { name: '', email: '   ' } })
@@ -388,11 +384,7 @@ describe('IdentityClient', () => {
         {
           name: 'Alice Smith (Personal)',
           identityKey: 'alice-key',
-          avatarURL: '',
-          abbreviatedKey: 'alice-i...',
-          badgeIconURL: '',
-          badgeLabel: '',
-          badgeClickURL: ''
+          avatarURL: '', abbreviatedKey: 'alice-i...', badgeIconURL: '', badgeLabel: '', badgeClickURL: ''
         }
       ]
 
@@ -410,7 +402,7 @@ describe('IdentityClient', () => {
         }
       }
 
-      const mockContactsManager = identityClient.contactsManager
+      const mockContactsManager = identityClient['contactsManager']
       mockContactsManager.getContacts = jest.fn().mockResolvedValue(contacts)
       walletMock.discoverByAttributes = jest.fn().mockResolvedValue({ certificates: [discoveredCertificate] })
 
@@ -574,13 +566,13 @@ describe('IdentityClient', () => {
         }
 
           ; (walletMock.listOutputs as jest.Mock).mockResolvedValueOnce({
-          outputs: [existingOutput],
-          BEEF: [1, 2, 3]
-        })
+            outputs: [existingOutput],
+            BEEF: [1, 2, 3]
+          })
 
-        ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
-          plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
-        })
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
 
         const updatedContact = { ...mockContact, name: 'Alice Updated' }
         await identityClient.saveContact(updatedContact)
@@ -630,13 +622,13 @@ describe('IdentityClient', () => {
         }
 
           ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
-          outputs: [mockOutput],
-          BEEF: [1, 2, 3]
-        })
+            outputs: [mockOutput],
+            BEEF: [1, 2, 3]
+          })
 
-        ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
-          plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
-        })
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
 
         const result = await identityClient.getContacts()
 
@@ -664,11 +656,11 @@ describe('IdentityClient', () => {
         })
         await identityClient.saveContact(mockContact)
 
-        // Mock empty result for force refresh
-        ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
-          outputs: [],
-          BEEF: []
-        })
+          // Mock empty result for force refresh
+          ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
+            outputs: [],
+            BEEF: []
+          })
 
         const result = await identityClient.getContacts(undefined, true)
 
@@ -727,13 +719,13 @@ describe('IdentityClient', () => {
         }
 
           ; (walletMock.listOutputs as jest.Mock).mockResolvedValue({
-          outputs: [mockOutput],
-          BEEF: [1, 2, 3]
-        })
+            outputs: [mockOutput],
+            BEEF: [1, 2, 3]
+          })
 
-        ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
-          plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
-        })
+          ; (walletMock.decrypt as jest.Mock).mockResolvedValue({
+            plaintext: new TextEncoder().encode(JSON.stringify(mockContact))
+          })
 
         await identityClient.removeContact(mockContact.identityKey)
 
