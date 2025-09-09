@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.6 - 2025-09-09](#176---2025-09-08)
 - [1.7.5 - 2025-09-08](#175---2025-09-08)
 - [1.7.4 - 2025-09-08](#174---2025-09-08)
 - [1.7.3 - 2025-09-05](#173---2025-09-05)
@@ -155,6 +156,13 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+### [1.7.6] - 2025-09-09
+
+### Fixed
+
+- Set the originator of AuthFetch within the constructor so it properly uses originator.
 
 ---
 

@@ -55,6 +55,7 @@ export class AuthFetch {
     this.wallet = wallet
     this.requestedCertificates = requestedCertificates
     this.sessionManager = sessionManager ?? new SessionManager()
+    this.originator = originator
   }
 
   /**
