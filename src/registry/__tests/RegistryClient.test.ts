@@ -99,7 +99,7 @@ let walletMock: Partial<WalletInterface>
 /**
  * Build minimal valid DefinitionData for each type
  */
-function buildDefinitionData(type: DefinitionType): DefinitionData {
+function buildDefinitionData (type: DefinitionType): DefinitionData {
   switch (type) {
     case 'basket': {
       const data: BasketDefinitionData = {
@@ -288,23 +288,23 @@ describe('RegistryClient', () => {
         })
       }))
 
-        // The code expects 7 fields for basket (6 definition fields + 1 extra signature field)
-        ; (PushDrop.decode as jest.Mock).mockReturnValue({
-          fields: [
-            [98], // 'b'
-            [97], // 'a'
-            [115], // 's'
-            [107], // 'k'
-            [101], // 'e'
-            [116], // 't' => operator
-            [111]  // extra signature field
-          ]
-        })
+      // The code expects 7 fields for basket (6 definition fields + 1 extra signature field)
+      ; (PushDrop.decode as jest.Mock).mockReturnValue({
+        fields: [
+          [98], // 'b'
+          [97], // 'a'
+          [115], // 's'
+          [107], // 'k'
+          [101], // 'e'
+          [116], // 't' => operator
+          [111] // extra signature field
+        ]
+      })
 
-        // The final field must match the current wallet pubkey => 'mockPublicKey'
-        ; (walletMock.getPublicKey as jest.Mock).mockResolvedValueOnce({
-          publicKey: 't'
-        })
+      // The final field must match the current wallet pubkey => 'mockPublicKey'
+      ; (walletMock.getPublicKey as jest.Mock).mockResolvedValueOnce({
+        publicKey: 't'
+      })
 
       const result = await registryClient.resolve('basket', { basketID: 'whatever' })
       expect(result).toHaveLength(1)
@@ -330,10 +330,10 @@ describe('RegistryClient', () => {
         })
       }))
 
-        // Return empty fields so parseLockingScript fails the length check
-        ; (PushDrop.decode as jest.Mock)
-          .mockReturnValueOnce({ fields: [] }) // fail
-          .mockReturnValueOnce({ fields: [] }) // fail again
+      // Return empty fields so parseLockingScript fails the length check
+      ; (PushDrop.decode as jest.Mock)
+        .mockReturnValueOnce({ fields: [] }) // fail
+        .mockReturnValueOnce({ fields: [] }) // fail again
 
       const result = await registryClient.resolve('basket', { name: 'fooAgain' })
       expect(result).toEqual([])
@@ -376,35 +376,34 @@ describe('RegistryClient', () => {
       (PushDrop.decode as jest.Mock).mockImplementation((scriptObj) => {
         return {
           fields: [
-            [98],  // 'b'
-            [97],  // 'a'
+            [98], // 'b'
+            [97], // 'a'
             [115], // 's'
             [107], // 'k'
             [101], // 'e'
             [116], // 't'
-            [111]  // extra signature field
+            [111] // extra signature field
           ]
         }
       });
 
-      (walletMock.getPublicKey as jest.Mock).mockResolvedValue({ publicKey: 't' }); // <-- Semicolon
+      (walletMock.getPublicKey as jest.Mock).mockResolvedValue({ publicKey: 't' }) // <-- Semicolon
 
-      const records = await registryClient.listOwnRegistryEntries('basket');
+      const records = await registryClient.listOwnRegistryEntries('basket')
       expect(walletMock.listOutputs).toHaveBeenCalledWith({
         basket: 'basketmap',
         include: 'entire transactions'
-      });
+      })
       // Only one spendable item should be returned if parsing succeeds.
-      expect(records).toHaveLength(1);
+      expect(records).toHaveLength(1)
       expect(records[0]).toMatchObject({
         definitionType: 'basket',
         txid: 'skipMe',
         outputIndex: 2,
         satoshis: 200,
         lockingScript: 'decodedLockScript1AsHex'
-      });
-    });
-
+      })
+    })
   })
 
   // ------------------------------------------------------------------
