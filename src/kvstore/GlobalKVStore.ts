@@ -3,13 +3,14 @@ import * as Utils from '../primitives/utils.js'
 import { Hash } from '../primitives/index.js'
 import { TopicBroadcaster, LookupResolver } from '../overlay-tools/index.js'
 import { BroadcastResponse, BroadcastFailure } from '../transaction/Broadcaster.js'
-import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString } from '../wallet/Wallet.interfaces.js'
+import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
 import { PushDrop } from '../script/index.js'
 import WalletClient from '../wallet/WalletClient.js'
 import { Beef } from '../transaction/Beef.js'
-import PubKeyHex from '../primitives/PublicKey.js'
 import { Historian } from './Historian.js'
 import { createKVStoreInterpreter } from './interpreters/createKVStoreInterpreter.js'
+import { ProtoWallet } from 'mod.js'
+import { kvProtocol } from './interpreters/types.js'
 
 /**
  * Configuration interface for GlobalKVStore operations.
@@ -26,14 +27,6 @@ export interface KVStoreConfig {
   topics?: string[]
   /** Counterparty for key derivation */
   counterparty?: PubKeyHex | 'self'
-  /** Whether receiving from counterparty */
-  receiveFromCounterparty?: boolean
-  /** Whether sending to counterparty */
-  sendToCounterparty?: boolean
-  /** Viewpoint for key derivation */
-  viewpoint?: string | 'localToSelf'
-  /** Whether to encrypt values before storing */
-  encrypt?: boolean
   /** Maximum double spend retry attempts */
   doubleSpendMaxAttempts?: number
   /** Current attempt counter */
@@ -58,6 +51,7 @@ export interface KVStoreConfig {
  */
 export interface KVStoreQuery {
   protectedKey?: string
+  controller?: PubKeyHex
   limit?: number
   skip?: number
   sortOrder?: 'asc' | 'desc'
@@ -97,10 +91,6 @@ const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'overlayHost' | 'o
   tokenAmount: 1,
   topics: ['tm_kvstore'],
   counterparty: 'self',
-  receiveFromCounterparty: false,
-  sendToCounterparty: false,
-  viewpoint: 'localToSelf',
-  encrypt: true,
   doubleSpendMaxAttempts: 5,
   attemptCounter: 0,
   actionDescription: '',
@@ -150,11 +140,6 @@ export class GlobalKVStore {
     this.config = { ...DEFAULT_CONFIG, ...config }
     this.wallet = config.wallet ?? new WalletClient()
     this.acceptDelayedBroadcast = false // Move to config?
-
-    // Validate configuration
-    if (this.config.sendToCounterparty === true && this.config.receiveFromCounterparty === true) {
-      throw new Error('sendToCounterparty and receiveFromCounterparty cannot both be true at the same time.')
-    }
   }
 
   /**
@@ -205,63 +190,26 @@ export class GlobalKVStore {
   }
 
   /**
-   * Computes an invoice number for key derivation.
-   * Used in viewpoint-based key protection when not using localToSelf viewpoint.
-   *
-   * @param {[number, string] | string} protocolID - The protocol identifier.
-   * @param {string} key - The key to compute invoice number for.
-   * @returns {string} The computed invoice number.
-   * @private
-   */
-  private computeInvoiceNumber(protocolID: [number, string] | string, key: string): string {
-    if (typeof protocolID === 'string') {
-      return `2-${protocolID}-${key}`
-    }
-    return `${protocolID[0]}-${protocolID[1]}-${key}`
-  }
-
-  /**
    * Generates a protected key for the given key and context.
-   * Uses createHMAC to derive a protected key based on the viewpoint and counterparty settings.
    *
    * @param {string} key - The original key to protect.
-   * @param {'searching' | 'creating'} [context='searching'] - The context for key generation (searching existing or creating new).
+   * @param {PubKeyHex} controller - The public key of the controller.
    * @returns {Promise<string>} The base64-encoded protected key.
    * @throws {Error} If key derivation fails.
    * @private
    */
-  private async getProtectedKey(key: string, context: 'searching' | 'creating' = 'searching'): Promise<string> {
-    if (this.config.viewpoint === 'localToSelf') {
-      let counterparty = this.config.counterparty
-
-      // Counterparty should flip to self when:
-      // - context is searching and sendToCounterparty is true
-      // - context is creating and receiveFromCounterparty is true
-      if (
-        (context === 'searching' && this.config.sendToCounterparty === true) ||
-        (context === 'creating' && this.config.receiveFromCounterparty === true)
-      ) {
-        counterparty = 'self'
-      }
-
-      // Use wallet for HMAC computation
-      const invoiceNumber = this.computeInvoiceNumber(this.config.protocolID, key)
-      const protectedKey = await this.wallet.createHmac({
-        protocolID: this.config.protocolID,
-        keyID: invoiceNumber,
-        counterparty: counterparty === 'self' ? 'self' : counterparty.toString(),
-        data: Utils.toArray('', 'utf8')
-      }, this.config.originator)
-      return Utils.toBase64(protectedKey.hmac)
-    } else {
-      // TODO: Review this logic
-      const invoiceNumber = this.computeInvoiceNumber(this.config.protocolID, key)
-      const viewpointBytes = Utils.toArray(this.config.viewpoint, 'hex')
-      const hmacKey = Hash.sha256(viewpointBytes)
-      const hmacData = Utils.toArray(invoiceNumber, 'utf8')
-      const hmac = Hash.sha256hmac(hmacKey, hmacData)
-      return Utils.toBase64(hmac)
+  private async getProtectedKey(key: string, controller?: PubKeyHex): Promise<string> {
+    // Use anyone wallet for HMAC computation
+    if (controller == null) {
+      controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
     }
+    const protectedKey = await new ProtoWallet('anyone').createHmac({
+      protocolID: this.config.protocolID,
+      keyID: key,
+      counterparty: controller,
+      data: Utils.toArray(key, 'utf8')
+    })
+    return Utils.toBase64(protectedKey.hmac)
   }
 
   /**
@@ -269,15 +217,20 @@ export class GlobalKVStore {
    * Searches for existing key-value pairs using the protected key and decodes the stored values.
    *
    * @param {string} protectedKey - The protected key to search for.
-   * @param {string} key - The original key for decryption.
+   * @param {PubKeyHex | undefined} controller - The controller of the key
    * @param {boolean} [history=false] - Whether to include value history.
    * @returns {Promise<{token?: KVStoreToken, value?: string, valueHistory?: string[]}>} The found data or empty object.
    * @throws {Error} If the overlay service is unreachable or returns invalid data.
    * @private
    */
-  private async findFromOverlay(protectedKey: string, key: string, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] }> {
+  private async findFromOverlay(protectedKey: string, controller?: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] }> {
+    // TODO: move to getIdentityKey helper
+    if (controller == null) {
+      controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
+    }
     const query: KVStoreQuery = {
       protectedKey,
+      controller,
       history
     }
 
@@ -295,67 +248,65 @@ export class GlobalKVStore {
       return {}
     }
 
-    // Get the first result (most recent)
-    const result = answer.outputs[0]
-    const tx = Transaction.fromBEEF(result.beef)
-    const output = tx.outputs[result.outputIndex]
-
-    // Decode the KVStore token to extract the value
-    const decoded = PushDrop.decode(output.lockingScript)
-    if (decoded.fields.length !== 3) {
-      throw new Error('Invalid KVStore token: expected 2 fields + sig')
-    }
-
-    let currentValue: string = Utils.toUTF8(decoded.fields[1]) // Default to plaintext
-
-    if (this.config.encrypt === true) {
-      // Try to decrypt the value using wallet
+    for (const result of answer.outputs) {
       try {
-        const { plaintext } = await this.wallet.decrypt({
-          protocolID: this.config.protocolID,
-          keyID: key,
-          ciphertext: decoded.fields[1]
+        // Verify signature
+        const tx = Transaction.fromBEEF(result.beef)
+        const output = tx.outputs[result.outputIndex]
+        // Decode the KVStore token to extract the value
+        const decoded = PushDrop.decode(output.lockingScript)
+        if (decoded.fields.length !== 5) {
+          throw new Error('Invalid KVStore token: expected 4 fields + sig')
+        }
+
+        // Verify key linkage
+        const anyoneWallet = new ProtoWallet('anyone')
+        const { valid } = await anyoneWallet.verifySignature({
+          data: decoded.fields.reduce((a, e) => [...a, ...e], []),
+          signature: decoded.fields[kvProtocol.signature],
+          counterparty: controller,
+          protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.namespace])),
+          keyID: protectedKey
         })
-        currentValue = Utils.toUTF8(plaintext)
-      } catch {
-        // Decryption failed, using plaintext fallback
+        if (!valid) {
+          continue
+        }
+
+        let currentValue: string = Utils.toUTF8(decoded.fields[kvProtocol.value]) // Default to plaintext
+
+        if (history) {
+          // Use Historian to extract complete history by traversing the input chain
+          const interpreter = createKVStoreInterpreter(protectedKey)
+
+          const historian = new Historian<string>(interpreter, { debug: false })
+          const valueHistory = await historian.buildHistory(tx)
+
+          return {
+            token: {
+              txid: tx.id('hex'),
+              outputIndex: result.outputIndex,
+              beef: Beef.fromBinary(result.beef),
+              satoshis: output.satoshis ?? 0
+            },
+            value: currentValue,
+            valueHistory
+          }
+        }
+
+        return {
+          token: {
+            txid: tx.id('hex'),
+            outputIndex: result.outputIndex,
+            beef: Beef.fromBinary(result.beef),
+            satoshis: output.satoshis ?? 0
+          },
+          value: currentValue
+        }
+      } catch (error) {
+        continue
       }
     }
-
-    if (history) {
-      // Use Historian to extract complete history by traversing the input chain
-      const interpreter = createKVStoreInterpreter({
-        protectedKey,
-        key,
-        encrypt: this.config.encrypt,
-        wallet: this.wallet,
-        protocolID: this.config.protocolID
-      })
-
-      const historian = new Historian<string>(interpreter, { debug: false })
-      const valueHistory = await historian.buildHistory(tx)
-
-      return {
-        token: {
-          txid: tx.id('hex'),
-          outputIndex: result.outputIndex,
-          beef: Beef.fromBinary(result.beef),
-          satoshis: output.satoshis ?? 0
-        },
-        value: currentValue,
-        valueHistory
-      }
-    }
-
-    return {
-      token: {
-        txid: tx.id('hex'),
-        outputIndex: result.outputIndex,
-        beef: Beef.fromBinary(result.beef),
-        satoshis: output.satoshis ?? 0
-      },
-      value: currentValue
-    }
+    throw new Error('No valid tokens found')
   }
 
   /**
@@ -380,6 +331,7 @@ export class GlobalKVStore {
    *
    * @param {string} key - The key to retrieve the value for.
    * @param {string | undefined} [defaultValue=undefined] - The value to return if the key is not found.
+   * @param {PubKeyHex | 'self'} [controller='self'] - The controller of the key.
    * @param {boolean} [history=false] - Whether to include the complete value history.
    * @returns {Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }>}
    *   A promise that resolves to the value as a string, the defaultValue if the key is not found,
@@ -387,7 +339,7 @@ export class GlobalKVStore {
    * @throws {Error} If the key is invalid or the overlay service is unreachable.
    * @throws {Error} If the found token's locking script cannot be decoded or represents an invalid token format.
    */
-  async get(key: string, defaultValue?: string, history = false): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
+  async get(key: string, defaultValue?: string, controller?: PubKeyHex, history = false): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -395,8 +347,8 @@ export class GlobalKVStore {
     const lockQueue = await this.queueOperationOnKey(key)
 
     try {
-      const protectedKey = await this.getProtectedKey(key, 'searching')
-      const results = await this.findFromOverlay(protectedKey, key, history)
+      const protectedKey = await this.getProtectedKey(key, controller)
+      const results = await this.findFromOverlay(protectedKey, controller, history)
 
       if (results.token == null || results.value == null) {
         return defaultValue
@@ -418,28 +370,6 @@ export class GlobalKVStore {
   }
 
   /**
-   * Retrieves the value associated with a given key along with its complete history.
-   * This is a convenience method equivalent to calling get(key, defaultValue, true).
-   *
-   * @param {string} key - The key to retrieve the value and history for.
-   * @param {string | undefined} [defaultValue=undefined] - The value to return if the key is not found.
-   * @returns {Promise<{ token: KVStoreToken, value: string, valueHistory: string[] } | undefined>}
-   *   A promise that resolves to a history object with the current value and all previous values,
-   *   or undefined if the key is not found.
-   * @throws {Error} If the key is invalid or the overlay service is unreachable.
-   */
-  async getWithHistory(key: string, defaultValue?: string): Promise<{ token: KVStoreToken, value: string, valueHistory: string[] } | undefined> {
-    const result = await this.get(key, defaultValue, true)
-
-    // Return undefined if no result, otherwise return the history object
-    if (typeof result === 'object' && result.valueHistory != null) {
-      return result as { token: KVStoreToken, value: string, valueHistory: string[] }
-    }
-
-    return undefined
-  }
-
-  /**
    * Sets or updates the value associated with a given key atomically.
    * If the key already exists, it spends the existing token and creates a new one with the updated value.
    * If the key does not exist, it creates a new token.
@@ -457,48 +387,28 @@ export class GlobalKVStore {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
-
     if (typeof value !== 'string') {
       throw new Error('Value must be a string.')
     }
 
     const lockQueue = await this.queueOperationOnKey(key)
-
+    const controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
     try {
-      const protectedKey = await this.getProtectedKey(key, 'searching')
+      const protectedKey = await this.getProtectedKey(key, controller)
       const existingTokens = await this.findFromOverlay(protectedKey, key)
-
-      const protocol = {
-        protocolID: this.config.protocolID,
-        keyID: key
-      }
-
-      // Prepare the value field
-      const newProtectedKey = await this.getProtectedKey(key, 'creating')
-      let valueAsArray = Utils.toArray(value, 'utf8')
-
-      // Encrypt the value if encryption is enabled
-      if (this.config.encrypt === true) {
-        const { ciphertext } = await this.wallet.encrypt({
-          ...protocol,
-          plaintext: valueAsArray
-        })
-        valueAsArray = ciphertext
-      }
-
-      // The protected key must be exactly 32 bytes as expected by topic manager
-      const protectedKeyBytes = Utils.toArray(newProtectedKey, 'base64')
-      if (protectedKeyBytes.length !== 32) {
-        throw new Error(`Protected key must be exactly 32 bytes, got ${protectedKeyBytes.length} bytes`)
-      }
 
       // Create PushDrop instance and locking script with the two required fields
       const pushdrop = new PushDrop(this.wallet, this.config.originator)
       const lockingScript = await pushdrop.lock(
-        [protectedKeyBytes, valueAsArray],
-        protocol.protocolID,
-        key,
-        'self'
+        [
+          Utils.toArray(JSON.stringify(this.config.protocolID), 'utf8'),
+          Utils.toArray(protectedKey, 'base64'),
+          Utils.toArray(value, 'utf8'),
+          Utils.toArray(controller, 'hex')
+        ],
+        this.config.protocolID,
+        protectedKey,
+        'anyone'
       )
 
       let inputs: CreateActionInput[] = []
@@ -512,8 +422,6 @@ export class GlobalKVStore {
           inputDescription: 'Previous KVStore token'
         }]
         inputBEEF = existingTokens.token.beef
-      } else if (this.config.receiveFromCounterparty === true) {
-        throw new Error('There is no token to receive from this counterparty')
       }
 
       try {
@@ -542,8 +450,8 @@ export class GlobalKVStore {
           const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
           const unlocker = pushdrop.unlock(
             this.config.protocolID,
-            key,
-            'self'
+            protectedKey,
+            'anyone'
           )
           const unlockingScript = await unlocker.sign(tx, 0)
 
@@ -558,7 +466,6 @@ export class GlobalKVStore {
 
           const transaction = Transaction.fromAtomicBEEF(finalTx)
           await this.submitToOverlay(transaction)
-
           return `${transaction.id('hex')}.0`
         } else {
           // New token - no inputs to sign
@@ -581,7 +488,6 @@ export class GlobalKVStore {
 
           const transaction = Transaction.fromAtomicBEEF(tx)
           await this.submitToOverlay(transaction)
-
           return `${transaction.id('hex')}.0`
         }
       } catch (error: any) {
@@ -592,7 +498,7 @@ export class GlobalKVStore {
         //   this.finishOperationOnKey(key, lockQueue)
         //   return this.set(key, value)
         // }
-        throw new Error('Failed to set key-value pair')
+        throw error
       }
     } finally {
       // Only finish operation if we haven't already done so in the retry logic
@@ -608,22 +514,22 @@ export class GlobalKVStore {
    * Uses atomic locking to ensure thread-safe operations.
    *
    * @param {string} key - The key to remove.
-   * @returns {Promise<string[]>} A promise that resolves to the txids of the removal transactions if successful.
+   * @param {CreateActionOutput[] | undefined} [outputs=undefined] - Additional outputs to include in the removal transaction.
+   * @returns {Promise<HexString>} A promise that resolves to the txid of the removal transaction if successful.
    * @throws {Error} If the key is invalid.
    * @throws {Error} If the key does not exist in the store.
    * @throws {Error} If the overlay service is unreachable or the transaction fails.
    * @throws {Error} If there are existing tokens that cannot be unlocked.
    */
-  async remove(key: string): Promise<string[]> {
+  async remove(key: string, outputs?: CreateActionOutput[]): Promise<HexString> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
-
+    const controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
     const lockQueue = await this.queueOperationOnKey(key)
-
     try {
-      const protectedKey = await this.getProtectedKey(key, 'searching')
-      const existingTokens = await this.findFromOverlay(protectedKey, key)
+      const protectedKey = await this.getProtectedKey(key, controller)
+      const existingTokens = await this.findFromOverlay(protectedKey, controller)
 
       if (existingTokens?.token == null) {
         throw new Error('The item did not exist, no item was deleted.')
@@ -643,6 +549,7 @@ export class GlobalKVStore {
           description: `Remove KVStore value for ${key}`,
           inputBEEF: kvstoreToken.beef.toBinary(),
           inputs,
+          outputs,
           options: {
             acceptDelayedBroadcast: this.acceptDelayedBroadcast
           }
@@ -656,8 +563,8 @@ export class GlobalKVStore {
         const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
         const unlocker = pushdrop.unlock(
           this.config.protocolID,
-          key,
-          'self'
+          protectedKey,
+          'anyone'
         )
         const unlockingScript = await unlocker.sign(tx, 0)
 
@@ -672,8 +579,7 @@ export class GlobalKVStore {
 
         const transaction = Transaction.fromAtomicBEEF(finalTx)
         await this.submitToOverlay(transaction)
-
-        return [transaction.id('hex')]
+        return transaction.id('hex')
       } catch (error: any) {
         // TODO: Handle double spend attempts
         // if (error.code === 'ERR_DOUBLE_SPEND' && this.config.attemptCounter! < this.config.doubleSpendMaxAttempts!) {
@@ -682,7 +588,7 @@ export class GlobalKVStore {
         //   this.finishOperationOnKey(key, lockQueue)
         //   return this.remove(key)
         // }
-        throw new Error(`There is 1 output with key ${key} that cannot be unlocked.`)
+        throw error
       }
     } finally {
       // Only finish operation if we haven't already done so in the retry logic
