@@ -1,6 +1,5 @@
 import Transaction from '../transaction/Transaction.js'
 import * as Utils from '../primitives/utils.js'
-import { Hash } from '../primitives/index.js'
 import { TopicBroadcaster, LookupResolver } from '../overlay-tools/index.js'
 import { BroadcastResponse, BroadcastFailure } from '../transaction/Broadcaster.js'
 import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
@@ -9,7 +8,7 @@ import WalletClient from '../wallet/WalletClient.js'
 import { Beef } from '../transaction/Beef.js'
 import { Historian } from './Historian.js'
 import { createKVStoreInterpreter } from './interpreters/createKVStoreInterpreter.js'
-import { ProtoWallet } from 'mod.js'
+import { ProtoWallet } from '../wallet/ProtoWallet.js'
 import { kvProtocol } from './interpreters/types.js'
 
 /**
@@ -42,7 +41,7 @@ export interface KVStoreConfig {
   /** Wallet interface for operations */
   wallet?: WalletInterface
   /** Network preset for overlay services */
-  networkPreset?: 'mainnet' | 'testnet'
+  networkPreset?: 'mainnet' | 'testnet' | 'local'
 }
 
 /**
@@ -86,7 +85,6 @@ export interface KVStoreToken {
  * Provides sensible defaults for overlay connection and protocol settings.
  */
 const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'overlayHost' | 'originator'>> = {
-  // overlayHost: 'https://backend.2b63ed8575c49054dd0ac65c61e7e6c6.projects.babbage.systems',
   protocolID: [1, 'kvstore'],
   tokenAmount: 1,
   topics: ['tm_kvstore'],
@@ -129,6 +127,12 @@ export class GlobalKVStore {
    * Flag indicating whether to accept delayed broadcast for transactions.
    */
   acceptDelayedBroadcast: boolean = false
+
+  /**
+   * Cached user identity key
+   * @private
+   */
+  private cachedIdentityKey: PubKeyHex | null = null
 
   /**
    * Creates an instance of the GlobalKVStore.
@@ -198,11 +202,7 @@ export class GlobalKVStore {
    * @throws {Error} If key derivation fails.
    * @private
    */
-  private async getProtectedKey(key: string, controller?: PubKeyHex): Promise<string> {
-    // Use anyone wallet for HMAC computation
-    if (controller == null) {
-      controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
-    }
+  private async getProtectedKey(key: string, controller: PubKeyHex): Promise<string> {
     const protectedKey = await new ProtoWallet('anyone').createHmac({
       protocolID: this.config.protocolID,
       keyID: key,
@@ -210,6 +210,19 @@ export class GlobalKVStore {
       data: Utils.toArray(key, 'utf8')
     })
     return Utils.toBase64(protectedKey.hmac)
+  }
+
+  /**
+   * Helper function to fetch and cache user identity key
+   *
+   * @returns {Promise<PubKeyHex>} The identity key of the current user
+   * @private
+   */
+  private async getIdentityKey(): Promise<PubKeyHex> {
+    if (this.cachedIdentityKey == null) {
+      this.cachedIdentityKey = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
+    }
+    return this.cachedIdentityKey
   }
 
   /**
@@ -223,11 +236,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or returns invalid data.
    * @private
    */
-  private async findFromOverlay(protectedKey: string, controller?: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] }> {
-    // TODO: move to getIdentityKey helper
-    if (controller == null) {
-      controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
-    }
+  private async findFromOverlay(protectedKey: string, controller: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] }> {
     const query: KVStoreQuery = {
       protectedKey,
       controller,
@@ -261,9 +270,10 @@ export class GlobalKVStore {
 
         // Verify key linkage
         const anyoneWallet = new ProtoWallet('anyone')
+        const signature = decoded.fields.pop() as number[]
         const { valid } = await anyoneWallet.verifySignature({
           data: decoded.fields.reduce((a, e) => [...a, ...e], []),
-          signature: decoded.fields[kvProtocol.signature],
+          signature,
           counterparty: controller,
           protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.namespace])),
           keyID: protectedKey
@@ -347,6 +357,9 @@ export class GlobalKVStore {
     const lockQueue = await this.queueOperationOnKey(key)
 
     try {
+      if (controller == null || controller === 'self') {
+        controller = await this.getIdentityKey()
+      }
       const protectedKey = await this.getProtectedKey(key, controller)
       const results = await this.findFromOverlay(protectedKey, controller, history)
 
@@ -367,6 +380,17 @@ export class GlobalKVStore {
     } finally {
       this.finishOperationOnKey(key, lockQueue)
     }
+  }
+
+  /** 
+   * Convenience method for getting a value with history.
+   * @param {string} key - The key to retrieve the value for.
+   * @param {PubKeyHex | 'self'} [controller='self'] - The controller of the key.
+   * @returns {Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }>}
+   * A promise that resolves to the value and history.
+   */
+  async getWithHistory(key: string, controller?: PubKeyHex): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
+    return this.get(key, undefined, controller ?? 'self', true)
   }
 
   /**
@@ -391,11 +415,11 @@ export class GlobalKVStore {
       throw new Error('Value must be a string.')
     }
 
+    const controller = await this.getIdentityKey()
     const lockQueue = await this.queueOperationOnKey(key)
-    const controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
     try {
       const protectedKey = await this.getProtectedKey(key, controller)
-      const existingTokens = await this.findFromOverlay(protectedKey, key)
+      const existingTokens = await this.findFromOverlay(protectedKey, controller)
 
       // Create PushDrop instance and locking script with the two required fields
       const pushdrop = new PushDrop(this.wallet, this.config.originator)
@@ -448,8 +472,10 @@ export class GlobalKVStore {
 
           // Sign the transaction
           const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
+          const decoded = PushDrop.decode(lockingScript)
+          const protocolID = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.namespace]))
           const unlocker = pushdrop.unlock(
-            this.config.protocolID,
+            protocolID,
             protectedKey,
             'anyone'
           )
@@ -525,9 +551,9 @@ export class GlobalKVStore {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
-    const controller = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
     const lockQueue = await this.queueOperationOnKey(key)
     try {
+      const controller = await this.getIdentityKey()
       const protectedKey = await this.getProtectedKey(key, controller)
       const existingTokens = await this.findFromOverlay(protectedKey, controller)
 
