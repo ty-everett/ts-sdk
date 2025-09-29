@@ -6,8 +6,8 @@ import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString, Pub
 import { PushDrop } from '../script/index.js'
 import WalletClient from '../wallet/WalletClient.js'
 import { Beef } from '../transaction/Beef.js'
-import { Historian } from './Historian.js'
-import { createKVStoreInterpreter } from './interpreters/createKVStoreInterpreter.js'
+import { Historian } from '../overlay-tools/Historian.js'
+import { KVContext, kvStoreInterpreter } from './interpreters/kvStoreInterpreter.js'
 import { ProtoWallet } from '../wallet/ProtoWallet.js'
 import { kvProtocol } from './interpreters/types.js'
 
@@ -42,6 +42,8 @@ export interface KVStoreConfig {
   wallet?: WalletInterface
   /** Network preset for overlay services */
   networkPreset?: 'mainnet' | 'testnet' | 'local'
+  /** Whether to accept delayed broadcast */
+  acceptDelayedBroadcast?: boolean
 }
 
 /**
@@ -84,7 +86,8 @@ export interface KVStoreToken {
  * Default configuration values for GlobalKVStore operations.
  * Provides sensible defaults for overlay connection and protocol settings.
  */
-const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'overlayHost' | 'originator'>> = {
+const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'originator'>> = {
+  overlayHost: 'http://localhost:8080',
   protocolID: [1, 'kvstore'],
   tokenAmount: 1,
   topics: ['tm_kvstore'],
@@ -94,7 +97,8 @@ const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'overlayHost' | 'o
   actionDescription: '',
   outputDescription: '',
   spendingDescription: '',
-  networkPreset: 'mainnet'
+  networkPreset: 'local',
+  acceptDelayedBroadcast: false
 }
 
 /**
@@ -116,6 +120,12 @@ export class GlobalKVStore {
    * @readonly
    */
   private readonly config: KVStoreConfig
+
+  /**
+   * Historian instance used to extract history from transaction outputs.
+   * @private
+   */
+  private readonly historian: Historian<string>
 
   /**
    * A map to store locks for each key to ensure atomic updates.
@@ -143,7 +153,7 @@ export class GlobalKVStore {
   constructor(config: KVStoreConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
     this.wallet = config.wallet ?? new WalletClient()
-    this.acceptDelayedBroadcast = false // Move to config?
+    this.historian = new Historian<string, KVContext>(kvStoreInterpreter)
   }
 
   /**
@@ -174,7 +184,6 @@ export class GlobalKVStore {
     }
 
     await newLock
-
     return lockQueue
   }
 
@@ -286,11 +295,7 @@ export class GlobalKVStore {
 
         if (history) {
           // Use Historian to extract complete history by traversing the input chain
-          const interpreter = createKVStoreInterpreter(protectedKey)
-
-          const historian = new Historian<string>(interpreter, { debug: false })
-          const valueHistory = await historian.buildHistory(tx)
-
+          const valueHistory = await this.historian.buildHistory(tx, { protectedKey })
           return {
             token: {
               txid: tx.id('hex'),
@@ -430,9 +435,10 @@ export class GlobalKVStore {
           Utils.toArray(value, 'utf8'),
           Utils.toArray(controller, 'hex')
         ],
-        this.config.protocolID,
+        [1, 'kvstore'],
         protectedKey,
-        'anyone'
+        'anyone',
+        true
       )
 
       let inputs: CreateActionInput[] = []
@@ -475,7 +481,7 @@ export class GlobalKVStore {
           const decoded = PushDrop.decode(lockingScript)
           const protocolID = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.namespace]))
           const unlocker = pushdrop.unlock(
-            protocolID,
+            [1, 'kvstore'],
             protectedKey,
             'anyone'
           )
