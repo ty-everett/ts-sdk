@@ -7,9 +7,9 @@ import { PushDrop } from '../script/index.js'
 import WalletClient from '../wallet/WalletClient.js'
 import { Beef } from '../transaction/Beef.js'
 import { Historian } from '../overlay-tools/Historian.js'
-import { KVContext, kvStoreInterpreter } from './interpreters/kvStoreInterpreter.js'
+import { KVContext, kvStoreInterpreter } from './kvStoreInterpreter.js'
 import { ProtoWallet } from '../wallet/ProtoWallet.js'
-import { kvProtocol } from './interpreters/types.js'
+import { kvProtocol } from './types.js'
 
 /**
  * Configuration interface for GlobalKVStore operations.
@@ -150,7 +150,7 @@ export class GlobalKVStore {
    * @param {KVStoreConfig} [config={}] - Configuration options for the KVStore. Defaults to empty object.
    * @throws {Error} If the configuration contains invalid parameters.
    */
-  constructor(config: KVStoreConfig = {}) {
+  constructor (config: KVStoreConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
     this.wallet = config.wallet ?? new WalletClient()
     this.historian = new Historian<string, KVContext>(kvStoreInterpreter)
@@ -164,7 +164,7 @@ export class GlobalKVStore {
    * @returns {Promise<Array<(value: void | PromiseLike<void>) => void>>} The lock queue for cleanup.
    * @private
    */
-  private async queueOperationOnKey(key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
+  private async queueOperationOnKey (key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
     // Check if a lock exists for this key and wait for it to resolve
     let lockQueue = this.keyLocks.get(key)
     if (lockQueue == null) {
@@ -194,7 +194,7 @@ export class GlobalKVStore {
    * @param {Array<(value: void | PromiseLike<void>) => void>} lockQueue - The lock queue from queueOperationOnKey.
    * @private
    */
-  private finishOperationOnKey(key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
+  private finishOperationOnKey (key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
     lockQueue.shift() // Remove the current lock from the queue
     if (lockQueue.length > 0) {
       // If there are more locks waiting, resolve the next one
@@ -211,7 +211,7 @@ export class GlobalKVStore {
    * @throws {Error} If key derivation fails.
    * @private
    */
-  private async getProtectedKey(key: string, controller: PubKeyHex): Promise<string> {
+  private async getProtectedKey (key: string, controller: PubKeyHex): Promise<string> {
     const protectedKey = await new ProtoWallet('anyone').createHmac({
       protocolID: this.config.protocolID,
       keyID: key,
@@ -227,7 +227,7 @@ export class GlobalKVStore {
    * @returns {Promise<PubKeyHex>} The identity key of the current user
    * @private
    */
-  private async getIdentityKey(): Promise<PubKeyHex> {
+  private async getIdentityKey (): Promise<PubKeyHex> {
     if (this.cachedIdentityKey == null) {
       this.cachedIdentityKey = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
     }
@@ -245,7 +245,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or returns invalid data.
    * @private
    */
-  private async findFromOverlay(protectedKey: string, controller: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] }> {
+  private async findFromOverlay (protectedKey: string, controller: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] }> {
     const query: KVStoreQuery = {
       protectedKey,
       controller,
@@ -291,7 +291,7 @@ export class GlobalKVStore {
           continue
         }
 
-        let currentValue: string = Utils.toUTF8(decoded.fields[kvProtocol.value]) // Default to plaintext
+        const currentValue: string = Utils.toUTF8(decoded.fields[kvProtocol.value]) // Default to plaintext
 
         if (history) {
           // Use Historian to extract complete history by traversing the input chain
@@ -333,7 +333,7 @@ export class GlobalKVStore {
    * @throws {Error} If the broadcast fails or the network is unreachable.
    * @private
    */
-  private async submitToOverlay(transaction: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
+  private async submitToOverlay (transaction: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
     const broadcaster = new TopicBroadcaster(['tm_kvstore'], {
       networkPreset: this.config.networkPreset
     })
@@ -354,7 +354,7 @@ export class GlobalKVStore {
    * @throws {Error} If the key is invalid or the overlay service is unreachable.
    * @throws {Error} If the found token's locking script cannot be decoded or represents an invalid token format.
    */
-  async get(key: string, defaultValue?: string, controller?: PubKeyHex, history = false): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
+  async get (key: string, defaultValue?: string, controller?: PubKeyHex, history = false): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -387,15 +387,15 @@ export class GlobalKVStore {
     }
   }
 
-  /** 
+  /**
    * Convenience method for getting a value with history.
    * @param {string} key - The key to retrieve the value for.
    * @param {PubKeyHex | 'self'} [controller='self'] - The controller of the key.
    * @returns {Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }>}
    * A promise that resolves to the value and history.
    */
-  async getWithHistory(key: string, controller?: PubKeyHex): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
-    return this.get(key, undefined, controller ?? 'self', true)
+  async getWithHistory (key: string, controller?: PubKeyHex): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
+    return await this.get(key, undefined, controller ?? 'self', true)
   }
 
   /**
@@ -412,7 +412,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or the transaction fails.
    * @throws {Error} If there are existing tokens that cannot be unlocked.
    */
-  async set(key: string, value: string): Promise<OutpointString> {
+  async set (key: string, value: string): Promise<OutpointString> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -453,84 +453,72 @@ export class GlobalKVStore {
         }]
         inputBEEF = existingTokens.token.beef
       }
-
-      try {
-        if (inputs.length > 0) {
-          // Update existing token - need to sign
-          const { signableTransaction } = await this.wallet.createAction({
-            description: `Update KVStore value for ${key}`,
-            inputBEEF: inputBEEF?.toBinary(),
-            inputs,
-            outputs: [{
-              satoshis: this.config.tokenAmount,
-              lockingScript: lockingScript.toHex(),
-              outputDescription: 'KVStore token'
-            }],
-            options: {
-              acceptDelayedBroadcast: this.acceptDelayedBroadcast,
-              randomizeOutputs: false
-            }
-          })
-
-          if (signableTransaction == null) {
-            throw new Error('Unable to create update transaction')
+      if (inputs.length > 0) {
+        // Update existing token - need to sign
+        const { signableTransaction } = await this.wallet.createAction({
+          description: `Update KVStore value for ${key}`,
+          inputBEEF: inputBEEF?.toBinary(),
+          inputs,
+          outputs: [{
+            satoshis: this.config.tokenAmount,
+            lockingScript: lockingScript.toHex(),
+            outputDescription: 'KVStore token'
+          }],
+          options: {
+            acceptDelayedBroadcast: this.acceptDelayedBroadcast,
+            randomizeOutputs: false
           }
+        })
 
-          // Sign the transaction
-          const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
-          const decoded = PushDrop.decode(lockingScript)
-          const protocolID = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.namespace]))
-          const unlocker = pushdrop.unlock(
-            [1, 'kvstore'],
-            protectedKey,
-            'anyone'
-          )
-          const unlockingScript = await unlocker.sign(tx, 0)
-
-          const { tx: finalTx } = await this.wallet.signAction({
-            reference: signableTransaction.reference,
-            spends: { 0: { unlockingScript: unlockingScript.toHex() } }
-          })
-
-          if (finalTx == null) {
-            throw new Error('Unable to finalize update transaction')
-          }
-
-          const transaction = Transaction.fromAtomicBEEF(finalTx)
-          await this.submitToOverlay(transaction)
-          return `${transaction.id('hex')}.0`
-        } else {
-          // New token - no inputs to sign
-          const { tx } = await this.wallet.createAction({
-            description: `Create KVStore value for ${key}`,
-            outputs: [{
-              satoshis: this.config.tokenAmount,
-              lockingScript: lockingScript.toHex(),
-              outputDescription: 'KVStore token'
-            }],
-            options: {
-              acceptDelayedBroadcast: this.acceptDelayedBroadcast,
-              randomizeOutputs: false
-            }
-          })
-
-          if (tx == null) {
-            throw new Error('Failed to create transaction')
-          }
-
-          const transaction = Transaction.fromAtomicBEEF(tx)
-          await this.submitToOverlay(transaction)
-          return `${transaction.id('hex')}.0`
+        if (signableTransaction == null) {
+          throw new Error('Unable to create update transaction')
         }
-      } catch (error: any) {
-        // TODO: Handle double spend attempts
-        // if (error.code === 'ERR_DOUBLE_SPEND' && this.config.attemptCounter! < this.config.doubleSpendMaxAttempts!) {
-        //   this.config.attemptCounter!++
-        //   // Release current lock and retry with a fresh lock
-        //   this.finishOperationOnKey(key, lockQueue)
-        //   return this.set(key, value)
-        // }
-        throw error
+
+        // Sign the transaction
+        const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
+        const decoded = PushDrop.decode(lockingScript)
+        const protocolID = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.namespace]))
+        const unlocker = pushdrop.unlock(
+          protocolID,
+          protectedKey,
+          'anyone'
+        )
+        const unlockingScript = await unlocker.sign(tx, 0)
+
+        const { tx: finalTx } = await this.wallet.signAction({
+          reference: signableTransaction.reference,
+          spends: { 0: { unlockingScript: unlockingScript.toHex() } }
+        })
+
+        if (finalTx == null) {
+          throw new Error('Unable to finalize update transaction')
+        }
+
+        const transaction = Transaction.fromAtomicBEEF(finalTx)
+        await this.submitToOverlay(transaction)
+        return `${transaction.id('hex')}.0`
+      } else {
+        // New token - no inputs to sign
+        const { tx } = await this.wallet.createAction({
+          description: `Create KVStore value for ${key}`,
+          outputs: [{
+            satoshis: this.config.tokenAmount,
+            lockingScript: lockingScript.toHex(),
+            outputDescription: 'KVStore token'
+          }],
+          options: {
+            acceptDelayedBroadcast: this.acceptDelayedBroadcast,
+            randomizeOutputs: false
+          }
+        })
+
+        if (tx == null) {
+          throw new Error('Failed to create transaction')
+        }
+
+        const transaction = Transaction.fromAtomicBEEF(tx)
+        await this.submitToOverlay(transaction)
+        return `${transaction.id('hex')}.0`
       }
     } finally {
       // Only finish operation if we haven't already done so in the retry logic
@@ -553,7 +541,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or the transaction fails.
    * @throws {Error} If there are existing tokens that cannot be unlocked.
    */
-  async remove(key: string, outputs?: CreateActionOutput[]): Promise<HexString> {
+  async remove (key: string, outputs?: CreateActionOutput[]): Promise<HexString> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -575,53 +563,42 @@ export class GlobalKVStore {
         inputDescription: 'KVStore token to remove'
       }]
 
-      try {
-        const pushdrop = new PushDrop(this.wallet, this.config.originator)
-        const { signableTransaction } = await this.wallet.createAction({
-          description: `Remove KVStore value for ${key}`,
-          inputBEEF: kvstoreToken.beef.toBinary(),
-          inputs,
-          outputs,
-          options: {
-            acceptDelayedBroadcast: this.acceptDelayedBroadcast
-          }
-        })
-
-        if (signableTransaction == null) {
-          throw new Error('Unable to create removal transaction')
+      const pushdrop = new PushDrop(this.wallet, this.config.originator)
+      const { signableTransaction } = await this.wallet.createAction({
+        description: `Remove KVStore value for ${key}`,
+        inputBEEF: kvstoreToken.beef.toBinary(),
+        inputs,
+        outputs,
+        options: {
+          acceptDelayedBroadcast: this.acceptDelayedBroadcast
         }
+      })
 
-        // Sign the transaction
-        const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
-        const unlocker = pushdrop.unlock(
-          this.config.protocolID,
-          protectedKey,
-          'anyone'
-        )
-        const unlockingScript = await unlocker.sign(tx, 0)
-
-        const { tx: finalTx } = await this.wallet.signAction({
-          reference: signableTransaction.reference,
-          spends: { 0: { unlockingScript: unlockingScript.toHex() } }
-        })
-
-        if (finalTx == null) {
-          throw new Error('Unable to finalize removal transaction')
-        }
-
-        const transaction = Transaction.fromAtomicBEEF(finalTx)
-        await this.submitToOverlay(transaction)
-        return transaction.id('hex')
-      } catch (error: any) {
-        // TODO: Handle double spend attempts
-        // if (error.code === 'ERR_DOUBLE_SPEND' && this.config.attemptCounter! < this.config.doubleSpendMaxAttempts!) {
-        //   this.config.attemptCounter!++
-        //   // Release current lock and retry with a fresh lock
-        //   this.finishOperationOnKey(key, lockQueue)
-        //   return this.remove(key)
-        // }
-        throw error
+      if (signableTransaction == null) {
+        throw new Error('Unable to create removal transaction')
       }
+
+      // Sign the transaction
+      const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
+      const unlocker = pushdrop.unlock(
+        this.config.protocolID,
+        protectedKey,
+        'anyone'
+      )
+      const unlockingScript = await unlocker.sign(tx, 0)
+
+      const { tx: finalTx } = await this.wallet.signAction({
+        reference: signableTransaction.reference,
+        spends: { 0: { unlockingScript: unlockingScript.toHex() } }
+      })
+
+      if (finalTx == null) {
+        throw new Error('Unable to finalize removal transaction')
+      }
+
+      const transaction = Transaction.fromAtomicBEEF(finalTx)
+      await this.submitToOverlay(transaction)
+      return transaction.id('hex')
     } finally {
       // Only finish operation if we haven't already done so in the retry logic
       if (lockQueue.length > 0) {

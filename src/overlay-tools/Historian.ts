@@ -45,12 +45,12 @@ export type InterpreterFunction<T, C = unknown> =
  *   // history: T[] (e.g., prior values for a protected kvstore key)
  */
 export class Historian<T, C = unknown> {
-  private interpreter: InterpreterFunction<T>
-  private debug: boolean
+  private readonly interpreter: InterpreterFunction<T>
+  private readonly debug: boolean
 
-  constructor(
+  constructor (
     interpreter: InterpreterFunction<T, C>,
-    options?: { debug?: boolean; defaultContext?: C }
+    options?: { debug?: boolean, defaultContext?: C }
   ) {
     this.interpreter = interpreter
     this.debug = options?.debug ?? false
@@ -59,12 +59,12 @@ export class Historian<T, C = unknown> {
   /**
    * Build history by traversing input chain from a starting transaction
    * Returns values in chronological order (oldest first)
-   * 
+   *
    * @param startTransaction - The transaction to start traversal from
    * @param context - The context to pass to the interpreter
    * @returns Array of interpreted values in chronological order
    */
-  async buildHistory(startTransaction: Transaction, context?: C): Promise<T[]> {
+  async buildHistory (startTransaction: Transaction, context?: C): Promise<T[]> {
     const history: T[] = []
     const visited = new Set<string>()
 
@@ -94,7 +94,7 @@ export class Historian<T, C = unknown> {
           if (interpretedValue !== undefined) {
             history.push(interpretedValue)
             if (this.debug) {
-              console.log(`[Historian] Added value to history:`, interpretedValue)
+              console.log('[Historian] Added value to history:', interpretedValue)
             }
           }
         } catch (error) {
@@ -107,10 +107,10 @@ export class Historian<T, C = unknown> {
 
       // Recursively traverse input transactions
       for (const input of transaction.inputs) {
-        if (input.sourceTransaction) {
+        if (input.sourceTransaction != null) {
           await traverseHistory(input.sourceTransaction)
         } else if (this.debug) {
-          console.log(`[Historian] Input missing sourceTransaction, skipping`)
+          console.log('[Historian] Input missing sourceTransaction, skipping')
         }
       }
     }

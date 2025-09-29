@@ -1,23 +1,30 @@
-import { PushDrop } from '../../script/index.js'
-import Transaction from '../../transaction/Transaction.js'
-import * as Utils from '../../primitives/utils.js'
+import { PushDrop } from '../script/index.js'
+import Transaction from '../transaction/Transaction.js'
+import * as Utils from '../primitives/utils.js'
 import { kvProtocol } from './types.js'
-import { InterpreterFunction } from '../../overlay-tools/Historian.js'
+import { InterpreterFunction } from '../overlay-tools/Historian.js'
 
-export type KVContext = { protectedKey: string }
+export interface KVContext { protectedKey: string }
 
 /**
- * KVStore-specific interpreter for use with Historian.
- * Handles KVStore token format validation, and protected key filtering.
- * 
- * @param protectedKey - Protected key to filter tokens by
- * @returns TokenInterpreter function for KVStore tokens
+ * KVStore interpreter used by Historian.
+ *
+ * Validates the KVStore PushDrop tokens: [namespace, protectedKey, value, controller, signature].
+ * Filters outputs by the provided protected key in the interpreter context.
+ * Produces the plaintext value for matching outputs; returns undefined otherwise.
+ *
+ * @param transaction - The transaction to inspect.
+ * @param outputIndex - The index of the output within transaction.outputs.
+ * @param ctx - { protectedKey: string } — per-call context specifying which protected key to match.
+ *
+ * @returns string | undefined — the decoded KV value if the output is a valid KVStore token for the
+ *   given protected key; otherwise undefined.
  */
 export const kvStoreInterpreter: InterpreterFunction<string, KVContext> = async (transaction: Transaction, outputIndex: number, ctx?: KVContext): Promise<string | undefined> => {
   try {
     const output = transaction.outputs[outputIndex]
-    if (!output?.lockingScript) return undefined
-    if (!ctx?.protectedKey) return undefined
+    if (output == null || output.lockingScript == null) return undefined
+    if (ctx == null || ctx.protectedKey == null) return undefined
 
     // Decode the KVStore token
     const decoded = PushDrop.decode(output.lockingScript)
