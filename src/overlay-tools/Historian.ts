@@ -12,14 +12,14 @@ import Transaction from '../transaction/Transaction.js'
  * Params:
  * - tx: The transaction containing the output to interpret.
  * - outputIndex: Index of the output within `tx.outputs`.
- * - ctx: Context object of type C, supplied at [Historian.buildHistory(startTx, context)]
+ * - ctx: Optional context object of type C, supplied at [Historian.buildHistory(startTx, context)]
  *
  * Returns:
  * - `T | undefined` (or a Promise thereof). `undefined` indicates a non-applicable or
  *   un-decodable output for the given context.
  */
 export type InterpreterFunction<T, C = unknown> =
-  (tx: Transaction, outputIndex: number, ctx: C) => Promise<T | undefined> | T | undefined
+  (tx: Transaction, outputIndex: number, ctx?: C) => Promise<T | undefined> | T | undefined
 
 /**
  * Historian builds a chronological history (oldest → newest) of typed values by traversing
@@ -45,12 +45,12 @@ export type InterpreterFunction<T, C = unknown> =
  *   // history: T[] (e.g., prior values for a protected kvstore key)
  */
 export class Historian<T, C = unknown> {
-  private readonly interpreter: InterpreterFunction<T>
+  private readonly interpreter: InterpreterFunction<T, C>
   private readonly debug: boolean
 
-  constructor (
+  constructor(
     interpreter: InterpreterFunction<T, C>,
-    options?: { debug?: boolean, defaultContext?: C }
+    options?: { debug?: boolean }
   ) {
     this.interpreter = interpreter
     this.debug = options?.debug ?? false
@@ -64,7 +64,7 @@ export class Historian<T, C = unknown> {
    * @param context - The context to pass to the interpreter
    * @returns Array of interpreted values in chronological order
    */
-  async buildHistory (startTransaction: Transaction, context?: C): Promise<T[]> {
+  async buildHistory(startTransaction: Transaction, context?: C): Promise<T[]> {
     const history: T[] = []
     const visited = new Set<string>()
 

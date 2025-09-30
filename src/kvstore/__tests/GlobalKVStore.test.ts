@@ -1,6 +1,5 @@
 /** eslint-env jest */
-
-import GlobalKVStore, { KVStoreConfig, KVStoreToken } from '../GlobalKVStore.js'
+import GlobalKVStore, { KVStoreConfig } from '../GlobalKVStore.js'
 import { WalletInterface, CreateActionResult, SignActionResult } from '../../wallet/Wallet.interfaces.js'
 import Transaction from '../../transaction/Transaction.js'
 import { Beef } from '../../transaction/Beef.js'
@@ -10,7 +9,6 @@ import { PushDrop } from '../../script/index.js'
 import * as Utils from '../../primitives/utils.js'
 import { TopicBroadcaster, LookupResolver } from '../../overlay-tools/index.js'
 import { ProtoWallet } from '../../wallet/ProtoWallet.js'
-import { kvProtocol } from '../types.js'
 
 // --- Module mocks ------------------------------------------------------------
 jest.mock('../../transaction/Transaction.js')
@@ -60,7 +58,7 @@ function makeMockTx(): MTx {
           toHex: jest.fn().mockReturnValue('mock_script'),
           toArray: jest.fn().mockReturnValue([1, 2, 3]),
         },
-        satoshis: 1000,
+        satoshis: 1,
       },
     ],
     inputs: [],
@@ -262,8 +260,8 @@ describe('GlobalKVStore', () => {
           service: 'ls_kvstore',
           query: expect.objectContaining({
             protectedKey: TEST_PROTECTED_KEY,
-            controller: TEST_CONTROLLER,
-          }),
+            controller: TEST_CONTROLLER
+          })
         })
       })
 
@@ -277,10 +275,10 @@ describe('GlobalKVStore', () => {
           token: expect.objectContaining({
             txid: TEST_TXID,
             outputIndex: 0,
-            satoshis: 1000,
+            satoshis: 1,
           }),
           value: TEST_VALUE,
-          valueHistory: ['oldValue', TEST_VALUE],
+          valueHistory: ['oldValue', TEST_VALUE]
         })
         expect(mockHistorian.buildHistory).toHaveBeenCalledWith(
           expect.any(Object),
@@ -444,8 +442,8 @@ describe('GlobalKVStore', () => {
         const customOutputs = [
           {
             satoshis: 500,
-            lockingScript: 'customScript',
-            outputDescription: 'Custom output',
+            lockingScript: 'customTransferScript',
+            outputDescription: 'Custom token transfer output',
           },
         ]
 
@@ -560,7 +558,7 @@ describe('GlobalKVStore', () => {
       // This test verifies that when tokens exist but fail validation (signature, etc),
       // the method gracefully returns undefined/default rather than throwing
       primeResolverWithOneOutput(mockResolver)
-      
+
       // Make signature verification fail (this could be a realistic failure mode)
       const originalVerifySignature = mockProtoWallet.verifySignature
       mockProtoWallet.verifySignature = jest.fn().mockResolvedValue({ valid: false })
