@@ -23,7 +23,7 @@ export type InterpreterFunction<T, C = unknown> =
 
 /**
  * Historian builds a chronological history (oldest → newest) of typed values by traversing
- * a transaction’s input ancestry and interpreting each output with a provided interpreter.
+ * a transaction's input ancestry and interpreting each output with a provided interpreter.
  *
  * Core ideas:
  * - You provide an interpreter `(tx, outputIndex) => T | undefined` that decodes one output
@@ -34,37 +34,94 @@ export type InterpreterFunction<T, C = unknown> =
  *   history reconstruction).
  * - The traversal visits each transaction once (cycle-safe) and collects interpreted values
  *   in reverse-chronological order, then returns them as chronological (oldest-first).
+ * - Optional caching support: provide a `historyCache` Map to cache complete history results
+ *   and avoid re-traversing identical transaction chains with the same context.
  *
  * Usage:
- * - Construct with an interpreter
- * - Call historian.buildHistory(tx) to get an array of values representing the history of a token over time.
+ * - Construct with an interpreter (and optional cache)
+ * - Call historian.buildHistory(tx, context) to get an array of values representing the history of a token over time.
  *
  * Example:
- *   const historian = new Historian(interpreter)
- *   const history = await historian.buildHistory(tipTransaction)
+ *   const cache = new Map() // Optional: for caching repeated queries
+ *   const historian = new Historian(interpreter, { historyCache: cache })
+ *   const history = await historian.buildHistory(tipTransaction, context)
  *   // history: T[] (e.g., prior values for a protected kvstore key)
+ *
+ * Caching:
+ * - Cache keys are generated from `interpreterVersion|txid|contextKey`
+ * - Cached results are immutable snapshots to prevent external mutation
+ * - Bump `interpreterVersion` when interpreter semantics change to invalidate old cache entries
  */
 export class Historian<T, C = unknown> {
   private readonly interpreter: InterpreterFunction<T, C>
   private readonly debug: boolean
 
+  // --- minimal cache support ---
+  private readonly historyCache?: Map<string, readonly T[]>
+  private readonly interpreterVersion: string
+  private readonly ctxKeyFn: (ctx?: C) => string
+
+  /**
+   * Create a new Historian instance
+   *
+   * @param interpreter - Function to interpret transaction outputs into typed values
+   * @param options - Configuration options
+   * @param options.debug - Enable debug logging (default: false)
+   * @param options.historyCache - Optional external cache for complete history results
+   * @param options.interpreterVersion - Version identifier for cache invalidation (default: 'v1')
+   * @param options.ctxKeyFn - Custom function to serialize context for cache keys (default: JSON.stringify)
+   */
   constructor(
     interpreter: InterpreterFunction<T, C>,
-    options?: { debug?: boolean }
+    options?: {
+      debug?: boolean
+      /** Optional cache for entire history results keyed by (version|txid|ctxKey) */
+      historyCache?: Map<string, readonly T[]>
+      /** Bump this if interpreter semantics change to invalidate cache */
+      interpreterVersion?: string
+      /** Deterministic, non-secret key for context. Default is JSON.stringify(ctx) */
+      ctxKeyFn?: (ctx?: C) => string
+    }
   ) {
     this.interpreter = interpreter
     this.debug = options?.debug ?? false
+
+    // Configure caching (all optional)
+    this.historyCache = options?.historyCache
+    this.interpreterVersion = options?.interpreterVersion ?? 'v1'
+    this.ctxKeyFn = options?.ctxKeyFn ?? ((ctx?: C) => {
+      try { return JSON.stringify(ctx ?? null) } catch { return '' }
+    })
+  }
+
+  private historyKey(startTransaction: Transaction, context?: C): string {
+    const txid = startTransaction.id('hex')
+    const ctxKey = this.ctxKeyFn(context)
+    return `${this.interpreterVersion}|${txid}|${ctxKey}`
   }
 
   /**
    * Build history by traversing input chain from a starting transaction
    * Returns values in chronological order (oldest first)
    *
+   * If caching is enabled, will first check for cached results matching the 
+   * startTransaction and context. On cache miss, performs full traversal and
+   * stores the result for future queries.
+   *
    * @param startTransaction - The transaction to start traversal from
    * @param context - The context to pass to the interpreter
    * @returns Array of interpreted values in chronological order
    */
   async buildHistory(startTransaction: Transaction, context?: C): Promise<T[]> {
+    // --- minimal cache fast path ---
+    const cacheKey = this.historyCache && this.historyKey(startTransaction, context)
+    if (cacheKey && this.historyCache!.has(cacheKey)) {
+      const cached = this.historyCache!.get(cacheKey)!
+      if (this.debug) console.log('[Historian] History cache hit:', cacheKey)
+      // Return a shallow copy to avoid external mutation of the cached array
+      return cached.slice() as T[]
+    }
+
     const history: T[] = []
     const visited = new Set<string>()
 
@@ -120,6 +177,14 @@ export class Historian<T, C = unknown> {
 
     // History is built in reverse chronological order during traversal,
     // so we reverse it to return oldest-first
-    return history.reverse()
+    const chronological = history.reverse()
+
+    if (cacheKey && this.historyCache) {
+      // Store an immutable snapshot to avoid accidental external mutation
+      this.historyCache.set(cacheKey, Object.freeze(chronological.slice()))
+      if (this.debug) console.log('[Historian] History cached:', cacheKey)
+    }
+
+    return chronological
   }
 }
