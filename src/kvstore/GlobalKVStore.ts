@@ -2,7 +2,7 @@ import Transaction from '../transaction/Transaction.js'
 import * as Utils from '../primitives/utils.js'
 import { TopicBroadcaster, LookupResolver } from '../overlay-tools/index.js'
 import { BroadcastResponse, BroadcastFailure } from '../transaction/Broadcaster.js'
-import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
+import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString, PubKeyHex, CreateActionOutput, HexString, SecurityLevel } from '../wallet/Wallet.interfaces.js'
 import { PushDrop } from '../script/index.js'
 import WalletClient from '../wallet/WalletClient.js'
 import { Beef } from '../transaction/Beef.js'
@@ -213,7 +213,7 @@ export class GlobalKVStore {
    */
   private async getProtectedKey (key: string, controller: PubKeyHex): Promise<string> {
     const protectedKey = await new ProtoWallet('anyone').createHmac({
-      protocolID: this.config.protocolID,
+      protocolID: this.config.protocolID as [SecurityLevel, string],
       keyID: key,
       counterparty: controller,
       data: Utils.toArray(key, 'utf8')
@@ -245,7 +245,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or returns invalid data.
    * @private
    */
-  private async findFromOverlay (protectedKey: string, controller: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] }> {
+  private async findFromOverlay (protectedKey: string, controller: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] } | undefined> {
     const query: KVStoreQuery = {
       protectedKey,
       controller,
@@ -321,7 +321,8 @@ export class GlobalKVStore {
         continue
       }
     }
-    throw new Error('No valid tokens found')
+    // throw new Error('No valid tokens found')
+    return undefined
   }
 
   /**
@@ -368,7 +369,7 @@ export class GlobalKVStore {
       const protectedKey = await this.getProtectedKey(key, controller)
       const results = await this.findFromOverlay(protectedKey, controller, history)
 
-      if (results.token == null || results.value == null) {
+      if (results == null || results.token == null || results.value == null) {
         return defaultValue
       }
 
@@ -460,7 +461,7 @@ export class GlobalKVStore {
           inputBEEF: inputBEEF?.toBinary(),
           inputs,
           outputs: [{
-            satoshis: this.config.tokenAmount,
+            satoshis: this.config.tokenAmount ?? 1,
             lockingScript: lockingScript.toHex(),
             outputDescription: 'KVStore token'
           }],
@@ -502,7 +503,7 @@ export class GlobalKVStore {
         const { tx } = await this.wallet.createAction({
           description: `Create KVStore value for ${key}`,
           outputs: [{
-            satoshis: this.config.tokenAmount,
+            satoshis: this.config.tokenAmount ?? 1,
             lockingScript: lockingScript.toHex(),
             outputDescription: 'KVStore token'
           }],
@@ -581,7 +582,7 @@ export class GlobalKVStore {
       // Sign the transaction
       const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
       const unlocker = pushdrop.unlock(
-        this.config.protocolID,
+        this.config.protocolID as [SecurityLevel, string], // TODO: Fix type in PushDrop
         protectedKey,
         'anyone'
       )
