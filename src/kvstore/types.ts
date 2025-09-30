@@ -1,6 +1,6 @@
-import { Beef } from "../transaction/Beef.js"
-import { PubKeyHex, WalletProtocol } from "../wallet/Wallet.interfaces.js"
-import { WalletInterface } from "../wallet/index.js"
+import { Beef } from '../transaction/Beef.js'
+import { PubKeyHex, WalletProtocol } from '../wallet/Wallet.interfaces.js'
+import { WalletInterface } from '../wallet/index.js'
 
 /**
  * Configuration interface for GlobalKVStore operations.
@@ -60,7 +60,6 @@ export interface KVStoreToken {
   satoshis: number
   beef: Beef
 }
-
 
 export const kvProtocol = {
   namespace: 0,

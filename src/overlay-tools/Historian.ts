@@ -71,7 +71,7 @@ export class Historian<T, C = unknown> {
    * @param options.interpreterVersion - Version identifier for cache invalidation (default: 'v1')
    * @param options.ctxKeyFn - Custom function to serialize context for cache keys (default: JSON.stringify)
    */
-  constructor(
+  constructor (
     interpreter: InterpreterFunction<T, C>,
     options?: {
       debug?: boolean
@@ -94,7 +94,7 @@ export class Historian<T, C = unknown> {
     })
   }
 
-  private historyKey(startTransaction: Transaction, context?: C): string {
+  private historyKey (startTransaction: Transaction, context?: C): string {
     const txid = startTransaction.id('hex')
     const ctxKey = this.ctxKeyFn(context)
     return `${this.interpreterVersion}|${txid}|${ctxKey}`
@@ -104,7 +104,7 @@ export class Historian<T, C = unknown> {
    * Build history by traversing input chain from a starting transaction
    * Returns values in chronological order (oldest first)
    *
-   * If caching is enabled, will first check for cached results matching the 
+   * If caching is enabled, will first check for cached results matching the
    * startTransaction and context. On cache miss, performs full traversal and
    * stores the result for future queries.
    *
@@ -112,14 +112,18 @@ export class Historian<T, C = unknown> {
    * @param context - The context to pass to the interpreter
    * @returns Array of interpreted values in chronological order
    */
-  async buildHistory(startTransaction: Transaction, context?: C): Promise<T[]> {
+  async buildHistory (startTransaction: Transaction, context?: C): Promise<T[]> {
     // --- minimal cache fast path ---
-    const cacheKey = this.historyCache && this.historyKey(startTransaction, context)
-    if (cacheKey && this.historyCache!.has(cacheKey)) {
-      const cached = this.historyCache!.get(cacheKey)!
-      if (this.debug) console.log('[Historian] History cache hit:', cacheKey)
-      // Return a shallow copy to avoid external mutation of the cached array
-      return cached.slice() as T[]
+    if (this.historyCache != null) {
+      const cacheKey = this.historyKey(startTransaction, context)
+      if (this.historyCache.has(cacheKey)) {
+        const cached = this.historyCache.get(cacheKey)
+        if (cached != null) {
+          if (this.debug) console.log('[Historian] History cache hit:', cacheKey)
+          // Return a shallow copy to avoid external mutation of the cached array
+          return cached.slice()
+        }
+      }
     }
 
     const history: T[] = []
@@ -179,7 +183,8 @@ export class Historian<T, C = unknown> {
     // so we reverse it to return oldest-first
     const chronological = history.reverse()
 
-    if (cacheKey && this.historyCache) {
+    if (this.historyCache != null) {
+      const cacheKey = this.historyKey(startTransaction, context)
       // Store an immutable snapshot to avoid accidental external mutation
       this.historyCache.set(cacheKey, Object.freeze(chronological.slice()))
       if (this.debug) console.log('[Historian] History cached:', cacheKey)

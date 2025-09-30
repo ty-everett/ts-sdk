@@ -2,7 +2,7 @@ import Transaction from '../transaction/Transaction.js'
 import * as Utils from '../primitives/utils.js'
 import { TopicBroadcaster, LookupResolver } from '../overlay-tools/index.js'
 import { BroadcastResponse, BroadcastFailure } from '../transaction/Broadcaster.js'
-import { WalletInterface, CreateActionInput, WalletProtocol, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
+import { WalletInterface, CreateActionInput, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
 import { PushDrop } from '../script/index.js'
 import WalletClient from '../wallet/WalletClient.js'
 import { Beef } from '../transaction/Beef.js'
@@ -67,7 +67,7 @@ export class GlobalKVStore {
    * @param {KVStoreConfig} [config={}] - Configuration options for the KVStore. Defaults to empty object.
    * @throws {Error} If the configuration contains invalid parameters.
    */
-  constructor(config: KVStoreConfig = {}) {
+  constructor (config: KVStoreConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
     this.wallet = config.wallet ?? new WalletClient()
     this.historian = new Historian<string, KVContext>(kvStoreInterpreter)
@@ -81,7 +81,7 @@ export class GlobalKVStore {
    * @returns {Promise<Array<(value: void | PromiseLike<void>) => void>>} The lock queue for cleanup.
    * @private
    */
-  private async queueOperationOnKey(key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
+  private async queueOperationOnKey (key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
     // Check if a lock exists for this key and wait for it to resolve
     let lockQueue = this.keyLocks.get(key)
     if (lockQueue == null) {
@@ -111,7 +111,7 @@ export class GlobalKVStore {
    * @param {Array<(value: void | PromiseLike<void>) => void>} lockQueue - The lock queue from queueOperationOnKey.
    * @private
    */
-  private finishOperationOnKey(key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
+  private finishOperationOnKey (key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
     lockQueue.shift() // Remove the current lock from the queue
     if (lockQueue.length > 0) {
       // If there are more locks waiting, resolve the next one
@@ -128,7 +128,7 @@ export class GlobalKVStore {
    * @throws {Error} If key derivation fails.
    * @private
    */
-  private async getProtectedKey(key: string, controller: PubKeyHex): Promise<string> {
+  private async getProtectedKey (key: string, controller: PubKeyHex): Promise<string> {
     const protectedKey = await new ProtoWallet('anyone').createHmac({
       protocolID: this.config.protocolID ?? DEFAULT_CONFIG.protocolID,
       keyID: key,
@@ -144,7 +144,7 @@ export class GlobalKVStore {
    * @returns {Promise<PubKeyHex>} The identity key of the current user
    * @private
    */
-  private async getIdentityKey(): Promise<PubKeyHex> {
+  private async getIdentityKey (): Promise<PubKeyHex> {
     if (this.cachedIdentityKey == null) {
       this.cachedIdentityKey = (await this.wallet.getPublicKey({ identityKey: true }, this.config.originator)).publicKey
     }
@@ -162,7 +162,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or returns invalid data.
    * @private
    */
-  private async findFromOverlay(protectedKey: string, controller: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] } | undefined> {
+  private async findFromOverlay (protectedKey: string, controller: PubKeyHex, history = false): Promise<{ token?: KVStoreToken, value?: string, valueHistory?: string[] } | undefined> {
     const query: KVStoreQuery = {
       protectedKey,
       controller,
@@ -251,7 +251,7 @@ export class GlobalKVStore {
    * @throws {Error} If the broadcast fails or the network is unreachable.
    * @private
    */
-  private async submitToOverlay(transaction: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
+  private async submitToOverlay (transaction: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
     const broadcaster = new TopicBroadcaster(this.config.topics ?? DEFAULT_CONFIG.topics, {
       networkPreset: this.config.networkPreset
     })
@@ -272,7 +272,7 @@ export class GlobalKVStore {
    * @throws {Error} If the key is invalid or the overlay service is unreachable.
    * @throws {Error} If the found token's locking script cannot be decoded or represents an invalid token format.
    */
-  async get(key: string, defaultValue?: string, controller?: PubKeyHex, history = false): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
+  async get (key: string, defaultValue?: string, controller?: PubKeyHex, history = false): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -312,7 +312,7 @@ export class GlobalKVStore {
    * @returns {Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }>}
    * A promise that resolves to the value and history.
    */
-  async getWithHistory(key: string, controller?: PubKeyHex): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
+  async getWithHistory (key: string, controller?: PubKeyHex): Promise<string | undefined | { token: KVStoreToken, value: string, valueHistory?: string[] }> {
     return await this.get(key, undefined, controller ?? 'self', true)
   }
 
@@ -330,7 +330,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or the transaction fails.
    * @throws {Error} If there are existing tokens that cannot be unlocked.
    */
-  async set(key: string, value: string): Promise<OutpointString> {
+  async set (key: string, value: string): Promise<OutpointString> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -459,7 +459,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or the transaction fails.
    * @throws {Error} If there are existing tokens that cannot be unlocked.
    */
-  async remove(key: string, outputs?: CreateActionOutput[]): Promise<HexString> {
+  async remove (key: string, outputs?: CreateActionOutput[]): Promise<HexString> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
