@@ -80,7 +80,7 @@ export default class LocalKVStore {
       this.keyLocks.set(key, lockQueue)
     }
 
-    let resolveNewLock: () => void = () => {}
+    let resolveNewLock: () => void = () => { }
     const newLock = new Promise<void>((resolve) => {
       resolveNewLock = resolve
       if (lockQueue != null) { lockQueue.push(resolve) }
@@ -166,8 +166,8 @@ export default class LocalKVStore {
         throw new Error('Invalid token.')
       }
       field = decoded.fields[0]
-    } catch (_) {
-      throw new Error(`Invalid value found. You need to call set to collapse the corrupted state (or relinquish the corrupted ${outputs[0].outpoint} output from the ${this.context} basket) before you can get this value again.`)
+    } catch (error) {
+      throw new Error(`Invalid value found. You need to call set to collapse the corrupted state (or relinquish the corrupted ${outputs[0].outpoint} output from the ${this.context} basket) before you can get this value again. Original error: ${error instanceof Error ? error.message : String(error)}`)
     }
     if (!this.encrypt) {
       r.value = Utils.toUTF8(field)
@@ -288,8 +288,8 @@ export default class LocalKVStore {
           })
           outpoint = `${txid as string}.0`
         }
-      } catch (_) {
-        throw new Error(`There are ${outputs.length} outputs with tag ${key} that cannot be unlocked.`)
+      } catch (error) {
+        throw new Error(`There are ${outputs.length} outputs with tag ${key} that cannot be unlocked. Original error: ${error instanceof Error ? error.message : String(error)}`)
       }
 
       return outpoint
@@ -337,8 +337,8 @@ export default class LocalKVStore {
             })
             if (txid === undefined) { throw new Error('signAction must return a valid txid') }
             txids.push(txid)
-          } catch (_) {
-            throw new Error(`There are ${totalOutputs} outputs with tag ${key} that cannot be unlocked.`)
+          } catch (error) {
+            throw new Error(`There are ${totalOutputs} outputs with tag ${key} that cannot be unlocked. Original error: ${error instanceof Error ? error.message : String(error)}`)
           }
         }
         if (outputs.length === totalOutputs) { break }
