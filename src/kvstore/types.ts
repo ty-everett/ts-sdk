@@ -30,12 +30,34 @@ export interface KVStoreConfig {
  * Used when searching for existing key-value pairs in the network.
  */
 export interface KVStoreQuery {
-  protectedKey?: string
+  key?: string
   controller?: PubKeyHex
+  namespace?: string
   limit?: number
   skip?: number
   sortOrder?: 'asc' | 'desc'
   history?: boolean
+}
+
+/**
+ * Parameters for getting data from KVStore
+ */
+export interface GetParams {
+  key?: string
+  controller?: PubKeyHex
+  namespace?: string
+  history?: boolean
+}
+
+/**
+ * KVStore entry returned from queries
+ */
+export interface KVStoreEntry {
+  key: string
+  value: string
+  controller: PubKeyHex
+  token?: KVStoreToken
+  history?: string[]
 }
 
 /**
@@ -63,7 +85,7 @@ export interface KVStoreToken {
 
 export const kvProtocol = {
   namespace: 0,
-  protectedKey: 1,
+  key: 1,
   value: 2,
   controller: 3,
   signature: 4
