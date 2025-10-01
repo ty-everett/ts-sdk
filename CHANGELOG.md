@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.7 - 2025-10-01](#177---2025-10-01)
 - [1.7.6 - 2025-09-09](#176---2025-09-08)
 - [1.7.5 - 2025-09-08](#175---2025-09-08)
 - [1.7.4 - 2025-09-08](#174---2025-09-08)
@@ -158,6 +159,21 @@ All notable changes to this project will be documented in this file. The format 
 ### Security
 
 ---
+
+### [1.7.7] - 2025-10-01
+
+### Added
+
+- **GlobalKVStore**: New global key-value storage system using overlay services to track key-value pairs
+  - Full CRUD operations: `get()`, `set()`, `remove()` with PushDrop token outputs
+  - Flexible query system supporting key, controller, and protocolID parameters
+  - Optional history tracking with `Historian` integration for chronological value chains
+  - Optional token data inclusion for transaction details and BEEF access
+  - Atomic operations with key-based locking for concurrent safety
+- **Historian**: Overlay tool for building chronological history by traversing transaction input ancestry and interpreting outputs with provided interpreter functions.
+
+---
+
 ### [1.7.6] - 2025-09-09
 
 ### Fixed
@@ -230,20 +246,6 @@ All notable changes to this project will be documented in this file. The format 
 
 - IdentityClient now supports saving, getting, and removing encrypted personal contacts.
 - SPV verification bugfix
-
----
-
-### [1.6.25] - 2025-10-01
-
-### Added
-
-- **GlobalKVStore**: New global key-value storage system using overlay services to track key-value pairs
-  - Full CRUD operations: `get()`, `set()`, `remove()` with PushDrop token outputs
-  - Flexible query system supporting key, controller, and protocolID parameters
-  - Optional history tracking with `Historian` integration for chronological value chains
-  - Optional token data inclusion for transaction details and BEEF access
-  - Atomic operations with key-based locking for concurrent safety
-- **Historian**: Overlay tool for building chronological history by traversing transaction input ancestry and interpreting outputs with provided interpreter functions.
 
 ---
 
