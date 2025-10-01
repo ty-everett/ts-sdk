@@ -434,6 +434,160 @@ describe('Historian', () => {
         expect(mockConsoleLog).not.toHaveBeenCalled()
       })
     })
+
+    describe('caching', () => {
+      it('accepts historyCache option in constructor', () => {
+        const cache = new Map<string, readonly TestValue[]>()
+        const cachedHistorian = new Historian(simpleInterpreter, { historyCache: cache })
+        expect(cachedHistorian).toBeInstanceOf(Historian)
+      })
+
+      it('uses cache when provided and returns cached results', async () => {
+        const cache = new Map<string, readonly TestValue[]>()
+        const cachedHistorian = new Historian(simpleInterpreter, { 
+          historyCache: cache,
+          debug: true // Enable debug to verify cache hit logs 
+        })
+        
+        const tx = makeMockTx(TEST_TXID_1, [makeMockOutput('76a914cached1234567890123456789012345678888ac')])
+        
+        // First call - should populate cache
+        const history1 = await cachedHistorian.buildHistory(tx)
+        expect(cache.size).toBe(1)
+        expect(history1).toHaveLength(1)
+        expect(history1[0]).toMatchObject({ data: 'value_from_76a914ca' })
+        
+        // Verify cache was populated (debug log should contain "cached")
+        expect(mockConsoleLog).toHaveBeenCalledWith(
+          expect.stringContaining('[Historian] History cached:'),
+          expect.any(String)
+        )
+        
+        // Second call - should use cache (returns shallow copy, not same reference)  
+        const history2 = await cachedHistorian.buildHistory(tx)
+        expect(history1).toStrictEqual(history2) // Same content from cache
+        expect(history1).not.toBe(history2) // Different references (shallow copy)
+        expect(cache.size).toBe(1) // No new cache entries
+        
+        // Verify cache hit (debug log should contain "cache hit")
+        expect(mockConsoleLog).toHaveBeenCalledWith(
+          expect.stringContaining('[Historian] History cache hit:'),
+          expect.any(String)
+        )
+      })
+
+      it('generates different cache keys for different transactions', async () => {
+        const cache = new Map<string, readonly TestValue[]>()
+        const cachedHistorian = new Historian(simpleInterpreter, { historyCache: cache })
+        
+        const tx1 = makeMockTx(TEST_TXID_1, [makeMockOutput('76a914tx1data123456789012345678901234567888ac')])
+        const tx2 = makeMockTx(TEST_TXID_2, [makeMockOutput('76a914tx2data123456789012345678901234567888ac')])
+        
+        await cachedHistorian.buildHistory(tx1)
+        await cachedHistorian.buildHistory(tx2)
+        
+        expect(cache.size).toBe(2) // Different transactions = different cache keys
+        
+        // Verify both are cached independently
+        const history1 = await cachedHistorian.buildHistory(tx1)
+        const history2 = await cachedHistorian.buildHistory(tx2)
+        expect(history1[0].data).toBe('value_from_76a914tx')
+        expect(history2[0].data).toBe('value_from_76a914tx')
+        expect(cache.size).toBe(2) // Still only 2 entries
+      })
+
+      it('generates different cache keys for different contexts', async () => {
+        const cache = new Map<string, readonly TestValue[]>()
+        const cachedHistorian = new Historian(simpleInterpreter, { historyCache: cache })
+        
+        const tx = makeMockTx(TEST_TXID_1, [
+          makeMockOutput('76a914filtered123456789012345678901234567888ac'), // Matches filter
+          makeMockOutput('76a914other1234567890123456789012345678988ac')     // Doesn't match filter
+        ])
+        
+        // Same transaction, different contexts
+        await cachedHistorian.buildHistory(tx, { filter: '76a914filtered' })
+        await cachedHistorian.buildHistory(tx, { filter: '76a914other' })
+        await cachedHistorian.buildHistory(tx) // No context
+        
+        expect(cache.size).toBe(3) // Different contexts = different cache keys
+      })
+
+      it('invalidates cache when interpreterVersion changes', async () => {
+        const cache = new Map<string, readonly TestValue[]>()
+        const historian1 = new Historian(simpleInterpreter, { 
+          historyCache: cache, 
+          interpreterVersion: 'v1' 
+        })
+        const historian2 = new Historian(simpleInterpreter, { 
+          historyCache: cache, 
+          interpreterVersion: 'v2' 
+        })
+        
+        const tx = makeMockTx(TEST_TXID_1, [makeMockOutput('76a914version123456789012345678901234567888ac')])
+        
+        await historian1.buildHistory(tx)
+        await historian2.buildHistory(tx) // Different version = new cache entry
+        
+        expect(cache.size).toBe(2) // Two entries for different versions
+        
+        // Verify both versions work independently
+        const history1 = await historian1.buildHistory(tx)
+        const history2 = await historian2.buildHistory(tx)
+        expect(history1).toBeDefined()
+        expect(history2).toBeDefined()
+        expect(cache.size).toBe(2) // Still only 2 entries
+      })
+
+      it('returns immutable cached results that cannot be mutated externally', async () => {
+        const cache = new Map<string, readonly TestValue[]>()
+        const cachedHistorian = new Historian(simpleInterpreter, { historyCache: cache })
+        
+        const tx = makeMockTx(TEST_TXID_1, [makeMockOutput('76a914immutable123456789012345678901234567888ac')])
+        
+        const history1 = await cachedHistorian.buildHistory(tx)
+        const history2 = await cachedHistorian.buildHistory(tx)
+        
+        // Should be different references but same content (shallow copies from cache)
+        expect(history1).toStrictEqual(history2)
+        expect(history1).not.toBe(history2)
+        
+        // Original cached value should be frozen, but returned copies are mutable
+        // Mutating returned copy should not affect the cache or future calls
+        ; (history1 as any).push({ data: 'malicious', outputIndex: 999 })
+        
+        const history3 = await cachedHistorian.buildHistory(tx)
+        expect(history3).toStrictEqual(history2) // Still original content from cache
+        expect(history3).toHaveLength(1) // Original length preserved
+        expect(history3).not.toStrictEqual(history1) // Different from mutated copy
+      })
+
+      it('works correctly with transaction chains when caching is enabled', async () => {
+        const cache = new Map<string, readonly TestValue[]>()
+        const cachedHistorian = new Historian(simpleInterpreter, { historyCache: cache })
+        
+        // Create a simple chain: tx1 <- tx2
+        const tx1 = makeMockTx(TEST_TXID_1, [makeMockOutput('76a914chain11234567890123456789012345678888ac')])
+        const tx2 = makeMockTx(TEST_TXID_2, [makeMockOutput('76a914chain21234567890123456789012345678888ac')], [
+          makeMockInput(tx1)
+        ])
+        
+        // First call - should cache the results
+        const history1 = await cachedHistorian.buildHistory(tx2)
+        expect(history1).toHaveLength(2)
+        expect(cache.size).toBeGreaterThan(0)
+        
+        // Second call - should use cache (same content, different reference)
+        const history2 = await cachedHistorian.buildHistory(tx2)
+        expect(history1).toStrictEqual(history2) // Same content from cache
+        expect(history1).not.toBe(history2) // Different references (shallow copy)
+        
+        // Individual transaction should also be cached
+        const tx1History = await cachedHistorian.buildHistory(tx1)
+        expect(tx1History).toHaveLength(1)
+        expect(tx1History[0]).toMatchObject({ data: 'value_from_76a914ch' })
+      })
+    })
   })
 
   // --------------------------------------------------------------------------
