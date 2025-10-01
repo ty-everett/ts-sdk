@@ -32,7 +32,7 @@ export interface KVStoreConfig {
 export interface KVStoreQuery {
   key?: string
   controller?: PubKeyHex
-  namespace?: string
+  protocolID?: WalletProtocol
   limit?: number
   skip?: number
   sortOrder?: 'asc' | 'desc'
@@ -45,7 +45,7 @@ export interface KVStoreQuery {
 export interface GetParams {
   key?: string
   controller?: PubKeyHex
-  namespace?: string
+  protocolID?: WalletProtocol
   history?: boolean
 }
 
@@ -84,7 +84,7 @@ export interface KVStoreToken {
 }
 
 export const kvProtocol = {
-  namespace: 0,
+  protocolID: 0,
   key: 1,
   value: 2,
   controller: 3,

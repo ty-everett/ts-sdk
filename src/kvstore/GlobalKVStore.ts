@@ -95,22 +95,22 @@ export class GlobalKVStore {
 
   /**
    * Retrieves data from the KVStore.
-   * Can query by specific key+controller or by namespace.
+   * Can query by specific key+controller or by protocolID.
    *
    * @param {GetParams} params - Query parameters
    * @param {boolean} [includeToken=false] - Whether to include the token transaction data in the results
-   * @returns {Promise<KVStoreEntry | KVStoreEntry[] | undefined>} Single entry for key queries, array for namespace queries
+   * @returns {Promise<KVStoreEntry | KVStoreEntry[] | undefined>} Single entry for key queries, array for protocolID queries
    */
   async get(params: GetParams, includeToken: boolean = false): Promise<KVStoreEntry | KVStoreEntry[] | undefined> {
-    if (params.namespace) {
-      // Namespace query - return all entries under the namespace
+    if (params.protocolID) {
+      // protocolID query - return all entries under the protocolID
       return await this.queryOverlay(params, includeToken)
     } else if (params.key) {
       // Specific key query - return single entry
       const entries = await this.queryOverlay(params, includeToken)
       return entries.length > 0 ? entries[0] : undefined
     } else {
-      throw new Error('Must specify either key or namespace')
+      throw new Error('Must specify either key or protocolID')
     }
   }
 
@@ -146,7 +146,7 @@ export class GlobalKVStore {
           Utils.toArray(value, 'utf8'),
           Utils.toArray(controller, 'hex')
         ],
-        [1, 'kvstore'],
+        this.config.protocolID ?? DEFAULT_CONFIG.protocolID,
         Utils.toUTF8(Utils.toArray(key, 'utf8')),
         'anyone',
         true
@@ -380,7 +380,7 @@ export class GlobalKVStore {
     const query: KVStoreQuery = {
       key: params.key,
       controller: params.controller,
-      namespace: params.namespace,
+      protocolID: params.protocolID,
       history: params.history
     }
 
@@ -412,7 +412,7 @@ export class GlobalKVStore {
           data: decoded.fields.reduce((a, e) => [...a, ...e], []),
           signature,
           counterparty: Utils.toHex(decoded.fields[kvProtocol.controller]),
-          protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.namespace])),
+          protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID])),
           keyID: Utils.toUTF8(decoded.fields[kvProtocol.key])
         })
 
