@@ -81,7 +81,7 @@ export class GlobalKVStore {
    * @param {WalletInterface} [config.wallet] - Wallet to use for operations. Defaults to WalletClient.
    * @throws {Error} If the configuration contains invalid parameters.
    */
-  constructor(config: KVStoreConfig = {}) {
+  constructor (config: KVStoreConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
     this.wallet = config.wallet ?? new WalletClient()
     this.historian = new Historian<string, KVContext>(kvStoreInterpreter)
@@ -95,23 +95,22 @@ export class GlobalKVStore {
 
   /**
    * Retrieves data from the KVStore.
-   * Can query by specific key+controller or by protocolID.
+   * Can query by key+controller (single result), protocolID, controller, or key (multiple results).
    *
    * @param {KVStoreQuery} query - Query parameters sent to overlay
    * @param {KVStoreGetOptions} [options={}] - Configuration options for local processing
-   * @returns {Promise<KVStoreEntry | KVStoreEntry[] | undefined>} Single entry for key queries, array for protocolID queries
+   * @returns {Promise<KVStoreEntry | KVStoreEntry[] | undefined>} Single entry for key+controller queries, array for all other queries
    */
-  async get(query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry | KVStoreEntry[] | undefined> {
-    if (query.protocolID != null) {
-      // protocolID query - return all entries under the protocolID
-      return await this.queryOverlay(query, options)
-    } else if (query.key != null) {
-      // Specific key query - return single entry
+  async get (query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry | KVStoreEntry[] | undefined> {
+    if (Object.keys(query).length === 0) {
+      throw new Error('Must specify either key, controller, or protocolID')
+    }
+    if (query.key != null && query.controller != null) {
+      // Specific key+controller query - return single entry
       const entries = await this.queryOverlay(query, options)
       return entries.length > 0 ? entries[0] : undefined
-    } else {
-      throw new Error('Must specify either key or protocolID')
     }
+    return await this.queryOverlay(query, options)
   }
 
   /**
@@ -121,7 +120,7 @@ export class GlobalKVStore {
    * @param {string} value - The value to store
    * @returns {Promise<OutpointString>} The outpoint of the created token
    */
-  async set(key: string, value: string): Promise<OutpointString> {
+  async set (key: string, value: string): Promise<OutpointString> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -246,7 +245,7 @@ export class GlobalKVStore {
    * @throws {Error} If the overlay service is unreachable or the transaction fails.
    * @throws {Error} If there are existing tokens that cannot be unlocked.
    */
-  async remove(key: string, outputs?: CreateActionOutput[]): Promise<HexString> {
+  async remove (key: string, outputs?: CreateActionOutput[]): Promise<HexString> {
     if (typeof key !== 'string' || key.length === 0) {
       throw new Error('Key must be a non-empty string.')
     }
@@ -318,7 +317,7 @@ export class GlobalKVStore {
    * @returns {Promise<Array<(value: void | PromiseLike<void>) => void>>} The lock queue for cleanup.
    * @private
    */
-  private async queueOperationOnKey(key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
+  private async queueOperationOnKey (key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
     // Check if a lock exists for this key and wait for it to resolve
     let lockQueue = this.keyLocks.get(key)
     if (lockQueue == null) {
@@ -348,7 +347,7 @@ export class GlobalKVStore {
    * @param {Array<(value: void | PromiseLike<void>) => void>} lockQueue - The lock queue from queueOperationOnKey.
    * @private
    */
-  private finishOperationOnKey(key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
+  private finishOperationOnKey (key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
     lockQueue.shift() // Remove the current lock from the queue
     if (lockQueue.length > 0) {
       // If there are more locks waiting, resolve the next one
@@ -365,7 +364,7 @@ export class GlobalKVStore {
    * @returns {Promise<PubKeyHex>} The identity key of the current user
    * @private
    */
-  private async getIdentityKey(): Promise<PubKeyHex> {
+  private async getIdentityKey (): Promise<PubKeyHex> {
     if (this.cachedIdentityKey == null) {
       this.cachedIdentityKey = (await this.wallet.getPublicKey({ identityKey: true }, this.config.originator)).publicKey
     }
@@ -380,7 +379,7 @@ export class GlobalKVStore {
    * @returns {Promise<KVStoreEntry[]>} Array of matching KV entries
    * @private
    */
-  private async queryOverlay(query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry[]> {
+  private async queryOverlay (query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry[]> {
     const answer = await this.lookupResolver.query({
       service: 'ls_kvstore',
       query
@@ -454,7 +453,7 @@ export class GlobalKVStore {
    * @throws {Error} If the broadcast fails or the network is unreachable.
    * @private
    */
-  private async submitToOverlay(transaction: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
+  private async submitToOverlay (transaction: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
     return await this.topicBroadcaster.broadcast(transaction)
   }
 }

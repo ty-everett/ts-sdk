@@ -259,10 +259,11 @@ describe('GlobalKVStore', () => {
   // --------------------------------------------------------------------------
   describe('get', () => {
     describe('happy paths', () => {
-      it('returns undefined when key not found', async () => {
+      it('returns empty array when key not found', async () => {
         primeResolverEmpty(mockResolver)
         const result = await kvStore.get({ key: TEST_KEY })
-        expect(result).toBeUndefined()
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(0)
       })
 
 
@@ -322,11 +323,11 @@ describe('GlobalKVStore', () => {
 
         const result = await kvStore.get({ key: TEST_KEY }, { includeToken: true })
 
-        expect(result).toBeDefined()
-        expect(result).not.toBeInstanceOf(Array)
-        if (result && !Array.isArray(result)) {
-          expect(result.token).toBeDefined()
-          expect(result.token).toEqual({
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(1)
+        if (Array.isArray(result) && result.length > 0) {
+          expect(result[0].token).toBeDefined()
+          expect(result[0].token).toEqual({
             txid: TEST_TXID,
             outputIndex: 0,
             satoshis: 1,
@@ -357,9 +358,10 @@ describe('GlobalKVStore', () => {
 
         const result = await kvStore.get({ key: TEST_KEY })
 
-        expect(result).toBeDefined()
-        if (result && !Array.isArray(result)) {
-          expect(result.token).toBeUndefined()
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(1)
+        if (Array.isArray(result) && result.length > 0) {
+          expect(result[0].token).toBeUndefined()
         }
       })
 
@@ -461,8 +463,8 @@ describe('GlobalKVStore', () => {
     })
 
     describe('sad paths', () => {
-      it('rejects when neither key nor protocolID provided', async () => {
-        await expect(kvStore.get({})).rejects.toThrow('Must specify either key or protocolID')
+      it('rejects when no query parameters provided', async () => {
+        await expect(kvStore.get({})).rejects.toThrow('Must specify either key, controller, or protocolID')
       })
 
       it('propagates overlay errors', async () => {
@@ -471,7 +473,7 @@ describe('GlobalKVStore', () => {
         await expect(kvStore.get({ key: TEST_KEY })).rejects.toThrow('Network error')
       })
 
-      it('skips malformed candidates and returns default (invalid PushDrop format)', async () => {
+      it('skips malformed candidates and returns empty array (invalid PushDrop format)', async () => {
         primeResolverWithOneOutput(mockResolver)
 
         const originalDecode = (MockPushDrop as any).decode
@@ -481,10 +483,138 @@ describe('GlobalKVStore', () => {
 
         try {
           const result = await kvStore.get({ key: TEST_KEY })
-          expect(result).toBeUndefined()
+          expect(Array.isArray(result)).toBe(true)
+          expect(result).toHaveLength(0)
         } finally {
           ; (MockPushDrop as any).decode = originalDecode
         }
+      })
+    })
+
+    describe('Query Parameter Combinations', () => {
+      describe('Single parameter queries (return arrays)', () => {
+        it('key only - returns array of entries matching key across all controllers', async () => {
+          primeResolverWithOneOutput(mockResolver)
+          
+          const result = await kvStore.get({ key: TEST_KEY })
+          
+          expect(Array.isArray(result)).toBe(true)
+          expect(mockResolver.query).toHaveBeenCalledWith({
+            service: 'ls_kvstore',
+            query: { key: TEST_KEY }
+          })
+        })
+
+        it('controller only - returns array of entries by specific controller', async () => {
+          primeResolverWithOneOutput(mockResolver)
+          
+          const result = await kvStore.get({ controller: TEST_CONTROLLER })
+          
+          expect(Array.isArray(result)).toBe(true)
+          expect(mockResolver.query).toHaveBeenCalledWith({
+            service: 'ls_kvstore',
+            query: { controller: TEST_CONTROLLER }
+          })
+        })
+
+        it('protocolID only - returns array of entries under protocol', async () => {
+          primeResolverWithOneOutput(mockResolver)
+          
+          const result = await kvStore.get({ protocolID: [1, 'kvstore'] })
+          
+          expect(Array.isArray(result)).toBe(true)
+          expect(mockResolver.query).toHaveBeenCalledWith({
+            service: 'ls_kvstore',
+            query: { protocolID: [1, 'kvstore'] }
+          })
+        })
+      })
+
+      describe('Combined parameter queries', () => {
+        it('key + controller - returns single result (unique combination)', async () => {
+          primeResolverWithOneOutput(mockResolver)
+          
+          const result = await kvStore.get({ 
+            key: TEST_KEY, 
+            controller: TEST_CONTROLLER 
+          })
+          
+          // Should return single entry, not array
+          expect(result).not.toBeNull()
+          expect(Array.isArray(result)).toBe(false)
+          if (result && !Array.isArray(result)) {
+            expect(result.key).toBe(TEST_KEY)
+            expect(result.controller).toBe(TEST_CONTROLLER)
+          }
+        })
+
+        it('key + protocolID - returns array (multiple results possible)', async () => {
+          primeResolverWithOneOutput(mockResolver)
+          
+          const result = await kvStore.get({ 
+            key: TEST_KEY, 
+            protocolID: [1, 'kvstore'] 
+          })
+          
+          expect(Array.isArray(result)).toBe(true)
+        })
+
+        it('controller + protocolID - returns array (multiple results possible)', async () => {
+          primeResolverWithOneOutput(mockResolver)
+          
+          const result = await kvStore.get({ 
+            controller: TEST_CONTROLLER, 
+            protocolID: [1, 'kvstore'] 
+          })
+          
+          expect(Array.isArray(result)).toBe(true)
+        })
+
+        it('key + controller + protocolID - returns single result (most specific)', async () => {
+          primeResolverWithOneOutput(mockResolver)
+          
+          const result = await kvStore.get({ 
+            key: TEST_KEY, 
+            controller: TEST_CONTROLLER,
+            protocolID: [1, 'kvstore'] 
+          })
+          
+          // key + controller combination should return single result
+          expect(result).not.toBeNull()
+          expect(Array.isArray(result)).toBe(false)
+        })
+      })
+
+      describe('Return type consistency', () => {
+        it('key+controller always returns single result or undefined', async () => {
+          primeResolverEmpty(mockResolver)
+          
+          const result = await kvStore.get({ 
+            key: TEST_KEY, 
+            controller: TEST_CONTROLLER 
+          })
+          
+          expect(result).toBeUndefined()
+          expect(Array.isArray(result)).toBe(false)
+        })
+
+        it('all other combinations always return arrays', async () => {
+          primeResolverEmpty(mockResolver)
+          
+          const testCases = [
+            { key: TEST_KEY },
+            { controller: TEST_CONTROLLER },
+            { protocolID: [1, 'kvstore'] as [1, 'kvstore'] },
+            { key: TEST_KEY, protocolID: [1, 'kvstore'] as [1, 'kvstore'] },
+            { controller: TEST_CONTROLLER, protocolID: [1, 'kvstore'] as [1, 'kvstore'] }
+          ]
+
+          for (const query of testCases) {
+            const result = await kvStore.get(query)
+            expect(Array.isArray(result)).toBe(true)
+            expect((result as any[]).length).toBe(0)
+          }
+        })
       })
     })
   })
@@ -702,19 +832,24 @@ describe('GlobalKVStore', () => {
 
       const result = await kvStore.get({ key: TEST_KEY }, { history: true })
 
-      expect(result).toEqual({
-        key: TEST_KEY,
-        value: TEST_VALUE,
-        controller: expect.any(String),
-        history: [TEST_VALUE],
-      })
+      expect(Array.isArray(result)).toBe(true)
+      expect(result).toHaveLength(1)
+      if (Array.isArray(result) && result.length > 0) {
+        expect(result[0]).toEqual({
+          key: TEST_KEY,
+          value: TEST_VALUE,
+          controller: expect.any(String),
+          history: [TEST_VALUE],
+        })
+      }
     })
 
-    it('returns undefined when key not found', async () => {
+    it('returns empty array when key not found', async () => {
       primeResolverEmpty(mockResolver)
 
       const result = await kvStore.get({ key: TEST_KEY }, { history: true })
-      expect(result).toBeUndefined()
+      expect(Array.isArray(result)).toBe(true)
+      expect(result).toHaveLength(0)
     })
   })
 
@@ -765,13 +900,14 @@ describe('GlobalKVStore', () => {
 
   // --------------------------------------------------------------------------
   describe('Error recovery & edge cases', () => {
-    it('returns undefined for empty overlay response', async () => {
+    it('returns empty array for empty overlay response', async () => {
       primeResolverEmpty(mockResolver)
       const result = await kvStore.get({ key: TEST_KEY })
-      expect(result).toBeUndefined()
+      expect(Array.isArray(result)).toBe(true)
+      expect(result).toHaveLength(0)
     })
 
-    it('skips malformed transactions and returns undefined', async () => {
+    it('skips malformed transactions and returns empty array', async () => {
       primeResolverWithOneOutput(mockResolver)
 
       const originalFromBEEF = (MockTransaction as any).fromBEEF
@@ -781,7 +917,8 @@ describe('GlobalKVStore', () => {
 
       try {
         const result = await kvStore.get({ key: TEST_KEY })
-        expect(result).toBeUndefined()
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(0)
       } finally {
         ; (MockTransaction as any).fromBEEF = originalFromBEEF
       }
@@ -789,7 +926,7 @@ describe('GlobalKVStore', () => {
 
     it('handles edge cases where no valid tokens pass full validation', async () => {
       // This test verifies that when tokens exist but fail validation (signature, etc),
-      // the method gracefully returns undefined rather than throwing
+      // the method gracefully returns empty array rather than throwing
       primeResolverWithOneOutput(mockResolver)
 
       // Make signature verification fail (this could be a realistic failure mode)
@@ -798,14 +935,15 @@ describe('GlobalKVStore', () => {
 
       try {
         const result = await kvStore.get({ key: TEST_KEY }, { history: true })
-        expect(result).toBeUndefined()
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(0)
       } finally {
         // Restore original mock
         mockProtoWallet.verifySignature = originalVerifySignature
       }
     })
 
-    it('when no valid outputs (decode fails), get(..., history=true) still returns undefined', async () => {
+    it('when no valid outputs (decode fails), get(..., history=true) still returns empty array', async () => {
       primeResolverWithOneOutput(mockResolver)
 
       const originalDecode = (MockPushDrop as any).decode
@@ -815,7 +953,8 @@ describe('GlobalKVStore', () => {
 
       try {
         const result = await kvStore.get({ key: TEST_KEY }, { history: true })
-        expect(result).toBeUndefined()
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(0)
       } finally {
         ; (MockPushDrop as any).decode = originalDecode
       }
