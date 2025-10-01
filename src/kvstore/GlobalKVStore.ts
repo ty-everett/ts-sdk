@@ -9,7 +9,7 @@ import { Beef } from '../transaction/Beef.js'
 import { Historian } from '../overlay-tools/Historian.js'
 import { KVContext, kvStoreInterpreter } from './kvStoreInterpreter.js'
 import { ProtoWallet } from '../wallet/ProtoWallet.js'
-import { kvProtocol, KVStoreConfig, KVStoreQuery, GetParams, KVStoreEntry } from './types.js'
+import { kvProtocol, KVStoreConfig, KVStoreQuery, KVStoreEntry, KVStoreGetOptions } from './types.js'
 
 /**
  * Default configuration values for GlobalKVStore operations.
@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'originator'>> = {
 /**
  * Implements a global key-value storage system which uses an overlay service to track key-value pairs.
  * Each key-value pair is represented by a PushDrop token output.
- * Allows getting, setting, and removing key-value pairs with optional encryption and history tracking.
+ * Allows getting, setting, and removing key-value pairs with optional fetching by protocolID and history tracking.
  */
 export class GlobalKVStore {
   /**
@@ -48,7 +48,7 @@ export class GlobalKVStore {
    * Historian instance used to extract history from transaction outputs.
    * @private
    */
-  private readonly historian: Historian<string>
+  private readonly historian: Historian<string, KVContext>
 
   /**
    * Lookup resolver used to query the overlay for transaction outputs.
@@ -97,17 +97,17 @@ export class GlobalKVStore {
    * Retrieves data from the KVStore.
    * Can query by specific key+controller or by protocolID.
    *
-   * @param {GetParams} params - Query parameters
-   * @param {boolean} [includeToken=false] - Whether to include the token transaction data in the results
+   * @param {KVStoreQuery} query - Query parameters sent to overlay
+   * @param {KVStoreGetOptions} [options={}] - Configuration options for local processing
    * @returns {Promise<KVStoreEntry | KVStoreEntry[] | undefined>} Single entry for key queries, array for protocolID queries
    */
-  async get(params: GetParams, includeToken: boolean = false): Promise<KVStoreEntry | KVStoreEntry[] | undefined> {
-    if (params.protocolID) {
+  async get(query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry | KVStoreEntry[] | undefined> {
+    if (query.protocolID != null) {
       // protocolID query - return all entries under the protocolID
-      return await this.queryOverlay(params, includeToken)
-    } else if (params.key) {
+      return await this.queryOverlay(query, options)
+    } else if (query.key != null) {
       // Specific key query - return single entry
-      const entries = await this.queryOverlay(params, includeToken)
+      const entries = await this.queryOverlay(query, options)
       return entries.length > 0 ? entries[0] : undefined
     } else {
       throw new Error('Must specify either key or protocolID')
@@ -134,7 +134,7 @@ export class GlobalKVStore {
 
     try {
       // Check for existing token to spend
-      const existingEntries = await this.queryOverlay({ key, controller })
+      const existingEntries = await this.queryOverlay({ key, controller }, { includeToken: true })
       const existingToken = existingEntries.length > 0 ? existingEntries[0].token : undefined
 
       // Create PushDrop locking script
@@ -255,9 +255,9 @@ export class GlobalKVStore {
     const lockQueue = await this.queueOperationOnKey(key)
 
     try {
-      const existingEntries = await this.queryOverlay({ key, controller })
+      const existingEntries = await this.queryOverlay({ key, controller }, { includeToken: true })
 
-      if (existingEntries.length === 0) {
+      if (existingEntries.length === 0 || existingEntries[0].token == null) {
         throw new Error('The item did not exist, no item was deleted.')
       }
 
@@ -353,6 +353,9 @@ export class GlobalKVStore {
     if (lockQueue.length > 0) {
       // If there are more locks waiting, resolve the next one
       lockQueue[0]()
+    } else {
+      // Clean up empty queue to prevent memory leak
+      this.keyLocks.delete(key)
     }
   }
 
@@ -372,18 +375,12 @@ export class GlobalKVStore {
   /**
    * Queries the overlay service for KV entries.
    *
-   * @param {GetParams} params - Query parameters
+   * @param {KVStoreQuery} query - Query parameters sent to overlay
+   * @param {KVStoreGetOptions} options - Configuration options for local processing
    * @returns {Promise<KVStoreEntry[]>} Array of matching KV entries
    * @private
    */
-  private async queryOverlay(params: GetParams, includeToken: boolean = false): Promise<KVStoreEntry[]> {
-    const query: KVStoreQuery = {
-      key: params.key,
-      controller: params.controller,
-      protocolID: params.protocolID,
-      history: params.history
-    }
-
+  private async queryOverlay(query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry[]> {
     const answer = await this.lookupResolver.query({
       service: 'ls_kvstore',
       query
@@ -426,7 +423,7 @@ export class GlobalKVStore {
           controller: Utils.toHex(decoded.fields[kvProtocol.controller])
         }
 
-        if (includeToken) {
+        if (options.includeToken === true) {
           entry.token = {
             txid: tx.id('hex'),
             outputIndex: result.outputIndex,
@@ -435,7 +432,7 @@ export class GlobalKVStore {
           }
         }
 
-        if (params.history) {
+        if (options.history === true) {
           entry.history = await this.historian.buildHistory(tx, { key: entry.key })
         }
 

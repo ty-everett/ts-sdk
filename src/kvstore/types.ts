@@ -36,17 +36,16 @@ export interface KVStoreQuery {
   limit?: number
   skip?: number
   sortOrder?: 'asc' | 'desc'
-  history?: boolean
 }
 
 /**
- * Parameters for getting data from KVStore
+ * Options for configuring KVStore get operations (local processing)
  */
-export interface GetParams {
-  key?: string
-  controller?: PubKeyHex
-  protocolID?: WalletProtocol
+export interface KVStoreGetOptions {
+  /** Whether to build and include history for each entry */
   history?: boolean
+  /** Whether to include token transaction data in results */
+  includeToken?: boolean
 }
 
 /**
