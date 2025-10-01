@@ -15,12 +15,11 @@ import { kvProtocol, KVStoreConfig, KVStoreQuery, KVStoreEntry, KVStoreGetOption
  * Default configuration values for GlobalKVStore operations.
  * Provides sensible defaults for overlay connection and protocol settings.
  */
-const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'originator'>> = {
-  overlayHost: 'http://localhost:8080',
+const DEFAULT_CONFIG: Required<Omit<KVStoreConfig, 'wallet' | 'overlayHost' | 'originator'>> = {
   protocolID: [1, 'kvstore'],
   tokenAmount: 1,
   topics: ['tm_kvstore'],
-  networkPreset: 'local',
+  networkPreset: 'mainnet',
   acceptDelayedBroadcast: false
 }
 
