@@ -6,6 +6,7 @@ import {
   DiscoverByIdentityKeyArgs,
   IdentityCertificate,
   OriginatorDomainNameStringUnder250Bytes,
+  PubKeyHex,
   WalletCertificate,
   WalletClient,
   WalletInterface
@@ -15,6 +16,7 @@ import Certificate from '../auth/certificates/Certificate.js'
 import { PushDrop } from '../script/index.js'
 import { PrivateKey, Utils } from '../primitives/index.js'
 import { TopicBroadcaster } from '../overlay-tools/index.js'
+import { ContactsManager, Contact } from './ContactsManager.js'
 
 /**
  * IdentityClient lets you discover who others are, and let the world know who you are.
@@ -22,6 +24,7 @@ import { TopicBroadcaster } from '../overlay-tools/index.js'
 export class IdentityClient {
   private readonly authClient: AuthFetch
   private readonly wallet: WalletInterface
+  private readonly contactsManager: ContactsManager
   constructor (
     wallet?: WalletInterface,
     private readonly options = DEFAULT_IDENTITY_CLIENT_OPTIONS,
@@ -29,6 +32,7 @@ export class IdentityClient {
   ) {
     this.wallet = wallet ?? new WalletClient()
     this.authClient = new AuthFetch(this.wallet)
+    this.contactsManager = new ContactsManager(this.wallet)
   }
 
   /**
@@ -112,11 +116,21 @@ export class IdentityClient {
   * Resolves displayable identity certificates, issued to a given identity key by a trusted certifier.
   *
   * @param {DiscoverByIdentityKeyArgs} args - Arguments for requesting the discovery based on the identity key.
+  * @param {boolean} [overrideWithContacts=true] - Whether to override the results with personal contacts if available.
   * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
   */
   async resolveByIdentityKey (
-    args: DiscoverByIdentityKeyArgs
+    args: DiscoverByIdentityKeyArgs,
+    overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
+    if (overrideWithContacts) {
+      // Override results with personal contacts if available
+      const contacts = await this.contactsManager.getContacts(args.identityKey)
+      if (contacts.length > 0) {
+        return contacts
+      }
+    }
+
     const { certificates } = await this.wallet.discoverByIdentityKey(args, this.originator)
     return certificates.map(cert => {
       return IdentityClient.parseIdentity(cert)
@@ -127,15 +141,31 @@ export class IdentityClient {
    * Resolves displayable identity certificates by specific identity attributes, issued by a trusted entity.
    *
    * @param {DiscoverByAttributesArgs} args - Attributes and optional parameters used to discover certificates.
+   * @param {boolean} [overrideWithContacts=true] - Whether to override the results with personal contacts if available.
    * @returns {Promise<DisplayableIdentity[]>} The promise resolves to displayable identities.
    */
   async resolveByAttributes (
-    args: DiscoverByAttributesArgs
+    args: DiscoverByAttributesArgs,
+    overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
-    const { certificates } = await this.wallet.discoverByAttributes(args, this.originator)
-    return certificates.map(cert => {
-      return IdentityClient.parseIdentity(cert)
-    })
+    // Run both queries in parallel for better performance
+    const [contacts, certificatesResult] = await Promise.all([
+      overrideWithContacts ? this.contactsManager.getContacts() : Promise.resolve([]),
+      this.wallet.discoverByAttributes(args, this.originator)
+    ])
+
+    // Fast lookup by identityKey
+    const contactByKey = new Map<PubKeyHex, Contact>(
+      contacts.map(contact => [contact.identityKey, contact] as const)
+    )
+
+    // Guard if certificates might be absent
+    const certs = certificatesResult?.certificates ?? []
+
+    // Parse certificates and substitute with contacts where available
+    return certs.map(cert =>
+      contactByKey.get(cert.subject) ?? IdentityClient.parseIdentity(cert)
+    )
   }
 
   /**
@@ -212,6 +242,34 @@ export class IdentityClient {
   //   const broadcaster = new SHIPBroadcaster(['tm_identity'])
   //   return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
   // }
+
+  /**
+   * Load all records from the contacts basket
+   * @param identityKey Optional specific identity key to fetch
+   * @param forceRefresh Whether to force a check for new contact data
+   * @param limit Optional limit on number of contacts to fetch
+   * @returns A promise that resolves with an array of contacts
+   */
+  public async getContacts (identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> {
+    return await this.contactsManager.getContacts(identityKey, forceRefresh, limit)
+  }
+
+  /**
+   * Save or update a Metanet contact
+   * @param contact The displayable identity information for the contact
+   * @param metadata Optional metadata to store with the contact (ex. notes, aliases, etc)
+   */
+  public async saveContact (contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> {
+    return await this.contactsManager.saveContact(contact, metadata)
+  }
+
+  /**
+   * Remove a contact from the contacts basket
+   * @param identityKey The identity key of the contact to remove
+   */
+  public async removeContact (identityKey: PubKeyHex): Promise<void> {
+    return await this.contactsManager.removeContact(identityKey)
+  }
 
   /**
    * Parse out identity and certifier attributes to display from an IdentityCertificate

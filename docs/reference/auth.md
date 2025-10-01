@@ -121,23 +121,23 @@ and sending BSV payment transactions when necessary.
 ```ts
 export class AuthFetch {
     peers: Record<string, AuthPeer> = {};
-    constructor(wallet: WalletInterface, requestedCertificates?: RequestedCertificateSet, sessionManager?: SessionManager) 
+    constructor(wallet: WalletInterface, requestedCertificates?: RequestedCertificateSet, sessionManager?: SessionManager, originator?: OriginatorDomainNameStringUnder250Bytes) 
     async fetch(url: string, config: SimplifiedFetchRequestOptions = {}): Promise<Response> 
     async sendCertificateRequest(baseUrl: string, certificatesToRequest: RequestedCertificateSet): Promise<VerifiableCertificate[]> 
     public consumeReceivedCertificates(): VerifiableCertificate[] 
 }
 ```
 
-See also: [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface)
 
 #### Constructor
 
 Constructs a new AuthFetch instance.
 
 ```ts
-constructor(wallet: WalletInterface, requestedCertificates?: RequestedCertificateSet, sessionManager?: SessionManager) 
+constructor(wallet: WalletInterface, requestedCertificates?: RequestedCertificateSet, sessionManager?: SessionManager, originator?: OriginatorDomainNameStringUnder250Bytes) 
 ```
-See also: [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [WalletInterface](./wallet.md#interface-walletinterface)
 
 Argument Details
 
@@ -643,7 +643,7 @@ This version supports multiple concurrent sessions per peer identityKey.
 export class Peer {
     public sessionManager: SessionManager;
     certificatesToRequest: RequestedCertificateSet;
-    constructor(wallet: WalletInterface, transport: Transport, certificatesToRequest?: RequestedCertificateSet, sessionManager?: SessionManager, autoPersistLastSession?: boolean) 
+    constructor(wallet: WalletInterface, transport: Transport, certificatesToRequest?: RequestedCertificateSet, sessionManager?: SessionManager, autoPersistLastSession?: boolean, originator?: OriginatorDomainNameStringUnder250Bytes) 
     async toPeer(message: number[], identityKey?: string, maxWaitTime?: number): Promise<void> 
     async requestCertificates(certificatesToRequest: RequestedCertificateSet, identityKey?: string, maxWaitTime = 10000): Promise<void> 
     async getAuthenticatedSession(identityKey?: string, maxWaitTime?: number): Promise<PeerSession> 
@@ -657,16 +657,16 @@ export class Peer {
 }
 ```
 
-See also: [PeerSession](./auth.md#interface-peersession), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [Transport](./auth.md#interface-transport), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [PeerSession](./auth.md#interface-peersession), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [Transport](./auth.md#interface-transport), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface)
 
 #### Constructor
 
 Creates a new Peer instance
 
 ```ts
-constructor(wallet: WalletInterface, transport: Transport, certificatesToRequest?: RequestedCertificateSet, sessionManager?: SessionManager, autoPersistLastSession?: boolean) 
+constructor(wallet: WalletInterface, transport: Transport, certificatesToRequest?: RequestedCertificateSet, sessionManager?: SessionManager, autoPersistLastSession?: boolean, originator?: OriginatorDomainNameStringUnder250Bytes) 
 ```
-See also: [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [Transport](./auth.md#interface-transport), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [SessionManager](./auth.md#class-sessionmanager), [Transport](./auth.md#interface-transport), [WalletInterface](./wallet.md#interface-walletinterface)
 
 Argument Details
 
@@ -1107,20 +1107,20 @@ export class VerifiableCertificate extends Certificate {
     decryptedFields?: Record<CertificateFieldNameUnder50Bytes, Base64String>;
     constructor(type: Base64String, serialNumber: Base64String, subject: PubKeyHex, certifier: PubKeyHex, revocationOutpoint: OutpointString, fields: Record<CertificateFieldNameUnder50Bytes, string>, keyring: Record<CertificateFieldNameUnder50Bytes, string>, signature?: HexString, decryptedFields?: Record<CertificateFieldNameUnder50Bytes, Base64String>) 
     static fromCertificate(certificate: WalletCertificate, keyring: Record<CertificateFieldNameUnder50Bytes, string>): VerifiableCertificate 
-    async decryptFields(verifierWallet: ProtoWallet, privileged?: boolean, privilegedReason?: string): Promise<Record<CertificateFieldNameUnder50Bytes, string>> 
+    async decryptFields(verifierWallet: ProtoWallet, privileged?: boolean, privilegedReason?: string, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<Record<CertificateFieldNameUnder50Bytes, string>> 
 }
 ```
 
-See also: [Base64String](./wallet.md#type-base64string), [Certificate](./auth.md#class-certificate), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [HexString](./wallet.md#type-hexstring), [OutpointString](./wallet.md#type-outpointstring), [ProtoWallet](./wallet.md#class-protowallet), [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletCertificate](./wallet.md#interface-walletcertificate)
+See also: [Base64String](./wallet.md#type-base64string), [Certificate](./auth.md#class-certificate), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [HexString](./wallet.md#type-hexstring), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [OutpointString](./wallet.md#type-outpointstring), [ProtoWallet](./wallet.md#class-protowallet), [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletCertificate](./wallet.md#interface-walletcertificate)
 
 #### Method decryptFields
 
 Decrypts selectively revealed certificate fields using the provided keyring and verifier wallet
 
 ```ts
-async decryptFields(verifierWallet: ProtoWallet, privileged?: boolean, privilegedReason?: string): Promise<Record<CertificateFieldNameUnder50Bytes, string>> 
+async decryptFields(verifierWallet: ProtoWallet, privileged?: boolean, privilegedReason?: string, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<Record<CertificateFieldNameUnder50Bytes, string>> 
 ```
-See also: [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [ProtoWallet](./wallet.md#class-protowallet)
+See also: [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [ProtoWallet](./wallet.md#class-protowallet)
 
 Returns
 
@@ -1177,10 +1177,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 Creates a nonce derived from a wallet
 
 ```ts
-export async function createNonce(wallet: WalletInterface, counterparty: WalletCounterparty = "self"): Promise<Base64String> 
+export async function createNonce(wallet: WalletInterface, counterparty: WalletCounterparty = "self", originator?: OriginatorDomainNameStringUnder250Bytes): Promise<Base64String> 
 ```
 
-See also: [Base64String](./wallet.md#type-base64string), [WalletCounterparty](./wallet.md#type-walletcounterparty), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [Base64String](./wallet.md#type-base64string), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [WalletCounterparty](./wallet.md#type-walletcounterparty), [WalletInterface](./wallet.md#interface-walletinterface)
 
 Returns
 
@@ -1199,10 +1199,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 Verifies a nonce derived from a wallet
 
 ```ts
-export async function verifyNonce(nonce: Base64String, wallet: WalletInterface, counterparty: WalletCounterparty = "self"): Promise<boolean> 
+export async function verifyNonce(nonce: Base64String, wallet: WalletInterface, counterparty: WalletCounterparty = "self", originator?: OriginatorDomainNameStringUnder250Bytes): Promise<boolean> 
 ```
 
-See also: [Base64String](./wallet.md#type-base64string), [WalletCounterparty](./wallet.md#type-walletcounterparty), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [Base64String](./wallet.md#type-base64string), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [WalletCounterparty](./wallet.md#type-walletcounterparty), [WalletInterface](./wallet.md#interface-walletinterface)
 
 Returns
 
@@ -1236,23 +1236,23 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: getVerifiableCertificates
 
 ```ts
-getVerifiableCertificates = async (wallet: WalletInterface, requestedCertificates: RequestedCertificateSet, verifierIdentityKey: string): Promise<VerifiableCertificate[]> => {
+getVerifiableCertificates = async (wallet: WalletInterface, requestedCertificates: RequestedCertificateSet, verifierIdentityKey: string, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<VerifiableCertificate[]> => {
     const matchingCertificates = await wallet.listCertificates({
         certifiers: requestedCertificates.certifiers,
         types: Object.keys(requestedCertificates.types)
-    });
+    }, originator);
     return await Promise.all(matchingCertificates.certificates.map(async (certificate) => {
         const { keyringForVerifier } = await wallet.proveCertificate({
             certificate,
             fieldsToReveal: requestedCertificates.types[certificate.type],
             verifier: verifierIdentityKey
-        });
+        }, originator);
         return new VerifiableCertificate(certificate.type, certificate.serialNumber, certificate.subject, certificate.certifier, certificate.revocationOutpoint, certificate.fields, keyringForVerifier, certificate.signature);
     }));
 }
 ```
 
-See also: [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -1260,7 +1260,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: validateCertificates
 
 ```ts
-validateCertificates = async (verifierWallet: WalletInterface, message: AuthMessage, certificatesRequested?: RequestedCertificateSet): Promise<void> => {
+validateCertificates = async (verifierWallet: WalletInterface, message: AuthMessage, certificatesRequested?: RequestedCertificateSet, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<void> => {
     if ((message.certificates == null) || message.certificates.length === 0) {
         throw new Error("No certificates were provided in the AuthMessage.");
     }
@@ -1283,12 +1283,12 @@ validateCertificates = async (verifierWallet: WalletInterface, message: AuthMess
                 throw new Error(`Certificate with type ${certToVerify.type} was not requested`);
             }
         }
-        await certToVerify.decryptFields(verifierWallet);
+        await certToVerify.decryptFields(verifierWallet, undefined, undefined, originator);
     }));
 }
 ```
 
-See also: [AuthMessage](./auth.md#interface-authmessage), [Certificate](./auth.md#class-certificate), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface), [verify](./compat.md#variable-verify)
+See also: [AuthMessage](./auth.md#interface-authmessage), [Certificate](./auth.md#class-certificate), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [RequestedCertificateSet](./auth.md#interface-requestedcertificateset), [VerifiableCertificate](./auth.md#class-verifiablecertificate), [WalletInterface](./wallet.md#interface-walletinterface), [verify](./compat.md#variable-verify)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

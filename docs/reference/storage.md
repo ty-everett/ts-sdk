@@ -22,7 +22,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export interface DownloadResult {
-    data: number[];
+    data: Uint8Array;
     mimeType: string | null;
 }
 ```
@@ -85,7 +85,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export interface UploadableFile {
-    data: number[];
+    data: Uint8Array | number[];
     type: string;
 }
 ```
@@ -341,13 +341,20 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: getURLForFile
 
 ```ts
-getURLForFile = (file: number[]): string => {
-    const hash = sha256(file);
+getURLForFile = (file: Uint8Array | number[]): string => {
+    const data = file instanceof Uint8Array ? file : Uint8Array.from(file);
+    const hasher = new Hash.SHA256();
+    const chunkSize = 1024 * 1024;
+    for (let i = 0; i < data.length; i += chunkSize) {
+        const chunk = data.subarray(i, i + chunkSize);
+        hasher.update(Array.from(chunk));
+    }
+    const hash = hasher.digest();
     return getURLForHash(hash);
 }
 ```
 
-See also: [getURLForHash](./storage.md#variable-geturlforhash), [sha256](./primitives.md#variable-sha256)
+See also: [SHA256](./primitives.md#class-sha256), [getURLForHash](./storage.md#variable-geturlforhash)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

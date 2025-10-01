@@ -1,6 +1,7 @@
 import { StorageUploader } from '../StorageUploader.js'
 import * as StorageUtils from '../StorageUtils.js'
 import WalletClient from '../../wallet/WalletClient.js'
+import { createHash } from 'crypto'
 
 /**
  * A helper for converting a string to a number[] of UTF-8 bytes
@@ -64,6 +65,25 @@ describe('StorageUploader Tests', () => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('')
     expect(firstFour).toHaveLength(8)
+  })
+
+  it('should handle large file uploads efficiently', async () => {
+    const size = 5 * 1024 * 1024
+    const data = new Uint8Array(size)
+    for (let i = 0; i < size; i++) data[i] = i % 256
+
+    jest.spyOn(uploader as any, 'getUploadInfo').mockResolvedValue({
+      uploadURL: 'https://example-upload.com/put'
+    })
+
+    const result = await uploader.publishFile({
+      file: { data, type: 'application/octet-stream' },
+      retentionPeriod: 7
+    })
+
+    const expectedHash = createHash('sha256').update(data).digest()
+    const urlHash = StorageUtils.getHashFromURL(result.uhrpURL)
+    expect(Buffer.from(urlHash)).toEqual(expectedHash)
   })
 
   it('should throw if the upload fails with HTTP 500', async () => {
