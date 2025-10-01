@@ -218,21 +218,15 @@ export default class PushDrop implements ScriptTemplate {
         fields: number[][];
     } 
     constructor(wallet: WalletInterface, originator?: string) 
-    async lock(fields: number[][], protocolID: [
-        SecurityLevel,
-        string
-    ], keyID: string, counterparty: string, forSelf = false, includeSignature = true, lockPosition: "before" | "after" = "before"): Promise<LockingScript> 
-    unlock(protocolID: [
-        SecurityLevel,
-        string
-    ], keyID: string, counterparty: string, signOutputs: "all" | "none" | "single" = "all", anyoneCanPay = false, sourceSatoshis?: number, lockingScript?: LockingScript): {
+    async lock(fields: number[][], protocolID: WalletProtocol, keyID: string, counterparty: string, forSelf = false, includeSignature = true, lockPosition: "before" | "after" = "before"): Promise<LockingScript> 
+    unlock(protocolID: WalletProtocol, keyID: string, counterparty: string, signOutputs: "all" | "none" | "single" = "all", anyoneCanPay = false, sourceSatoshis?: number, lockingScript?: LockingScript): {
         sign: (tx: Transaction, inputIndex: number) => Promise<UnlockingScript>;
         estimateLength: () => Promise<73>;
     } 
 }
 ```
 
-See also: [LockingScript](./script.md#class-lockingscript), [PublicKey](./primitives.md#class-publickey), [ScriptTemplate](./script.md#interface-scripttemplate), [SecurityLevel](./wallet.md#type-securitylevel), [Transaction](./transaction.md#class-transaction), [UnlockingScript](./script.md#class-unlockingscript), [WalletInterface](./wallet.md#interface-walletinterface), [sign](./compat.md#variable-sign)
+See also: [LockingScript](./script.md#class-lockingscript), [PublicKey](./primitives.md#class-publickey), [ScriptTemplate](./script.md#interface-scripttemplate), [Transaction](./transaction.md#class-transaction), [UnlockingScript](./script.md#class-unlockingscript), [WalletInterface](./wallet.md#interface-walletinterface), [WalletProtocol](./wallet.md#type-walletprotocol), [sign](./compat.md#variable-sign)
 
 #### Constructor
 
@@ -277,12 +271,9 @@ Argument Details
 Creates a PushDrop locking script with arbitrary data fields and a public key lock.
 
 ```ts
-async lock(fields: number[][], protocolID: [
-    SecurityLevel,
-    string
-], keyID: string, counterparty: string, forSelf = false, includeSignature = true, lockPosition: "before" | "after" = "before"): Promise<LockingScript> 
+async lock(fields: number[][], protocolID: WalletProtocol, keyID: string, counterparty: string, forSelf = false, includeSignature = true, lockPosition: "before" | "after" = "before"): Promise<LockingScript> 
 ```
-See also: [LockingScript](./script.md#class-lockingscript), [SecurityLevel](./wallet.md#type-securitylevel)
+See also: [LockingScript](./script.md#class-lockingscript), [WalletProtocol](./wallet.md#type-walletprotocol)
 
 Returns
 
@@ -308,15 +299,12 @@ Argument Details
 Creates an unlocking script for spending a PushDrop token output.
 
 ```ts
-unlock(protocolID: [
-    SecurityLevel,
-    string
-], keyID: string, counterparty: string, signOutputs: "all" | "none" | "single" = "all", anyoneCanPay = false, sourceSatoshis?: number, lockingScript?: LockingScript): {
+unlock(protocolID: WalletProtocol, keyID: string, counterparty: string, signOutputs: "all" | "none" | "single" = "all", anyoneCanPay = false, sourceSatoshis?: number, lockingScript?: LockingScript): {
     sign: (tx: Transaction, inputIndex: number) => Promise<UnlockingScript>;
     estimateLength: () => Promise<73>;
 } 
 ```
-See also: [LockingScript](./script.md#class-lockingscript), [SecurityLevel](./wallet.md#type-securitylevel), [Transaction](./transaction.md#class-transaction), [UnlockingScript](./script.md#class-unlockingscript), [sign](./compat.md#variable-sign)
+See also: [LockingScript](./script.md#class-lockingscript), [Transaction](./transaction.md#class-transaction), [UnlockingScript](./script.md#class-unlockingscript), [WalletProtocol](./wallet.md#type-walletprotocol), [sign](./compat.md#variable-sign)
 
 Returns
 
