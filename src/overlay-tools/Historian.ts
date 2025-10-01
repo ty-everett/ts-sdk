@@ -7,7 +7,7 @@ import Transaction from '../transaction/Transaction.js'
  * - T: The decoded/typed value produced for a matching output. Returning `undefined`
  *      means “this output does not contribute to history.”
  * - C: The per-call context passed through Historian to the interpreter. This carries
- *      any metadata needed to interpret outputs (e.g., `{ protectedKey: string }` for KVStore).
+ *      any metadata needed to interpret outputs (e.g., `{ key: string }` for KVStore).
  *
  * Params:
  * - tx: The transaction containing the output to interpret.

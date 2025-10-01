@@ -9,7 +9,7 @@ export interface KVContext { key: string }
 /**
  * KVStore interpreter used by Historian.
  *
- * Validates the KVStore PushDrop tokens: [namespace, protectedKey, value, controller, signature].
+ * Validates the KVStore PushDrop tokens: [protocolID, key, value, controller, signature].
  * Filters outputs by the provided key in the interpreter context.
  * Produces the plaintext value for matching outputs; returns undefined otherwise.
  *
@@ -29,7 +29,7 @@ export const kvStoreInterpreter: InterpreterFunction<string, KVContext> = async 
     // Decode the KVStore token
     const decoded = PushDrop.decode(output.lockingScript)
 
-    // Validate KVStore token format (must have 5 fields: [protocolID, protectedKey, value, controller, signature])
+    // Validate KVStore token format (must have 5 fields: [protocolID, key, value, controller, signature])
     if (decoded.fields.length !== Object.keys(kvProtocol).length) return undefined
 
     // Filter by key - only return values for this specific key
