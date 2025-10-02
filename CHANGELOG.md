@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.7.8 - 2025-10-02](#178---2025-10-02)
 - [1.7.6 - 2025-09-09](#176---2025-09-08)
 - [1.7.5 - 2025-09-08](#175---2025-09-08)
 - [1.7.4 - 2025-09-08](#174---2025-09-08)
@@ -156,6 +157,15 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.7.8] - 2025-10-02
+
+### Added
+
+- **LivePolicy fee model**: New dynamic fee model that fetches current rates from ARC GorillaPool API (`https://arc.gorillapool.io/v1/policy`) with intelligent caching and fallback mechanisms
+
 
 ---
 
