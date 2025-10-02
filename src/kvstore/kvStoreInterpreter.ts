@@ -35,8 +35,8 @@ export const kvStoreInterpreter: InterpreterFunction<string, KVContext> = async 
 
     // Only return values for the given key and protocolID
     const key = Utils.toUTF8(decoded.fields[kvProtocol.key])
-    const protocolID = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID]))
-    if (key !== ctx.key || protocolID !== ctx.protocolID) return undefined
+    const protocolID = Utils.toUTF8(decoded.fields[kvProtocol.protocolID])
+    if (key !== ctx.key || protocolID !== JSON.stringify(ctx.protocolID)) return undefined
     try {
       return Utils.toUTF8(decoded.fields[kvProtocol.value])
     } catch {
