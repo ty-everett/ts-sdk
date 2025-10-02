@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.0 - 2025-10-02](#180---2025-10-02)
 - [1.7.8 - 2025-10-02](#178---2025-10-02)
 - [1.7.6 - 2025-09-09](#176---2025-09-08)
 - [1.7.5 - 2025-09-08](#175---2025-09-08)
@@ -159,6 +160,19 @@ All notable changes to this project will be documented in this file. The format 
 ### Security
 
 ---
+
+### [1.8.0] - 2025-10-02
+
+### Added
+
+- Added `secure-json-api` substrate to allow for HTTPS JSON API communication.
+
+### Changed
+
+- Changed the way in which the substrates attempt to connect to speed up the decision by 20x. Now all substrates are tried in parallel and the first successful one is used. XDM is attempted if all else fails because the delayed caused by absence would otherwise be 200ms.
+
+---
+
 
 ### [1.7.8] - 2025-10-02
 
