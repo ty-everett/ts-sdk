@@ -101,7 +101,7 @@ export class GlobalKVStore {
    * Can query by key+controller (single result), protocolID, controller, or key (multiple results).
    *
    * @param {KVStoreQuery} query - Query parameters sent to overlay
-   * @param {KVStoreGetOptions} [options={}] - Configuration options for local processing
+   * @param {KVStoreGetOptions} [options={}] - Configuration options for the get operation
    * @returns {Promise<KVStoreEntry | KVStoreEntry[] | undefined>} Single entry for key+controller queries, array for all other queries
    */
   async get (query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry | KVStoreEntry[] | undefined> {
@@ -121,6 +121,7 @@ export class GlobalKVStore {
    *
    * @param {string} key - The key to set (user computes this however they want)
    * @param {string} value - The value to store
+   * @param {KVStoreSetOptions} [options={}] - Configuration options for the set operation
    * @returns {Promise<OutpointString>} The outpoint of the created token
    */
   async set (key: string, value: string, options: KVStoreSetOptions = {}): Promise<OutpointString> {
@@ -386,7 +387,7 @@ export class GlobalKVStore {
    * Queries the overlay service for KV entries.
    *
    * @param {KVStoreQuery} query - Query parameters sent to overlay
-   * @param {KVStoreGetOptions} options - Configuration options for local processing
+   * @param {KVStoreGetOptions} options - Configuration options for the query
    * @returns {Promise<KVStoreEntry[]>} Array of matching KV entries
    * @private
    */
