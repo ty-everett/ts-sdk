@@ -52,13 +52,13 @@ describe('getVerifiableCertificates', () => {
     expect(mockWallet.listCertificates).toHaveBeenCalledWith({
       certifiers: requestedCertificates.certifiers,
       types: Object.keys(requestedCertificates.types)
-    })
+    }, undefined)
 
     expect(mockWallet.proveCertificate).toHaveBeenCalledWith({
       certificate: mockCertificate,
       fieldsToReveal: requestedCertificates.types[mockCertificate.type],
       verifier: verifierIdentityKey
-    })
+    }, undefined)
 
     expect(result).toHaveLength(1)
     expect(result[0]).toBeInstanceOf(VerifiableCertificate)
@@ -147,6 +147,6 @@ describe('getVerifiableCertificates', () => {
     expect(mockWallet.listCertificates).toHaveBeenCalledWith({
       certifiers: [],
       types: []
-    })
+    }, undefined)
   })
 })

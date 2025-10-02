@@ -5,8 +5,17 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
-- [1.6.25 - 2025-08-25](#1625---2025-08-25)
-- [1.6.24 - 2025-08-19](#1620---2025-07-22)
+- [1.7.8 - 2025-10-02](#178---2025-10-02)
+- [1.7.6 - 2025-09-09](#176---2025-09-08)
+- [1.7.5 - 2025-09-08](#175---2025-09-08)
+- [1.7.4 - 2025-09-08](#174---2025-09-08)
+- [1.7.3 - 2025-09-05](#173---2025-09-05)
+- [1.7.2 - 2025-09-05](#172---2025-09-05)
+- [1.7.1 - 2025-09-03](#171---2025-09-03)
+- [1.7.0 - 2025-09-03](#170---2025-09-03)
+- [1.6.26 - 2025-09-02](#1626---2025-09-02)
+- [1.6.25 - 2025-09-02](#1625---2025-09-02)
+- [1.6.24 - 2025-08-19](#1624---2025-08-19)
 - [1.6.20 - 2025-07-22](#1620---2025-07-22)
 - [1.6.19 - 2025-07-21](#1619---2025-07-21)
 - [1.6.18 - 2025-07-20](#1618---2025-07-20)
@@ -151,11 +160,86 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
-### [1.6.25] - 2025-08-25
+### [1.7.8] - 2025-10-02
 
 ### Added
 
 - **LivePolicy fee model**: New dynamic fee model that fetches current rates from ARC GorillaPool API (`https://arc.gorillapool.io/v1/policy`) with intelligent caching and fallback mechanisms
+
+
+---
+### [1.7.6] - 2025-09-09
+
+### Fixed
+
+- Set the originator of AuthFetch within the constructor so it properly uses originator.
+
+---
+
+### [1.7.5] - 2025-09-08
+
+### Fixed
+
+- Plumbed originator through Peer and AuthFetch to pass to WalletInterface calls.
+- Updated IdentityClient to support limit on getContacts, and only request locking scripts to increase performance.
+
+---
+
+### [1.7.4] - 2025-09-08
+
+### Fixed
+
+- Use shared lookup resolver to benefit from competent host caching.
+
+---
+
+### [1.7.3] - 2025-09-05
+
+### Fixed
+
+- Fixed bug with LookupResolver default fetch in browser.
+
+---
+
+### [1.7.2] - 2025-09-05
+
+### Changed
+
+- Cache lookup resolver state for faster overlay operations
+
+---
+
+### [1.7.1] - 2025-09-03
+
+### Changed
+
+- Support overriding identity resolution results with personal contacts in IdentityClient.discoverByIdentityKey and IdentityClient.discoverByAttributes
+
+---
+
+### [1.7.0] - 2025-09-03
+
+### Changed
+
+- Use Uint8Array for storage instead of number arrays
+- Support chunked hashing for more efficient uploads and downloads of large data
+
+---
+
+### [1.6.26] - 2025-09-02
+
+### Fixed
+
+- Fixed bug with ContactsManager caching system.
+
+---
+
+### [1.6.25] - 2025-09-02
+
+### Added
+
+- IdentityClient now supports saving, getting, and removing encrypted personal contacts.
+- SPV verification bugfix
 
 ---
 

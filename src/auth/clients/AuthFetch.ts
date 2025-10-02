@@ -3,7 +3,7 @@ import * as Utils from '../../primitives/utils.js'
 import Random from '../../primitives/Random.js'
 import P2PKH from '../../script/templates/P2PKH.js'
 import PublicKey from '../../primitives/PublicKey.js'
-import { WalletInterface } from '../../wallet/Wallet.interfaces.js'
+import { OriginatorDomainNameStringUnder250Bytes, WalletInterface } from '../../wallet/Wallet.interfaces.js'
 import { createNonce } from '../utils/createNonce.js'
 import { Peer } from '../Peer.js'
 import { SimplifiedFetchTransport } from '../transports/SimplifiedFetchTransport.js'
@@ -43,6 +43,7 @@ export class AuthFetch {
   private callbacks: Record<string, { resolve: Function, reject: Function }> = {}
   private readonly certificatesReceived: VerifiableCertificate[] = []
   private readonly requestedCertificates?: RequestedCertificateSet
+  private readonly originator?: OriginatorDomainNameStringUnder250Bytes
   peers: Record<string, AuthPeer> = {}
 
   /**
@@ -50,10 +51,11 @@ export class AuthFetch {
   * @param wallet - The wallet instance for signing and authentication.
   * @param requestedCertificates - Optional set of certificates to request from peers.
   */
-  constructor(wallet: WalletInterface, requestedCertificates?: RequestedCertificateSet, sessionManager?: SessionManager) {
+  constructor(wallet: WalletInterface, requestedCertificates?: RequestedCertificateSet, sessionManager?: SessionManager, originator?: OriginatorDomainNameStringUnder250Bytes) {
     this.wallet = wallet
     this.requestedCertificates = requestedCertificates
-    this.sessionManager = sessionManager || new SessionManager()
+    this.sessionManager = sessionManager ?? new SessionManager()
+    this.originator = originator
   }
 
   /**
@@ -91,7 +93,7 @@ export class AuthFetch {
           // Create a peer for the request
           const newTransport = new SimplifiedFetchTransport(baseURL)
           peerToUse = {
-            peer: new Peer(this.wallet, newTransport, this.requestedCertificates, this.sessionManager),
+            peer: new Peer(this.wallet, newTransport, this.requestedCertificates, this.sessionManager, undefined, this.originator),
             pendingCertificateRequests: []
           }
           this.peers[baseURL] = peerToUse
@@ -104,7 +106,8 @@ export class AuthFetch {
               const certificatesToInclude = await getVerifiableCertificates(
                 this.wallet,
                 requestedCertificates,
-                verifier
+                verifier,
+                this.originator
               )
               await this.peers[baseURL].peer.sendCertificateResponse(verifier, certificatesToInclude)
             } finally {
@@ -268,7 +271,8 @@ export class AuthFetch {
           this.wallet,
           newTransport,
           this.requestedCertificates,
-          this.sessionManager
+          this.sessionManager,
+          this.originator
         )
       }
       this.peers[baseURL] = peerToUse
@@ -460,7 +464,7 @@ export class AuthFetch {
     }
 
     const serverIdentityKey = originalResponse.headers.get('x-bsv-auth-identity-key')
-    if (!serverIdentityKey) {
+    if (typeof serverIdentityKey !== 'string') {
       throw new Error('Missing x-bsv-auth-identity-key response header.')
     }
 
@@ -470,14 +474,14 @@ export class AuthFetch {
     }
 
     // Create a random suffix for the derivation path
-    const derivationSuffix = await createNonce(this.wallet)
+    const derivationSuffix = await createNonce(this.wallet, undefined, this.originator)
 
     // Derive the script hex from the server identity key
     const { publicKey: derivedPublicKey } = await this.wallet.getPublicKey({
       protocolID: [2, '3241645161d8'], // wallet payment protocol
       keyID: `${derivationPrefix} ${derivationSuffix}`,
       counterparty: serverIdentityKey
-    })
+    }, this.originator)
     const lockingScript = new P2PKH().lock(PublicKey.fromString(derivedPublicKey).toAddress()).toHex()
 
     // Create the payment transaction using createAction
@@ -492,7 +496,7 @@ export class AuthFetch {
       options: {
         randomizeOutputs: false
       }
-    })
+    }, this.originator)
 
 
 

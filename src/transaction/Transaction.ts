@@ -804,6 +804,8 @@ export default class Transaction {
           if (proofValid) {
             verifiedTxids.add(txid)
             continue
+          } else {
+            throw new Error(`Invalid merkle path for transaction ${txid}`)
           }
         }
       }

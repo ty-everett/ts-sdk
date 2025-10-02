@@ -48,6 +48,82 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ## Classes
 
+| |
+| --- |
+| [ContactsManager](#class-contactsmanager) |
+| [IdentityClient](#class-identityclient) |
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+
+### Class: ContactsManager
+
+```ts
+export class ContactsManager {
+    constructor(wallet?: WalletInterface) 
+    async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
+    async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
+    async removeContact(identityKey: string): Promise<void> 
+}
+```
+
+See also: [Contact](./identity.md#type-contact), [DisplayableIdentity](./identity.md#interface-displayableidentity), [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletInterface](./wallet.md#interface-walletinterface)
+
+#### Method getContacts
+
+Load all records from the contacts basket
+
+```ts
+async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
+```
+See also: [Contact](./identity.md#type-contact), [PubKeyHex](./wallet.md#type-pubkeyhex)
+
+Returns
+
+A promise that resolves with an array of contacts
+
+Argument Details
+
++ **identityKey**
+  + Optional specific identity key to fetch
++ **forceRefresh**
+  + Whether to force a check for new contact data
++ **limit**
+  + Maximum number of contacts to return
+
+#### Method removeContact
+
+Remove a contact from the contacts basket
+
+```ts
+async removeContact(identityKey: string): Promise<void> 
+```
+
+Argument Details
+
++ **identityKey**
+  + The identity key of the contact to remove
+
+#### Method saveContact
+
+Save or update a Metanet contact
+
+```ts
+async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
+```
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity)
+
+Argument Details
+
++ **contact**
+  + The displayable identity information for the contact
++ **metadata**
+  + Optional metadata to store with the contact (ex. notes, aliases, etc)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ### Class: IdentityClient
 
 IdentityClient lets you discover who others are, and let the world know who you are.
@@ -56,18 +132,45 @@ IdentityClient lets you discover who others are, and let the world know who you 
 export class IdentityClient {
     constructor(wallet?: WalletInterface, private readonly options = DEFAULT_IDENTITY_CLIENT_OPTIONS, private readonly originator?: OriginatorDomainNameStringUnder250Bytes) 
     async publiclyRevealAttributes(certificate: WalletCertificate, fieldsToReveal: CertificateFieldNameUnder50Bytes[]): Promise<BroadcastResponse | BroadcastFailure> 
-    async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs): Promise<DisplayableIdentity[]> 
-    async resolveByAttributes(args: DiscoverByAttributesArgs): Promise<DisplayableIdentity[]> 
+    async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
+    async resolveByAttributes(args: DiscoverByAttributesArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
+    public async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
+    public async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
+    public async removeContact(identityKey: PubKeyHex): Promise<void> 
     static parseIdentity(identityToParse: IdentityCertificate): DisplayableIdentity 
 }
 ```
 
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [DEFAULT_IDENTITY_CLIENT_OPTIONS](./identity.md#variable-default_identity_client_options), [DiscoverByAttributesArgs](./wallet.md#interface-discoverbyattributesargs), [DiscoverByIdentityKeyArgs](./wallet.md#interface-discoverbyidentitykeyargs), [DisplayableIdentity](./identity.md#interface-displayableidentity), [IdentityCertificate](./wallet.md#interface-identitycertificate), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [WalletCertificate](./wallet.md#interface-walletcertificate), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [Contact](./identity.md#type-contact), [DEFAULT_IDENTITY_CLIENT_OPTIONS](./identity.md#variable-default_identity_client_options), [DiscoverByAttributesArgs](./wallet.md#interface-discoverbyattributesargs), [DiscoverByIdentityKeyArgs](./wallet.md#interface-discoverbyidentitykeyargs), [DisplayableIdentity](./identity.md#interface-displayableidentity), [IdentityCertificate](./wallet.md#interface-identitycertificate), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletCertificate](./wallet.md#interface-walletcertificate), [WalletInterface](./wallet.md#interface-walletinterface)
 
-#### Method parseIdentity
+#### Method getContacts
 
 TODO: Implement once revocation overlay is created
 Remove public certificate revelation from overlay services by spending the identity token
+
+Load all records from the contacts basket
+
+```ts
+public async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
+```
+See also: [Contact](./identity.md#type-contact), [PubKeyHex](./wallet.md#type-pubkeyhex)
+
+Returns
+
+A promise that resolves with an array of contacts
+
+Argument Details
+
++ **serialNumber**
+  + Unique serial number of the certificate to revoke revelation
++ **identityKey**
+  + Optional specific identity key to fetch
++ **forceRefresh**
+  + Whether to force a check for new contact data
++ **limit**
+  + Optional limit on number of contacts to fetch
+
+#### Method parseIdentity
 
 Parse out identity and certifier attributes to display from an IdentityCertificate
 
@@ -82,8 +185,6 @@ Returns
 
 Argument Details
 
-+ **serialNumber**
-  + Unique serial number of the certificate to revoke revelation
 + **identityToParse**
   + The Identity Certificate to parse
 
@@ -112,12 +213,26 @@ Throws
 
 Throws an error if the certificate is invalid, the fields cannot be revealed, or if the broadcast fails.
 
+#### Method removeContact
+
+Remove a contact from the contacts basket
+
+```ts
+public async removeContact(identityKey: PubKeyHex): Promise<void> 
+```
+See also: [PubKeyHex](./wallet.md#type-pubkeyhex)
+
+Argument Details
+
++ **identityKey**
+  + The identity key of the contact to remove
+
 #### Method resolveByAttributes
 
 Resolves displayable identity certificates by specific identity attributes, issued by a trusted entity.
 
 ```ts
-async resolveByAttributes(args: DiscoverByAttributesArgs): Promise<DisplayableIdentity[]> 
+async resolveByAttributes(args: DiscoverByAttributesArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
 ```
 See also: [DiscoverByAttributesArgs](./wallet.md#interface-discoverbyattributesargs), [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
@@ -129,13 +244,15 @@ Argument Details
 
 + **args**
   + Attributes and optional parameters used to discover certificates.
++ **overrideWithContacts**
+  + Whether to override the results with personal contacts if available.
 
 #### Method resolveByIdentityKey
 
 Resolves displayable identity certificates, issued to a given identity key by a trusted certifier.
 
 ```ts
-async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs): Promise<DisplayableIdentity[]> 
+async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
 ```
 See also: [DiscoverByIdentityKeyArgs](./wallet.md#interface-discoverbyidentitykeyargs), [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
@@ -147,6 +264,24 @@ Argument Details
 
 + **args**
   + Arguments for requesting the discovery based on the identity key.
++ **overrideWithContacts**
+  + Whether to override the results with personal contacts if available.
+
+#### Method saveContact
+
+Save or update a Metanet contact
+
+```ts
+public async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
+```
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity)
+
+Argument Details
+
++ **contact**
+  + The displayable identity information for the contact
++ **metadata**
+  + Optional metadata to store with the contact (ex. notes, aliases, etc)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -155,6 +290,19 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ## Types
 
+### Type: Contact
+
+```ts
+export type Contact = DisplayableIdentity & {
+    metadata?: Record<string, any>;
+}
+```
+
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ## Enums
 
 ## Variables

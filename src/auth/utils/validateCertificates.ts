@@ -1,4 +1,4 @@
-import { WalletInterface } from '../../wallet/index.js'
+import { OriginatorDomainNameStringUnder250Bytes, WalletInterface } from '../../wallet/index.js'
 import { AuthMessage, RequestedCertificateSet } from '../types.js'
 import { VerifiableCertificate } from '../certificates/VerifiableCertificate.js'
 
@@ -13,7 +13,8 @@ import { VerifiableCertificate } from '../certificates/VerifiableCertificate.js'
 export const validateCertificates = async (
   verifierWallet: WalletInterface,
   message: AuthMessage,
-  certificatesRequested?: RequestedCertificateSet
+  certificatesRequested?: RequestedCertificateSet,
+  originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<void> => {
   if ((message.certificates == null) || message.certificates.length === 0) {
     throw new Error('No certificates were provided in the AuthMessage.')
@@ -58,7 +59,7 @@ export const validateCertificates = async (
 
         // Check type and fields match requested
         const requestedFields = types[certToVerify.type]
-        if (requestedFields == null) { // ✅ Explicitly check for null or undefined
+        if (requestedFields == null) {
           throw new Error(
             `Certificate with type ${certToVerify.type} was not requested`
           )
@@ -66,7 +67,7 @@ export const validateCertificates = async (
       }
 
       // Attempt to decrypt fields
-      await certToVerify.decryptFields(verifierWallet)
+      await certToVerify.decryptFields(verifierWallet, undefined, undefined, originator)
     })
   )
 }

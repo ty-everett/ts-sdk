@@ -1,5 +1,5 @@
 import * as Utils from '../../primitives/utils.js'
-import { WalletInterface, WalletCounterparty, Base64String } from '../../wallet/Wallet.interfaces.js'
+import { WalletInterface, WalletCounterparty, Base64String, OriginatorDomainNameStringUnder250Bytes } from '../../wallet/Wallet.interfaces.js'
 
 /**
  * Verifies a nonce derived from a wallet
@@ -11,7 +11,8 @@ import { WalletInterface, WalletCounterparty, Base64String } from '../../wallet/
 export async function verifyNonce(
   nonce: Base64String,
   wallet: WalletInterface,
-  counterparty: WalletCounterparty = 'self'
+  counterparty: WalletCounterparty = 'self',
+  originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<boolean> {
   // Convert nonce from base64 string to Uint8Array
   const buffer = Utils.toArray(nonce, 'base64')
@@ -27,7 +28,7 @@ export async function verifyNonce(
     protocolID: [2, 'server hmac'],
     keyID: Utils.toUTF8(data),
     counterparty
-  })
+  }, originator)
 
   return valid
 }

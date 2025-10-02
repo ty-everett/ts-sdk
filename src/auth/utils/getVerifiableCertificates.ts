@@ -1,5 +1,5 @@
 import { VerifiableCertificate } from '../certificates/VerifiableCertificate.js'
-import { WalletInterface } from '../../wallet/Wallet.interfaces.js'
+import { OriginatorDomainNameStringUnder250Bytes, WalletInterface } from '../../wallet/Wallet.interfaces.js'
 import { RequestedCertificateSet } from '../types.js'
 
 /**
@@ -13,14 +13,15 @@ import { RequestedCertificateSet } from '../types.js'
 export const getVerifiableCertificates = async (
   wallet: WalletInterface,
   requestedCertificates: RequestedCertificateSet,
-  verifierIdentityKey: string
+  verifierIdentityKey: string,
+  originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<VerifiableCertificate[]> => {
   // Find matching certificates we have
   // Note: This may return multiple certificates that match the correct type.
   const matchingCertificates = await wallet.listCertificates({
     certifiers: requestedCertificates.certifiers,
     types: Object.keys(requestedCertificates.types)
-  })
+  }, originator)
 
   // For each certificate requested, create a verifiable cert with selectively revealed fields
   return await Promise.all(
@@ -29,7 +30,7 @@ export const getVerifiableCertificates = async (
         certificate,
         fieldsToReveal: requestedCertificates.types[certificate.type],
         verifier: verifierIdentityKey
-      })
+      }, originator)
       return new VerifiableCertificate(
         certificate.type,
         certificate.serialNumber,

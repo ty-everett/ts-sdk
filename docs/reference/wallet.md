@@ -2134,7 +2134,7 @@ export class ProtoWallet {
     async revealCounterpartyKeyLinkage(args: RevealCounterpartyKeyLinkageArgs): Promise<RevealCounterpartyKeyLinkageResult> 
     async revealSpecificKeyLinkage(args: RevealSpecificKeyLinkageArgs): Promise<RevealSpecificKeyLinkageResult> 
     async encrypt(args: WalletEncryptArgs): Promise<WalletEncryptResult> 
-    async decrypt(args: WalletDecryptArgs): Promise<WalletDecryptResult> 
+    async decrypt(args: WalletDecryptArgs, originator?: string): Promise<WalletDecryptResult> 
     async createHmac(args: CreateHmacArgs): Promise<CreateHmacResult> 
     async verifyHmac(args: VerifyHmacArgs): Promise<VerifyHmacResult> 
     async createSignature(args: CreateSignatureArgs): Promise<CreateSignatureResult> 

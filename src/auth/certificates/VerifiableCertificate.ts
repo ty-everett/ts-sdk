@@ -5,6 +5,7 @@ import type {
   HexString,
   OutpointString,
   WalletCertificate,
+  OriginatorDomainNameStringUnder250Bytes,
 } from '../../wallet/Wallet.interfaces.js'
 import SymmetricKey from '../../primitives/SymmetricKey.js'
 import * as Utils from '../../primitives/utils.js'
@@ -85,9 +86,10 @@ export class VerifiableCertificate extends Certificate {
   async decryptFields(
     verifierWallet: ProtoWallet,
     privileged?: boolean,
-    privilegedReason?: string
+    privilegedReason?: string,
+    originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<Record<CertificateFieldNameUnder50Bytes, string>> {
-    if (this.keyring == null || Object.keys(this.keyring).length === 0) { // ✅ Explicitly check null and empty object
+    if (this.keyring == null || Object.keys(this.keyring).length === 0) {
       throw new Error(
         'A keyring is required to decrypt certificate fields for the verifier.'
       )
@@ -106,7 +108,7 @@ export class VerifiableCertificate extends Certificate {
           counterparty: this.subject,
           privileged,
           privilegedReason
-        })
+        }, originator)
 
         const fieldValue = new SymmetricKey(fieldRevelationKey).decrypt(
           Utils.toArray(this.fields[fieldName], 'base64')
@@ -117,7 +119,6 @@ export class VerifiableCertificate extends Certificate {
     } catch (error) {
       throw new Error(
         `Failed to decrypt selectively revealed certificate fields using keyring: ${String(error instanceof Error ? error.message : error)}`
-
       )
     }
   }
