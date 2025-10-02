@@ -416,15 +416,16 @@ export class GlobalKVStore {
         // Verify signature
         const anyoneWallet = new ProtoWallet('anyone')
         const signature = decoded.fields.pop() as number[]
-        const { valid } = await anyoneWallet.verifySignature({
-          data: decoded.fields.reduce((a, e) => [...a, ...e], []),
-          signature,
-          counterparty: Utils.toHex(decoded.fields[kvProtocol.controller]),
-          protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID])),
-          keyID: Utils.toUTF8(decoded.fields[kvProtocol.key])
-        })
-
-        if (!valid) {
+        try {
+          await anyoneWallet.verifySignature({
+            data: decoded.fields.reduce((a, e) => [...a, ...e], []),
+            signature,
+            counterparty: Utils.toHex(decoded.fields[kvProtocol.controller]),
+            protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID])),
+            keyID: Utils.toUTF8(decoded.fields[kvProtocol.key])
+          })
+        } catch (error) {
+          // Skip all outputs that fail signature verification
           continue
         }
 
