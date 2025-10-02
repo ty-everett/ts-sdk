@@ -79,7 +79,7 @@ export default class WalletClient implements WalletInterface {
       return // substrate is already connected
     }
 
-    const attemptSubstrate = async (factory: () => WalletInterface, timeout?: number): Promise<{ success: boolean; sub?: WalletInterface }> => {
+    const attemptSubstrate = async (factory: () => WalletInterface, timeout?: number): Promise<{ success: boolean, sub?: WalletInterface }> => {
       try {
         const sub = factory()
         let result
@@ -113,9 +113,9 @@ export default class WalletClient implements WalletInterface {
 
     const fastResults = await Promise.allSettled(fastAttempts)
     const fastSuccessful = fastResults
-      .filter((r): r is PromiseFulfilledResult<{ success: boolean; sub?: WalletInterface }> => r.status === 'fulfilled' && r.value.success)
+      .filter((r): r is PromiseFulfilledResult<{ success: boolean, sub?: WalletInterface }> => r.status === 'fulfilled' && r.value.success)
       .map(r => r.value.sub!)
-    
+
     if (fastSuccessful.length > 0) {
       this.substrate = fastSuccessful[0]
       return
@@ -123,7 +123,7 @@ export default class WalletClient implements WalletInterface {
 
     // Fall back to slower XDM substrate
     const xdmResult = await attemptSubstrate(() => new XDMSubstrate(), MAX_XDM_RESPONSE_WAIT)
-    if (xdmResult.success && xdmResult.sub) {
+    if (xdmResult.success && (xdmResult.sub != null)) {
       this.substrate = xdmResult.sub
     } else {
       throw new Error(
