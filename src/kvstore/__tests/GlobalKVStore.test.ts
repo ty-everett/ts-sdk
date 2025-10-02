@@ -933,7 +933,7 @@ describe('GlobalKVStore', () => {
 
       // Make signature verification fail (this could be a realistic failure mode)
       const originalVerifySignature = mockProtoWallet.verifySignature
-      mockProtoWallet.verifySignature = jest.fn().mockResolvedValue({ valid: false })
+      mockProtoWallet.verifySignature = jest.fn().mockRejectedValue(new Error('Signature verification failed'))
 
       try {
         const result = await kvStore.get({ key: TEST_KEY }, { history: true })
