@@ -2,7 +2,7 @@ import Transaction from '../transaction/Transaction.js'
 import * as Utils from '../primitives/utils.js'
 import { TopicBroadcaster, LookupResolver } from '../overlay-tools/index.js'
 import { BroadcastResponse, BroadcastFailure } from '../transaction/Broadcaster.js'
-import { WalletInterface, CreateActionInput, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
+import { WalletInterface, WalletProtocol, CreateActionInput, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
 import { PushDrop } from '../script/index.js'
 import WalletClient from '../wallet/WalletClient.js'
 import { Beef } from '../transaction/Beef.js'
@@ -21,7 +21,10 @@ const DEFAULT_CONFIG: KVStoreConfig = {
   tokenAmount: 1,
   topics: ['tm_kvstore'],
   networkPreset: 'mainnet',
-  acceptDelayedBroadcast: false
+  acceptDelayedBroadcast: false,
+  tokenSetDescription: '', // Will be set dynamically
+  tokenUpdateDescription: '', // Will be set dynamically
+  tokenRemovalDescription: '' // Will be set dynamically
 }
 
 /**
@@ -32,13 +35,12 @@ const DEFAULT_CONFIG: KVStoreConfig = {
 export class GlobalKVStore {
   /**
    * The wallet interface used to create transactions and perform cryptographic operations.
-   * @private
    * @readonly
    */
   private readonly wallet: WalletInterface
 
   /**
-   * Configuration object containing overlay service settings and protocol parameters.
+   * Configuration for the KVStore instance containing all runtime options.
    * @private
    * @readonly
    */
@@ -82,13 +84,14 @@ export class GlobalKVStore {
    * @throws {Error} If the configuration contains invalid parameters.
    */
   constructor (config: KVStoreConfig = {}) {
+    // Merge with defaults to create a fully resolved config
     this.config = { ...DEFAULT_CONFIG, ...config }
     this.wallet = config.wallet ?? new WalletClient()
     this.historian = new Historian<string, KVContext>(kvStoreInterpreter)
     this.lookupResolver = new LookupResolver({
       networkPreset: this.config.networkPreset
     })
-    this.topicBroadcaster = new TopicBroadcaster(this.config.topics ?? DEFAULT_CONFIG.topics, {
+    this.topicBroadcaster = new TopicBroadcaster(this.config.topics as string[], {
       networkPreset: this.config.networkPreset
     })
   }
@@ -130,10 +133,10 @@ export class GlobalKVStore {
 
     const controller = await this.getIdentityKey()
     const lockQueue = await this.queueOperationOnKey(key)
-    const protocolID = options.protocolID ?? this.config.protocolID ?? DEFAULT_CONFIG.protocolID
-    const tokenSetDescription = options.tokenSetDescription ?? this.config.tokenSetDescription ?? DEFAULT_CONFIG.tokenSetDescription
-    const tokenUpdateDescription = options.tokenUpdateDescription ?? this.config.tokenUpdateDescription ?? DEFAULT_CONFIG.tokenUpdateDescription
-    const tokenAmount = options.tokenAmount ?? this.config.tokenAmount ?? DEFAULT_CONFIG.tokenAmount
+    const protocolID = options.protocolID ?? this.config.protocolID
+    const tokenSetDescription = (options.tokenSetDescription != null && options.tokenSetDescription !== '') ? options.tokenSetDescription : `Create KVStore value for ${key}`
+    const tokenUpdateDescription = (options.tokenUpdateDescription != null && options.tokenUpdateDescription !== '') ? options.tokenUpdateDescription : `Update KVStore value for ${key}`
+    const tokenAmount = options.tokenAmount ?? this.config.tokenAmount
 
     try {
       // Check for existing token to spend
@@ -149,7 +152,7 @@ export class GlobalKVStore {
           Utils.toArray(value, 'utf8'),
           Utils.toArray(controller, 'hex')
         ],
-        protocolID,
+        protocolID ?? this.config.protocolID as WalletProtocol,
         Utils.toUTF8(Utils.toArray(key, 'utf8')),
         'anyone',
         true
@@ -174,7 +177,7 @@ export class GlobalKVStore {
           inputBEEF: inputBEEF?.toBinary(),
           inputs,
           outputs: [{
-            satoshis: tokenAmount,
+            satoshis: tokenAmount ?? this.config.tokenAmount as number,
             lockingScript: lockingScript.toHex(),
             outputDescription: 'KVStore token'
           }],
@@ -190,7 +193,7 @@ export class GlobalKVStore {
 
         const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
         const unlocker = pushdrop.unlock(
-          this.config.protocolID ?? DEFAULT_CONFIG.protocolID,
+          this.config.protocolID as WalletProtocol,
           key,
           'anyone'
         )
@@ -213,7 +216,7 @@ export class GlobalKVStore {
         const { tx } = await this.wallet.createAction({
           description: tokenSetDescription,
           outputs: [{
-            satoshis: tokenAmount,
+            satoshis: tokenAmount ?? this.config.tokenAmount as number,
             lockingScript: lockingScript.toHex(),
             outputDescription: 'KVStore token'
           }],
@@ -258,8 +261,8 @@ export class GlobalKVStore {
     const controller = await this.getIdentityKey()
     const lockQueue = await this.queueOperationOnKey(key)
 
-    const protocolID = options.protocolID ?? this.config.protocolID ?? DEFAULT_CONFIG.protocolID
-    const tokenRemovalDescription = options.tokenRemovalDescription ?? this.config.tokenRemovalDescription ?? DEFAULT_CONFIG.tokenRemovalDescription
+    const protocolID = options.protocolID ?? this.config.protocolID
+    const tokenRemovalDescription = (options.tokenRemovalDescription != null && options.tokenRemovalDescription !== '') ? options.tokenRemovalDescription : `Remove KVStore value for ${key}`
 
     try {
       const existingEntries = await this.queryOverlay({ key, controller }, { includeToken: true })
@@ -292,7 +295,7 @@ export class GlobalKVStore {
 
       const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
       const unlocker = pushdrop.unlock(
-        protocolID,
+        protocolID ?? this.config.protocolID as WalletProtocol,
         key,
         'anyone'
       )
@@ -389,7 +392,7 @@ export class GlobalKVStore {
    */
   private async queryOverlay (query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry[]> {
     const answer = await this.lookupResolver.query({
-      service: options.serviceName ?? this.config.serviceName,
+      service: options.serviceName ?? this.config.serviceName as string,
       query
     })
 

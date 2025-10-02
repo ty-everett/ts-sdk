@@ -275,7 +275,8 @@ describe('GlobalKVStore', () => {
         expect(result).toEqual({
           key: TEST_KEY,
           value: TEST_VALUE,
-          controller: expect.any(String)
+          controller: expect.any(String),
+          protocolID: [1, 'kvstore']
         })
         expect(mockResolver.query).toHaveBeenCalledWith({
           service: 'ls_kvstore',
@@ -296,6 +297,7 @@ describe('GlobalKVStore', () => {
           key: TEST_KEY,
           value: TEST_VALUE,
           controller: expect.any(String),
+          protocolID: [1, 'kvstore'],
           history: ['oldValue', TEST_VALUE]
         })
         expect(mockHistorian.buildHistory).toHaveBeenCalledWith(
@@ -495,9 +497,9 @@ describe('GlobalKVStore', () => {
       describe('Single parameter queries (return arrays)', () => {
         it('key only - returns array of entries matching key across all controllers', async () => {
           primeResolverWithOneOutput(mockResolver)
-          
+
           const result = await kvStore.get({ key: TEST_KEY })
-          
+
           expect(Array.isArray(result)).toBe(true)
           expect(mockResolver.query).toHaveBeenCalledWith({
             service: 'ls_kvstore',
@@ -507,9 +509,9 @@ describe('GlobalKVStore', () => {
 
         it('controller only - returns array of entries by specific controller', async () => {
           primeResolverWithOneOutput(mockResolver)
-          
+
           const result = await kvStore.get({ controller: TEST_CONTROLLER })
-          
+
           expect(Array.isArray(result)).toBe(true)
           expect(mockResolver.query).toHaveBeenCalledWith({
             service: 'ls_kvstore',
@@ -519,9 +521,9 @@ describe('GlobalKVStore', () => {
 
         it('protocolID only - returns array of entries under protocol', async () => {
           primeResolverWithOneOutput(mockResolver)
-          
+
           const result = await kvStore.get({ protocolID: [1, 'kvstore'] })
-          
+
           expect(Array.isArray(result)).toBe(true)
           expect(mockResolver.query).toHaveBeenCalledWith({
             service: 'ls_kvstore',
@@ -533,12 +535,12 @@ describe('GlobalKVStore', () => {
       describe('Combined parameter queries', () => {
         it('key + controller - returns single result (unique combination)', async () => {
           primeResolverWithOneOutput(mockResolver)
-          
-          const result = await kvStore.get({ 
-            key: TEST_KEY, 
-            controller: TEST_CONTROLLER 
+
+          const result = await kvStore.get({
+            key: TEST_KEY,
+            controller: TEST_CONTROLLER
           })
-          
+
           // Should return single entry, not array
           expect(result).not.toBeNull()
           expect(Array.isArray(result)).toBe(false)
@@ -550,35 +552,35 @@ describe('GlobalKVStore', () => {
 
         it('key + protocolID - returns array (multiple results possible)', async () => {
           primeResolverWithOneOutput(mockResolver)
-          
-          const result = await kvStore.get({ 
-            key: TEST_KEY, 
-            protocolID: [1, 'kvstore'] 
+
+          const result = await kvStore.get({
+            key: TEST_KEY,
+            protocolID: [1, 'kvstore']
           })
-          
+
           expect(Array.isArray(result)).toBe(true)
         })
 
         it('controller + protocolID - returns array (multiple results possible)', async () => {
           primeResolverWithOneOutput(mockResolver)
-          
-          const result = await kvStore.get({ 
-            controller: TEST_CONTROLLER, 
-            protocolID: [1, 'kvstore'] 
+
+          const result = await kvStore.get({
+            controller: TEST_CONTROLLER,
+            protocolID: [1, 'kvstore']
           })
-          
+
           expect(Array.isArray(result)).toBe(true)
         })
 
         it('key + controller + protocolID - returns single result (most specific)', async () => {
           primeResolverWithOneOutput(mockResolver)
-          
-          const result = await kvStore.get({ 
-            key: TEST_KEY, 
+
+          const result = await kvStore.get({
+            key: TEST_KEY,
             controller: TEST_CONTROLLER,
-            protocolID: [1, 'kvstore'] 
+            protocolID: [1, 'kvstore']
           })
-          
+
           // key + controller combination should return single result
           expect(result).not.toBeNull()
           expect(Array.isArray(result)).toBe(false)
@@ -588,19 +590,19 @@ describe('GlobalKVStore', () => {
       describe('Return type consistency', () => {
         it('key+controller always returns single result or undefined', async () => {
           primeResolverEmpty(mockResolver)
-          
-          const result = await kvStore.get({ 
-            key: TEST_KEY, 
-            controller: TEST_CONTROLLER 
+
+          const result = await kvStore.get({
+            key: TEST_KEY,
+            controller: TEST_CONTROLLER
           })
-          
+
           expect(result).toBeUndefined()
           expect(Array.isArray(result)).toBe(false)
         })
 
         it('all other combinations always return arrays', async () => {
           primeResolverEmpty(mockResolver)
-          
+
           const testCases = [
             { key: TEST_KEY },
             { controller: TEST_CONTROLLER },
@@ -624,7 +626,6 @@ describe('GlobalKVStore', () => {
     describe('happy paths', () => {
       it('creates a new token when key does not exist', async () => {
         primeResolverEmpty(mockResolver)
-
         const outpoint = await kvStore.set(TEST_KEY, TEST_VALUE)
 
         expect(mockWallet.createAction).toHaveBeenCalledWith(
@@ -635,7 +636,7 @@ describe('GlobalKVStore', () => {
                 satoshis: 1,
                 outputDescription: 'KVStore token',
               }),
-            ]),
+            ])
           }),
           undefined
         )
@@ -839,6 +840,7 @@ describe('GlobalKVStore', () => {
           key: TEST_KEY,
           value: TEST_VALUE,
           controller: expect.any(String),
+          protocolID: [1, 'kvstore'],
           history: [TEST_VALUE],
         })
       }
