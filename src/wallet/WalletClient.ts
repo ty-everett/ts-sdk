@@ -58,6 +58,7 @@ export default class WalletClient implements WalletInterface {
     | 'window.CWI'
     | 'json-api'
     | 'react-native'
+    | 'secure-json-api'
     | WalletInterface = 'auto',
     originator?: OriginatorDomainNameStringUnder250Bytes
   ) {
@@ -68,6 +69,7 @@ export default class WalletClient implements WalletInterface {
     if (substrate === 'XDM') substrate = new XDMSubstrate()
     if (substrate === 'json-api') substrate = new HTTPWalletJSON(originator)
     if (substrate === 'react-native') substrate = new ReactNativeWebView(originator)
+    if (substrate === 'secure-json-api') substrate = new HTTPWalletJSON(originator, 'https://localhost:2121')
     this.substrate = substrate
     this.originator = originator
   }
@@ -76,60 +78,57 @@ export default class WalletClient implements WalletInterface {
     if (typeof this.substrate === 'object') {
       return // substrate is already connected
     }
-    let sub: WalletInterface
-    const checkSub = async (timeout?: number): Promise<void> => {
-      let result
-      if (typeof timeout === 'number') {
-        result = await Promise.race([
-          sub.getVersion({}),
-          new Promise<never>((_resolve, reject) =>
-            setTimeout(() => reject(new Error('Timed out.')), timeout)
-          )
-        ])
-      } else {
-        result = await sub.getVersion({})
-      }
-      if (typeof result !== 'object' || typeof result.version !== 'string') {
-        throw new Error('Failed to use substrate.')
+
+    const attemptSubstrate = async (factory: () => WalletInterface, timeout?: number): Promise<{ success: boolean, sub?: WalletInterface }> => {
+      try {
+        const sub = factory()
+        let result
+        if (typeof timeout === 'number') {
+          result = await Promise.race([
+            sub.getVersion({}),
+            new Promise<never>((_resolve, reject) =>
+              setTimeout(() => reject(new Error('Timed out.')), timeout)
+            )
+          ])
+        } else {
+          result = await sub.getVersion({})
+        }
+        if (typeof result !== 'object' || typeof result.version !== 'string') {
+          return { success: false }
+        }
+        return { success: true, sub }
+      } catch {
+        return { success: false }
       }
     }
-    try {
-      sub = new WindowCWISubstrate()
-      await checkSub()
-      this.substrate = sub
-    } catch (e) {
-      // XDM failed, try the next one...
-      try {
-        sub = new XDMSubstrate()
-        await checkSub(MAX_XDM_RESPONSE_WAIT)
-        this.substrate = sub
-      } catch (e) {
-        // HTTP wire failed, move on...
-        try {
-          sub = new WalletWireTransceiver(new HTTPWalletWire(this.originator))
-          await checkSub()
-          this.substrate = sub
-        } catch (e) {
-          // HTTP Wire failed, attempt the next...
-          try {
-            sub = new HTTPWalletJSON(this.originator)
-            await checkSub()
-            this.substrate = sub
-          } catch (e) {
-            // HTTP JSON failed, attempt the next...
-            try {
-              sub = new ReactNativeWebView(this.originator)
-              await checkSub()
-              this.substrate = sub
-            } catch (e) {
-              // No comms. Tell the user to install a BSV wallet.
-              throw new Error(
-                'No wallet available over any communication substrate. Install a BSV wallet today!'
-              )
-            }
-          }
-        }
-      }
+
+    // Try fast substrates first
+    const fastAttempts = [
+      attemptSubstrate(() => new WindowCWISubstrate()),
+      attemptSubstrate(() => new HTTPWalletJSON(this.originator, 'https://localhost:2121')),
+      attemptSubstrate(() => new HTTPWalletJSON(this.originator)),
+      attemptSubstrate(() => new ReactNativeWebView(this.originator)),
+      attemptSubstrate(() => new WalletWireTransceiver(new HTTPWalletWire(this.originator)))
+    ]
+
+    const fastResults = await Promise.allSettled(fastAttempts)
+    const fastSuccessful = fastResults
+      .filter((r): r is PromiseFulfilledResult<{ success: boolean, sub?: WalletInterface }> => r.status === 'fulfilled' && r.value.success && r.value.sub !== undefined)
+      .map(r => r.value.sub as WalletInterface)
+
+    if (fastSuccessful.length > 0) {
+      this.substrate = fastSuccessful[0]
+      return
+    }
+
+    // Fall back to slower XDM substrate
+    const xdmResult = await attemptSubstrate(() => new XDMSubstrate(), MAX_XDM_RESPONSE_WAIT)
+    if (xdmResult.success && xdmResult.sub !== undefined) {
+      this.substrate = xdmResult.sub
+    } else {
+      throw new Error(
+        'No wallet available over any communication substrate. Install a BSV wallet today!'
+      )
     }
   }
 

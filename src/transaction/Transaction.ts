@@ -6,7 +6,7 @@ import LockingScript from '../script/LockingScript.js'
 import { Reader, Writer, toHex, toArray } from '../primitives/utils.js'
 import { hash256 } from '../primitives/Hash.js'
 import FeeModel from './FeeModel.js'
-import SatoshisPerKilobyte from './fee-models/SatoshisPerKilobyte.js'
+import LivePolicy from './fee-models/LivePolicy.js'
 import { Broadcaster, BroadcastResponse, BroadcastFailure } from './Broadcaster.js'
 import MerklePath from './MerklePath.js'
 import Spend from '../script/Spend.js'
@@ -411,7 +411,7 @@ export default class Transaction {
 
   /**
    * Computes fees prior to signing.
-   * If no fee model is provided, uses a SatoshisPerKilobyte fee model that pays 1 sat/kb.
+   * If no fee model is provided, uses a LivePolicy fee model that fetches current rates from ARC.
    * If fee is a number, the transaction uses that value as fee.
    *
    * @param modelOrFee - The initialized fee model to use or fixed fee for the transaction
@@ -420,7 +420,7 @@ export default class Transaction {
    *
    */
   async fee (
-    modelOrFee: FeeModel | number = new SatoshisPerKilobyte(1),
+    modelOrFee: FeeModel | number = LivePolicy.getInstance(),
     changeDistribution: 'equal' | 'random' = 'equal'
   ): Promise<void> {
     this.cachedHash = undefined
@@ -774,7 +774,7 @@ export default class Transaction {
    *
    * @returns Whether the transaction is valid according to the rules of SPV.
    *
-   * @example tx.verify(new WhatsOnChain(), new SatoshisPerKilobyte(1))
+   * @example tx.verify(new WhatsOnChain(), LivePolicy.getInstance())
    */
   async verify (
     chainTracker: ChainTracker | 'scripts only' = defaultChainTracker(),
@@ -912,49 +912,49 @@ export default class Transaction {
     const writer = new Writer()
     writer.writeUInt32LE(BEEF_V1)
     const BUMPs: MerklePath[] = []
+    const bumpIndexByInstance = new Map<MerklePath, number>()
+    const bumpIndexByRoot = new Map<string, number>()
     const txs: Array<{ tx: Transaction, pathIndex?: number }> = []
+    const seenTxids = new Set<string>()
+
+    const getBumpIndex = (merklePath: MerklePath): number => {
+      const existingByInstance = bumpIndexByInstance.get(merklePath)
+      if (existingByInstance !== undefined) {
+        return existingByInstance
+      }
+
+      const key = `${merklePath.blockHeight}:${merklePath.computeRoot()}`
+      const existingByRoot = bumpIndexByRoot.get(key)
+      if (existingByRoot !== undefined) {
+        BUMPs[existingByRoot].combine(merklePath)
+        bumpIndexByInstance.set(merklePath, existingByRoot)
+        return existingByRoot
+      }
+
+      const newIndex = BUMPs.length
+      BUMPs.push(merklePath)
+      bumpIndexByInstance.set(merklePath, newIndex)
+      bumpIndexByRoot.set(key, newIndex)
+      return newIndex
+    }
 
     // Recursive function to add paths and input transactions for a TX
     const addPathsAndInputs = (tx: Transaction): void => {
+      const txid = tx.id('hex')
+      if (seenTxids.has(txid)) {
+        return
+      }
+
       const obj: { tx: Transaction, pathIndex?: number } = { tx }
-      const hasProof = typeof tx.merklePath === 'object'
-      if (hasProof) {
-        let added = false
-        // If this proof is identical to another one previously added, we use that first. Otherwise, we try to merge it with proofs from the same block.
-        for (let i = 0; i < BUMPs.length; i++) {
-          if (BUMPs[i] === tx.merklePath) {
-            // Literally the same
-            obj.pathIndex = i
-            added = true
-            break
-          }
-          if (tx.merklePath !== null && tx.merklePath !== undefined && BUMPs[i].blockHeight === tx.merklePath.blockHeight) {
-            // Probably the same...
-            const rootA = BUMPs[i].computeRoot()
-            const rootB = tx.merklePath.computeRoot()
-            if (rootA === rootB) {
-              // Definitely the same... combine them to save space
-              BUMPs[i].combine(tx.merklePath)
-              obj.pathIndex = i
-              added = true
-              break
-            }
-          }
-        }
-        // Finally, if the proof is not yet added, add a new path.
-        if (!added) {
-          obj.pathIndex = BUMPs.length
-          if (tx.merklePath !== null && tx.merklePath !== undefined) {
-            BUMPs.push(tx.merklePath)
-          }
-        }
+      const merklePath = tx.merklePath
+      const hasProof = typeof merklePath === 'object'
+
+      if (hasProof && merklePath != null) {
+        obj.pathIndex = getBumpIndex(merklePath)
       }
-      const duplicate = txs.some((x) => x.tx.id('hex') === tx.id('hex'))
-      if (!duplicate) {
-        txs.unshift(obj)
-      }
+
       if (!hasProof) {
-        for (let i = 0; i < tx.inputs.length; i++) {
+        for (let i = tx.inputs.length - 1; i >= 0; i--) {
           const input = tx.inputs[i]
           if (typeof input.sourceTransaction === 'object') {
             addPathsAndInputs(input.sourceTransaction)
@@ -963,6 +963,9 @@ export default class Transaction {
           }
         }
       }
+
+      seenTxids.add(txid)
+      txs.push(obj)
     }
 
     addPathsAndInputs(this)
