@@ -459,6 +459,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [LivePolicy](#class-livepolicy) |
 | [MerklePath](#class-merklepath) |
 | [NodejsHttpClient](#class-nodejshttpclient) |
+| [SatoshisPerKilobyte](#class-satoshisperkilobyte) |
 | [Transaction](#class-transaction) |
 | [WhatsOnChain](#class-whatsonchain) |
 
@@ -1202,16 +1203,17 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Class: LivePolicy
 
 Represents a live fee policy that fetches current rates from ARC GorillaPool.
+Extends SatoshisPerKilobyte to reuse transaction size calculation logic.
 
 ```ts
-export default class LivePolicy implements FeeModel {
+export default class LivePolicy extends SatoshisPerKilobyte {
     constructor(cacheValidityMs: number = 5 * 60 * 1000) 
     static getInstance(cacheValidityMs: number = 5 * 60 * 1000): LivePolicy 
     async computeFee(tx: Transaction): Promise<number> 
 }
 ```
 
-See also: [FeeModel](./transaction.md#interface-feemodel), [Transaction](./transaction.md#class-transaction)
+See also: [SatoshisPerKilobyte](./transaction.md#class-satoshisperkilobyte), [Transaction](./transaction.md#class-transaction)
 
 #### Constructor
 
@@ -1229,6 +1231,7 @@ Argument Details
 #### Method computeFee
 
 Computes the fee for a given transaction using the current live rate.
+Overrides the parent method to use dynamic rate fetching.
 
 ```ts
 async computeFee(tx: Transaction): Promise<number> 
@@ -1483,6 +1486,54 @@ export class NodejsHttpClient implements HttpClient {
 ```
 
 See also: [HttpClient](./transaction.md#interface-httpclient), [HttpClientRequestOptions](./transaction.md#interface-httpclientrequestoptions), [HttpClientResponse](./transaction.md#type-httpclientresponse), [HttpsNodejs](./transaction.md#interface-httpsnodejs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Class: SatoshisPerKilobyte
+
+Represents the "satoshis per kilobyte" transaction fee model.
+
+```ts
+export default class SatoshisPerKilobyte implements FeeModel {
+    value: number;
+    constructor(value: number) 
+    async computeFee(tx: Transaction): Promise<number> 
+}
+```
+
+See also: [FeeModel](./transaction.md#interface-feemodel), [Transaction](./transaction.md#class-transaction)
+
+#### Constructor
+
+Constructs an instance of the sat/kb fee model.
+
+```ts
+constructor(value: number) 
+```
+
+Argument Details
+
++ **value**
+  + The number of satoshis per kilobyte to charge as a fee.
+
+#### Method computeFee
+
+Computes the fee for a given transaction.
+
+```ts
+async computeFee(tx: Transaction): Promise<number> 
+```
+See also: [Transaction](./transaction.md#class-transaction)
+
+Returns
+
+The fee in satoshis for the transaction, as a BigNumber.
+
+Argument Details
+
++ **tx**
+  + The transaction for which a fee is to be computed.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
