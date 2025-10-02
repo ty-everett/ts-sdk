@@ -3,8 +3,9 @@ import Transaction from '../transaction/Transaction.js'
 import * as Utils from '../primitives/utils.js'
 import { kvProtocol } from './types.js'
 import { InterpreterFunction } from '../overlay-tools/Historian.js'
+import { WalletProtocol } from '../wallet/Wallet.interfaces.js'
 
-export interface KVContext { key: string }
+export interface KVContext { key: string, protocolID: WalletProtocol }
 
 /**
  * KVStore interpreter used by Historian.
@@ -15,7 +16,7 @@ export interface KVContext { key: string }
  *
  * @param transaction - The transaction to inspect.
  * @param outputIndex - The index of the output within transaction.outputs.
- * @param ctx - { key: string } — per-call context specifying which key to match.
+ * @param ctx - { key: string, protocolID: WalletProtocol } — per-call context specifying which key to match.
  *
  * @returns string | undefined — the decoded KV value if the output is a valid KVStore token for the
  *   given key; otherwise undefined.
@@ -32,9 +33,10 @@ export const kvStoreInterpreter: InterpreterFunction<string, KVContext> = async 
     // Validate KVStore token format (must have 5 fields: [protocolID, key, value, controller, signature])
     if (decoded.fields.length !== Object.keys(kvProtocol).length) return undefined
 
-    // Filter by key - only return values for this specific key
-    const pKey = Utils.toUTF8(decoded.fields[kvProtocol.key])
-    if (pKey !== ctx.key) return undefined
+    // Only return values for the given key and protocolID
+    const key = Utils.toUTF8(decoded.fields[kvProtocol.key])
+    const protocolID = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID]))
+    if (key !== ctx.key || protocolID !== ctx.protocolID) return undefined
     try {
       return Utils.toUTF8(decoded.fields[kvProtocol.value])
     } catch {

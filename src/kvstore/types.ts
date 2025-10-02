@@ -11,6 +11,8 @@ export interface KVStoreConfig {
   overlayHost?: string
   /** Protocol ID for the KVStore protocol */
   protocolID?: WalletProtocol
+  /** Service name for overlay submission */
+  serviceName?: string
   /** Amount of satoshis for each token */
   tokenAmount?: number
   /** Topics for overlay submission */
@@ -23,6 +25,12 @@ export interface KVStoreConfig {
   networkPreset?: 'mainnet' | 'testnet' | 'local'
   /** Whether to accept delayed broadcast */
   acceptDelayedBroadcast?: boolean
+  /** Description for token set */
+  tokenSetDescription?: string
+  /** Description for token update */
+  tokenUpdateDescription?: string
+  /** Description for token removal */
+  tokenRemovalDescription?: string
 }
 
 /**
@@ -46,6 +54,20 @@ export interface KVStoreGetOptions {
   history?: boolean
   /** Whether to include token transaction data in results */
   includeToken?: boolean
+  /** Service name for overlay retrieval */
+  serviceName?: string
+}
+
+export interface KVStoreSetOptions {
+  protocolID?: WalletProtocol
+  tokenSetDescription?: string
+  tokenUpdateDescription?: string
+  tokenAmount?: number
+}
+
+export interface KVStoreRemoveOptions {
+  protocolID?: WalletProtocol
+  tokenRemovalDescription?: string
 }
 
 /**
@@ -55,6 +77,7 @@ export interface KVStoreEntry {
   key: string
   value: string
   controller: PubKeyHex
+  protocolID: WalletProtocol
   token?: KVStoreToken
   history?: string[]
 }
