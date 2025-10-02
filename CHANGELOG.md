@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.1 - 2025-10-02](#181---2025-10-02)
 - [1.8.0 - 2025-10-02](#180---2025-10-02)
 - [1.7.8 - 2025-10-02](#178---2025-10-02)
 - [1.7.6 - 2025-09-09](#176---2025-09-08)
@@ -158,6 +159,20 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.8.1] - 2025-10-02
+
+### Added
+
+- **GlobalKVStore**: New global key-value storage system using overlay services to track key-value pairs
+  - Full CRUD operations: `get()`, `set()`, `remove()` with PushDrop token outputs
+  - Flexible query system supporting key, controller, and protocolID parameters
+  - Optional history tracking with `Historian` integration for chronological value chains
+  - Optional token data inclusion for transaction details and BEEF access
+  - Atomic operations with key-based locking for concurrent safety
+- **Historian**: Overlay tool for building chronological history by traversing transaction input ancestry and interpreting outputs with provided interpreter functions.
 
 ---
 

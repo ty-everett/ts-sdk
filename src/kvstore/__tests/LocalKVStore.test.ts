@@ -481,6 +481,51 @@ describe('localKVStore', () => {
       })
       expect(mockWallet.relinquishOutput).not.toHaveBeenCalled()
     })
+
+    it('should preserve original error message when createAction fails', async () => {
+      const originalErrorMessage = 'Network connection timeout while creating transaction'
+      const originalError = new Error(originalErrorMessage)
+      
+      // Mock the lookupValue to return a value that differs from what we're setting
+      // to ensure set() will attempt to create a transaction
+      const mockedLor: ListOutputsResult = {
+        totalOutputs: 0,
+        outputs: [],
+        BEEF: undefined
+      }
+
+      const lookupValueReal = kvStore['lookupValue']
+      kvStore['lookupValue'] = jest.fn().mockResolvedValue({
+        value: 'different_value', // Different from testValue to trigger createAction
+        outpoint: undefined,
+        lor: mockedLor
+      })
+
+      // Mock wallet.createAction to fail with a specific error
+      mockWallet.createAction.mockRejectedValue(originalError)
+
+      // Mock other required methods
+      const valueArray = Array.from(testRawValueBuffer)
+      const encryptedArray = Array.from(testEncryptedValue)
+      MockedUtils.toArray.mockReturnValue(valueArray)
+      mockWallet.encrypt.mockResolvedValue({ ciphertext: encryptedArray } as WalletEncryptResult)
+
+      try {
+        await kvStore.set(testKey, testValue)
+        fail('Expected set() to throw an error but it succeeded')
+      } catch (error) {
+        // Verify that the thrown error contains both the contextual message and the original error
+        expect(error).toBeInstanceOf(Error)
+        const errorMessage = (error as Error).message
+        expect(errorMessage).toContain('outputs with tag')
+        expect(errorMessage).toContain('cannot be unlocked')
+        expect(errorMessage).toContain('Original error:')
+        expect(errorMessage).toContain(originalErrorMessage)
+      } finally {
+        // Restore the original method
+        kvStore['lookupValue'] = lookupValueReal
+      }
+    })
   })
 
   // --- Remove Method Tests ---
@@ -609,6 +654,33 @@ describe('localKVStore', () => {
       expect(mockUnlocker.sign).toHaveBeenCalledTimes(1) // sign was called
       expect(mockWallet.signAction).toHaveBeenCalled() // Called but failed
 
+    })
+
+    it('should preserve original error message when wallet operations fail during removal', async () => {
+      const originalErrorMessage = 'Insufficient funds to cover transaction fees'
+      const originalError = new Error(originalErrorMessage)
+      
+      const existingOutpoint = 'failTxId.0'
+      const existingOutput = { outpoint: existingOutpoint, txid: 'failTxId', vout: 0, lockingScript: 's1' }
+      const mockBEEF = Buffer.from('mockBEEFFail')
+
+      // Mock wallet to have outputs but createAction fails
+      mockWallet.listOutputs.mockResolvedValue({ outputs: [existingOutput], totalOutputs: 1, BEEF: mockBEEF } as any)
+      mockWallet.createAction.mockRejectedValue(originalError)
+
+      try {
+        await kvStore.remove(testKey)
+        fail('Expected remove() to throw an error but it succeeded')
+      } catch (error) {
+        // Verify that the thrown error contains both the contextual message and the original error
+        expect(error).toBeInstanceOf(Error)
+        const errorMessage = (error as Error).message
+        expect(errorMessage).toContain('1 outputs with tag')
+        expect(errorMessage).toContain(testKey)
+        expect(errorMessage).toContain('cannot be unlocked')
+        expect(errorMessage).toContain('Original error:')
+        expect(errorMessage).toContain(originalErrorMessage)
+      }
     })
   })
 })

@@ -6,8 +6,9 @@ import {
   Signature,
   PublicKey
 } from '../../primitives/index.js'
-import { WalletInterface, SecurityLevel } from '../../wallet/Wallet.interfaces.js'
+import { WalletInterface } from '../../wallet/Wallet.interfaces.js'
 import { Transaction } from '../../transaction/index.js'
+import { WalletProtocol } from '../../wallet/Wallet.interfaces.js'
 
 function verifyTruthy<T>(v: T | undefined): T {
   if (v == null) throw new Error('must have value')
@@ -117,7 +118,7 @@ export default class PushDrop implements ScriptTemplate {
    * Creates a PushDrop locking script with arbitrary data fields and a public key lock.
    *
    * @param {number[][]} fields - The token fields to include in the locking script.
-   * @param {[SecurityLevel, string]} protocolID - The protocol ID to use.
+   * @param {WalletProtocol} protocolID - The protocol ID to use.
    * @param {string} keyID - The key ID to use.
    * @param {string} counterparty - The counterparty involved in the transaction, "self" or "anyone".
    * @param {boolean} [forSelf=false] - Flag indicating if the lock is for the creator (default no).
@@ -126,7 +127,7 @@ export default class PushDrop implements ScriptTemplate {
    */
   async lock(
     fields: number[][],
-    protocolID: [SecurityLevel, string],
+    protocolID: WalletProtocol,
     keyID: string,
     counterparty: string,
     forSelf = false,
@@ -177,7 +178,7 @@ export default class PushDrop implements ScriptTemplate {
   /**
    * Creates an unlocking script for spending a PushDrop token output.
    *
-   * @param {[SecurityLevel, string]} protocolID - The protocol ID to use.
+   * @param {WalletProtocol} protocolID - The protocol ID to use.
    * @param {string} keyID - The key ID to use.
    * @param {string} counterparty - The counterparty involved in the transaction, "self" or "anyone".
    * @param {string} [sourceTXID] - The TXID of the source transaction.
@@ -188,7 +189,7 @@ export default class PushDrop implements ScriptTemplate {
    * @returns {Object} An object containing functions to sign the transaction and estimate the script length.
    */
   unlock(
-    protocolID: [SecurityLevel, string],
+    protocolID: WalletProtocol,
     keyID: string,
     counterparty: string,
     signOutputs: 'all' | 'none' | 'single' = 'all',
