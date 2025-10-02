@@ -123,8 +123,8 @@ export default class WalletClient implements WalletInterface {
 
     // Fall back to slower XDM substrate
     const xdmResult = await attemptSubstrate(() => new XDMSubstrate(), MAX_XDM_RESPONSE_WAIT)
-    if (xdmResult.success && (xdmResult.sub != null)) {
-      this.substrate = xdmResult.sub
+    if (xdmResult.success) {
+      this.substrate = xdmResult.sub!
     } else {
       throw new Error(
         'No wallet available over any communication substrate. Install a BSV wallet today!'
