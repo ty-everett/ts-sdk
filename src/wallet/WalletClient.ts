@@ -114,7 +114,7 @@ export default class WalletClient implements WalletInterface {
     const fastResults = await Promise.allSettled(fastAttempts)
     const fastSuccessful = fastResults
       .filter((r): r is PromiseFulfilledResult<{ success: boolean, sub?: WalletInterface }> => r.status === 'fulfilled' && r.value.success)
-      .map(r => r.value.sub!)
+      .map(r => r.value.sub)
 
     if (fastSuccessful.length > 0) {
       this.substrate = fastSuccessful[0]
@@ -124,7 +124,7 @@ export default class WalletClient implements WalletInterface {
     // Fall back to slower XDM substrate
     const xdmResult = await attemptSubstrate(() => new XDMSubstrate(), MAX_XDM_RESPONSE_WAIT)
     if (xdmResult.success) {
-      this.substrate = xdmResult.sub!
+      this.substrate = xdmResult.sub
     } else {
       throw new Error(
         'No wallet available over any communication substrate. Install a BSV wallet today!'
