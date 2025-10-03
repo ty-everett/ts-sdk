@@ -60,7 +60,7 @@ export default abstract class BasePoint {
 }
 ```
 
-See also: [Curve](./primitives.md#class-curve)
+See also: [Curve](#class-curve)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -231,7 +231,7 @@ export default class BigNumber {
 }
 ```
 
-See also: [ReductionContext](./primitives.md#class-reductioncontext), [red](./primitives.md#function-red), [toArray](./primitives.md#variable-toarray), [toHex](./primitives.md#variable-tohex)
+See also: [ReductionContext](#class-reductioncontext), [red](#function-red), [toArray](#variable-toarray), [toHex](#variable-tohex)
 
 #### Constructor
 
@@ -255,7 +255,7 @@ Reduction context of the big number.
 ```ts
 public red: ReductionContext | null
 ```
-See also: [ReductionContext](./primitives.md#class-reductioncontext)
+See also: [ReductionContext](#class-reductioncontext)
 
 #### Property wordSize
 
@@ -279,7 +279,7 @@ The multiplicative inverse is a number which when multiplied with the current Bi
 ```ts
 _invmp(p: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -323,7 +323,7 @@ Creates a BigNumber from a number representing the "bits" value in a block heade
 ```ts
 static fromBits(bits: number, strict: boolean = false): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -347,7 +347,7 @@ Creates a BigNumber from a hexadecimal string.
 ```ts
 static fromHex(hex: string, endian?: "le" | "be" | "little" | "big"): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -374,7 +374,7 @@ Creates a BigNumber from a JSON-serialized string.
 ```ts
 static fromJSON(str: string): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -392,7 +392,7 @@ Creates a BigNumber from a number.
 ```ts
 static fromNumber(n: number): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -410,7 +410,7 @@ Creates a BigNumber from the format used in Bitcoin scripts.
 ```ts
 static fromScriptNum(num: number[], requireMinimal: boolean = false, maxNumSize?: number): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -432,7 +432,7 @@ Creates a BigNumber from a signed magnitude number.
 ```ts
 static fromSm(bytes: number[], endian: "big" | "little" = "big"): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -452,7 +452,7 @@ Creates a BigNumber from a string, considering an optional base.
 ```ts
 static fromString(str: string, base?: number | "hex"): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -489,7 +489,7 @@ Returns the bigger value between two BigNumbers
 ```ts
 static max(left: BigNumber, right: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -509,7 +509,7 @@ Returns the smaller value between two BigNumbers
 ```ts
 static min(left: BigNumber, right: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -530,7 +530,7 @@ It chooses the multiplication method based on the lengths of the numbers to opti
 ```ts
 mulTo(num: BigNumber, out: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -569,7 +569,7 @@ Converts a BigNumber to an array of bits.
 ```ts
 static toBitArray(num: BigNumber): Array<0 | 1> 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -787,7 +787,7 @@ export default class Curve {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point), [ReductionContext](./primitives.md#class-reductioncontext), [red](./primitives.md#function-red)
+See also: [BigNumber](#class-bignumber), [Point](#class-point), [ReductionContext](#class-reductioncontext), [red](#function-red)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -813,7 +813,7 @@ export default class DRBG {
 }
 ```
 
-See also: [SHA256HMAC](./primitives.md#class-sha256hmac)
+See also: [SHA256HMAC](#class-sha256hmac)
 
 #### Method generate
 
@@ -846,7 +846,7 @@ Generates HMAC using the K value of the instance. This method is used internally
 ```ts
 hmac(): SHA256HMAC 
 ```
-See also: [SHA256HMAC](./primitives.md#class-sha256hmac)
+See also: [SHA256HMAC](#class-sha256hmac)
 
 Returns
 
@@ -918,7 +918,7 @@ export default class JacobianPoint extends BasePoint {
 }
 ```
 
-See also: [BasePoint](./primitives.md#class-basepoint), [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point)
+See also: [BasePoint](#class-basepoint), [BigNumber](#class-bignumber), [Point](#class-point)
 
 #### Constructor
 
@@ -927,7 +927,7 @@ Constructs a new `JacobianPoint` instance.
 ```ts
 constructor(x: string | BigNumber | null, y: string | BigNumber | null, z: string | BigNumber | null) 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -955,7 +955,7 @@ The `x` coordinate of the point in the Jacobian form.
 ```ts
 x: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property y
 
@@ -964,7 +964,7 @@ The `y` coordinate of the point in the Jacobian form.
 ```ts
 y: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property z
 
@@ -973,7 +973,7 @@ The `z` coordinate of the point in the Jacobian form.
 ```ts
 z: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property zOne
 
@@ -992,7 +992,7 @@ when either one of the points is the point at infinity, it will return the other
 ```ts
 add(p: JacobianPoint): JacobianPoint 
 ```
-See also: [JacobianPoint](./primitives.md#class-jacobianpoint)
+See also: [JacobianPoint](#class-jacobianpoint)
 
 Returns
 
@@ -1018,7 +1018,7 @@ Point doubling operation in the Jacobian coordinates. A special case is when the
 ```ts
 dbl(): JacobianPoint 
 ```
-See also: [JacobianPoint](./primitives.md#class-jacobianpoint)
+See also: [JacobianPoint](#class-jacobianpoint)
 
 Returns
 
@@ -1038,7 +1038,7 @@ Multiple doubling operation. It doubles the Jacobian point as many times as the 
 ```ts
 dblp(pow: number): JacobianPoint 
 ```
-See also: [JacobianPoint](./primitives.md#class-jacobianpoint)
+See also: [JacobianPoint](#class-jacobianpoint)
 
 Returns
 
@@ -1063,7 +1063,7 @@ Equality check operation. It checks whether the affine or Jacobian point is equa
 ```ts
 eq(p: Point | JacobianPoint): boolean 
 ```
-See also: [JacobianPoint](./primitives.md#class-jacobianpoint), [Point](./primitives.md#class-point)
+See also: [JacobianPoint](#class-jacobianpoint), [Point](#class-point)
 
 Returns
 
@@ -1091,7 +1091,7 @@ of a point in projective coordinates.
 ```ts
 eqXToP(x: BigNumber): boolean 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1156,7 +1156,7 @@ the affine point to Jacobian, and then preforms the addition.
 ```ts
 mixedAdd(p: Point): JacobianPoint 
 ```
-See also: [JacobianPoint](./primitives.md#class-jacobianpoint), [Point](./primitives.md#class-point)
+See also: [JacobianPoint](#class-jacobianpoint), [Point](#class-point)
 
 Returns
 
@@ -1182,7 +1182,7 @@ Negation operation. It returns the additive inverse of the Jacobian point.
 ```ts
 neg(): JacobianPoint 
 ```
-See also: [JacobianPoint](./primitives.md#class-jacobianpoint)
+See also: [JacobianPoint](#class-jacobianpoint)
 
 Returns
 
@@ -1202,7 +1202,7 @@ Converts the `JacobianPoint` object instance to standard affine `Point` format a
 ```ts
 toP(): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Returns
 
@@ -1240,7 +1240,7 @@ export default class K256 extends Mersenne {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Mersenne](./primitives.md#class-mersenne)
+See also: [BigNumber](#class-bignumber), [Mersenne](#class-mersenne)
 
 #### Constructor
 
@@ -1265,7 +1265,7 @@ Multiplies a BigNumber ('num') with the constant 'K' in-place and returns the re
 ```ts
 imulK(num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1291,7 +1291,7 @@ rules. This method modifies the input and output big numbers.
 ```ts
 split(input: BigNumber, output: BigNumber): void 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -1330,7 +1330,7 @@ export class KeyShares {
 }
 ```
 
-See also: [PointInFiniteField](./primitives.md#class-pointinfinitefield)
+See also: [PointInFiniteField](#class-pointinfinitefield)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -1353,7 +1353,7 @@ export default class Mersenne {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Constructor
 
@@ -1381,7 +1381,7 @@ The constant subtracted from 2^n to derive a pseudo-Mersenne prime.
 ```ts
 k: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property n
 
@@ -1406,7 +1406,7 @@ BigNumber equivalent to 2^n - k.
 ```ts
 p: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Method imulK
 
@@ -1415,7 +1415,7 @@ Performs an in-place multiplication of the parameter by constant k.
 ```ts
 imulK(num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1440,7 +1440,7 @@ it is less than the square of the pseudo-Mersenne prime.
 ```ts
 ireduce(num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1465,7 +1465,7 @@ to meet the magnitude of the pseudo-Mersenne prime.
 ```ts
 split(input: BigNumber, out: BigNumber): void 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -1510,14 +1510,14 @@ export default class MontgomoryMethod extends ReductionContext {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [ReductionContext](./primitives.md#class-reductioncontext)
+See also: [BigNumber](#class-bignumber), [ReductionContext](#class-reductioncontext)
 
 #### Constructor
 
 ```ts
 constructor(m: BigNumber | "k256") 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -1531,7 +1531,7 @@ The modular multiplicative inverse of `m` mod `r`.
 ```ts
 minv: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property r
 
@@ -1540,7 +1540,7 @@ The 2^shift, shifted left by the bit length of modulus `m`.
 ```ts
 r: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property r2
 
@@ -1549,7 +1549,7 @@ The square of `r` modulo `m`.
 ```ts
 r2: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property rinv
 
@@ -1558,7 +1558,7 @@ The modular multiplicative inverse of `r` mod `m`.
 ```ts
 rinv: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property shift
 
@@ -1575,7 +1575,7 @@ Converts a number from the Montgomery domain back to the original domain.
 ```ts
 convertFrom(num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1600,7 +1600,7 @@ Converts a number into the Montgomery domain.
 ```ts
 convertTo(num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1625,7 +1625,7 @@ Performs an in-place multiplication of two numbers in the Montgomery domain.
 ```ts
 imul(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1652,7 +1652,7 @@ Calculates the modular multiplicative inverse of a number in the Montgomery doma
 ```ts
 invm(a: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1677,7 +1677,7 @@ Performs the multiplication of two numbers in the Montgomery domain.
 ```ts
 mul(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -1749,14 +1749,14 @@ export default class Point extends BasePoint {
 }
 ```
 
-See also: [BasePoint](./primitives.md#class-basepoint), [BigNumber](./primitives.md#class-bignumber), [encode](./primitives.md#variable-encode)
+See also: [BasePoint](#class-basepoint), [BigNumber](#class-bignumber), [encode](#variable-encode)
 
 #### Constructor
 
 ```ts
 constructor(x: BigNumber | number | number[] | string | null, y: BigNumber | number | number[] | string | null, isRed: boolean = true) 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -1789,7 +1789,7 @@ The x-coordinate of the point.
 ```ts
 x: BigNumber | null
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property y
 
@@ -1798,7 +1798,7 @@ The y-coordinate of the point.
 ```ts
 y: BigNumber | null
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Method add
 
@@ -1807,7 +1807,7 @@ Adds another Point to this Point, returning a new Point.
 ```ts
 add(p: Point): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Returns
 
@@ -1833,7 +1833,7 @@ Doubles the current point.
 ```ts
 dbl(): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Example
 
@@ -1852,7 +1852,7 @@ a point at infinity is still infinity.
 ```ts
 dblp(k: number): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Returns
 
@@ -1909,7 +1909,7 @@ Checks if the Point instance is equal to another given Point.
 ```ts
 eq(p: Point): boolean 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Returns
 
@@ -1937,7 +1937,7 @@ The function verifies the integrity of the provided data and throws errors if in
 ```ts
 static fromDER(bytes: number[]): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Returns
 
@@ -1970,7 +1970,7 @@ JSON points into proper Point objects.
 ```ts
 static fromJSON(obj: string | any[], isRed: boolean): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Returns
 
@@ -1999,7 +1999,7 @@ The function verifies the integrity of the provided data and throws errors if in
 ```ts
 static fromString(str: string): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Returns
 
@@ -2031,7 +2031,7 @@ y coordinate is odd.
 ```ts
 static fromX(x: BigNumber | number | number[] | string, odd: boolean): Point 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point)
+See also: [BigNumber](#class-bignumber), [Point](#class-point)
 
 Returns
 
@@ -2062,7 +2062,7 @@ Returns X coordinate of point
 ```ts
 getX(): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Example
 
@@ -2078,7 +2078,7 @@ Returns X coordinate of point
 ```ts
 getY(): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Example
 
@@ -2133,7 +2133,7 @@ step. Instead of returning a regular Point, the result is a JacobianPoint.
 ```ts
 jmulAdd(k1: BigNumber, p2: Point, k2: BigNumber): JPoint 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point)
+See also: [BigNumber](#class-bignumber), [Point](#class-point)
 
 Returns
 
@@ -2163,7 +2163,7 @@ Multiplies this Point by a scalar value, returning a new Point.
 ```ts
 mul(k: BigNumber | number | number[] | string): Point 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point)
+See also: [BigNumber](#class-bignumber), [Point](#class-point)
 
 Returns
 
@@ -2189,7 +2189,7 @@ Multiplies this Point by k1, adds the resulting Point to the result of p2 multip
 ```ts
 mulAdd(k1: BigNumber, p2: Point, k2: BigNumber): Point 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point)
+See also: [BigNumber](#class-bignumber), [Point](#class-point)
 
 Returns
 
@@ -2219,7 +2219,7 @@ Negate a point. The negation of a point P is the mirror of P about x-axis.
 ```ts
 neg(_precompute?: boolean): Point 
 ```
-See also: [Point](./primitives.md#class-point)
+See also: [Point](#class-point)
 
 Example
 
@@ -2268,7 +2268,7 @@ toJSON(): [
     }?
 ] 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -2338,7 +2338,7 @@ export class PointInFiniteField {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Method toString
 
@@ -2376,7 +2376,7 @@ export default class Polynomial {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [PointInFiniteField](./primitives.md#class-pointinfinitefield), [PrivateKey](./primitives.md#class-privatekey)
+See also: [BigNumber](#class-bignumber), [PointInFiniteField](#class-pointinfinitefield), [PrivateKey](#class-privatekey)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -2416,14 +2416,14 @@ export default class PrivateKey extends BigNumber {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [KeyShares](./primitives.md#class-keyshares), [Point](./primitives.md#class-point), [PublicKey](./primitives.md#class-publickey), [Signature](./primitives.md#class-signature), [modN](./primitives.md#variable-modn), [sign](./compat.md#variable-sign), [toHex](./primitives.md#variable-tohex), [verify](./compat.md#variable-verify)
+See also: [BigNumber](#class-bignumber), [KeyShares](#class-keyshares), [Point](#class-point), [PublicKey](#class-publickey), [Signature](#class-signature), [modN](#variable-modn), [sign](#variable-sign), [toHex](#variable-tohex), [verify](#variable-verify)
 
 #### Constructor
 
 ```ts
 constructor(number: BigNumber | number | string | number[] = 0, base: number | "be" | "le" | "hex" = 10, endian: "be" | "le" = "be", modN: "apply" | "nocheck" | "error" = "apply") 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [modN](./primitives.md#variable-modn)
+See also: [BigNumber](#class-bignumber), [modN](#variable-modn)
 
 Argument Details
 
@@ -2454,7 +2454,7 @@ checkInField(): {
     modN: BigNumber;
 } 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [modN](./primitives.md#variable-modn)
+See also: [BigNumber](#class-bignumber), [modN](#variable-modn)
 
 Returns
 
@@ -2467,7 +2467,7 @@ Derives a child key with BRC-42.
 ```ts
 deriveChild(publicKey: PublicKey, invoiceNumber: string, cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))): PrivateKey 
 ```
-See also: [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
+See also: [Point](#class-point), [PrivateKey](#class-privatekey), [PublicKey](#class-publickey)
 
 Returns
 
@@ -2491,7 +2491,7 @@ Derives a shared secret from the public key.
 ```ts
 deriveSharedSecret(key: PublicKey): Point 
 ```
-See also: [Point](./primitives.md#class-point), [PublicKey](./primitives.md#class-publickey)
+See also: [Point](#class-point), [PublicKey](#class-publickey)
 
 Returns
 
@@ -2519,7 +2519,7 @@ const sharedSecret = privateKey.deriveSharedSecret(publicKey);
 ```ts
 static fromBackupShares(shares: string[]): PrivateKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey)
+See also: [PrivateKey](#class-privatekey)
 
 Returns
 
@@ -2541,7 +2541,7 @@ Generates a private key from a hexadecimal string.
 ```ts
 static fromHex(str: string): PrivateKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey)
+See also: [PrivateKey](#class-privatekey)
 
 Returns
 
@@ -2563,7 +2563,7 @@ Combines shares to reconstruct the private key.
 ```ts
 static fromKeyShares(keyShares: KeyShares): PrivateKey 
 ```
-See also: [KeyShares](./primitives.md#class-keyshares), [PrivateKey](./primitives.md#class-privatekey)
+See also: [KeyShares](#class-keyshares), [PrivateKey](#class-privatekey)
 
 Returns
 
@@ -2583,7 +2583,7 @@ Generates a private key randomly.
 ```ts
 static fromRandom(): PrivateKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey)
+See also: [PrivateKey](#class-privatekey)
 
 Returns
 
@@ -2602,7 +2602,7 @@ Generates a private key from a string.
 ```ts
 static fromString(str: string, base: number | "hex" = "hex"): PrivateKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey)
+See also: [PrivateKey](#class-privatekey)
 
 Returns
 
@@ -2626,7 +2626,7 @@ Generates a private key from a WIF (Wallet Import Format) string.
 ```ts
 static fromWif(wif: string, prefixLength: number = 1): PrivateKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey)
+See also: [PrivateKey](#class-privatekey)
 
 Returns
 
@@ -2660,7 +2660,7 @@ Signs a message using the private key.
 ```ts
 sign(msg: number[] | string, enc?: "hex" | "utf8", forceLowS: boolean = true, customK?: ((iter: number) => BigNumber) | BigNumber): Signature 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Signature](./primitives.md#class-signature)
+See also: [BigNumber](#class-bignumber), [Signature](#class-signature)
 
 Returns
 
@@ -2755,7 +2755,7 @@ Splits the private key into shares using Shamir's Secret Sharing Scheme.
 ```ts
 toKeyShares(threshold: number, totalShares: number): KeyShares 
 ```
-See also: [KeyShares](./primitives.md#class-keyshares)
+See also: [KeyShares](#class-keyshares)
 
 Returns
 
@@ -2786,7 +2786,7 @@ The public key is generated by multiplying the base point G of the curve and the
 ```ts
 toPublicKey(): PublicKey 
 ```
-See also: [PublicKey](./primitives.md#class-publickey)
+See also: [PublicKey](#class-publickey)
 
 Returns
 
@@ -2859,7 +2859,7 @@ Verifies a message's signature using the public key associated with this private
 ```ts
 verify(msg: number[] | string, sig: Signature, enc?: "hex"): boolean 
 ```
-See also: [Signature](./primitives.md#class-signature)
+See also: [Signature](#class-signature)
 
 Returns
 
@@ -2906,14 +2906,14 @@ export default class PublicKey extends Point {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [Signature](./primitives.md#class-signature), [verify](./compat.md#variable-verify)
+See also: [BigNumber](#class-bignumber), [Point](#class-point), [PrivateKey](#class-privatekey), [Signature](#class-signature), [verify](#variable-verify)
 
 #### Constructor
 
 ```ts
 constructor(x: Point | BigNumber | number | number[] | string | null, y: BigNumber | number | number[] | string | null = null, isRed: boolean = true) 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point)
+See also: [BigNumber](#class-bignumber), [Point](#class-point)
 
 Argument Details
 
@@ -2938,7 +2938,7 @@ Derives a child key with BRC-42.
 ```ts
 deriveChild(privateKey: PrivateKey, invoiceNumber: string, cacheSharedSecret?: ((priv: PrivateKey, pub: Point, point: Point) => void), retrieveCachedSharedSecret?: ((priv: PrivateKey, pub: Point) => (Point | undefined))): PublicKey 
 ```
-See also: [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
+See also: [Point](#class-point), [PrivateKey](#class-privatekey), [PublicKey](#class-publickey)
 
 Returns
 
@@ -2963,7 +2963,7 @@ This method multiplies the public key (an instance of Point) with a private key.
 ```ts
 deriveSharedSecret(priv: PrivateKey): Point 
 ```
-See also: [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey)
+See also: [Point](#class-point), [PrivateKey](#class-privatekey)
 
 Returns
 
@@ -2992,7 +2992,7 @@ Static factory method to create a PublicKey instance from a number array.
 ```ts
 static fromDER(bytes: number[]): PublicKey 
 ```
-See also: [PublicKey](./primitives.md#class-publickey)
+See also: [PublicKey](#class-publickey)
 
 Returns
 
@@ -3021,7 +3021,7 @@ The range represents the recovery param which can be 0,1,2,3.
 ```ts
 static fromMsgHashAndCompactSignature(msgHash: BigNumber, signature: number[] | string, enc?: "hex" | "base64"): PublicKey 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [PublicKey](./primitives.md#class-publickey)
+See also: [BigNumber](#class-bignumber), [PublicKey](#class-publickey)
 
 Returns
 
@@ -3050,7 +3050,7 @@ It multiplies the generator point 'g' on the elliptic curve by the private key.
 ```ts
 static fromPrivateKey(key: PrivateKey): PublicKey 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
+See also: [PrivateKey](#class-privatekey), [PublicKey](#class-publickey)
 
 Returns
 
@@ -3075,7 +3075,7 @@ Static factory method to create a PublicKey instance from a string.
 ```ts
 static fromString(str: string): PublicKey 
 ```
-See also: [PublicKey](./primitives.md#class-publickey)
+See also: [PublicKey](#class-publickey)
 
 Returns
 
@@ -3167,7 +3167,7 @@ Verify a signature of a message using this public key.
 ```ts
 verify(msg: number[] | string, sig: Signature, enc?: "hex" | "utf8"): boolean 
 ```
-See also: [Signature](./primitives.md#class-signature)
+See also: [Signature](#class-signature)
 
 Returns
 
@@ -3256,7 +3256,7 @@ export class Reader {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -3293,7 +3293,7 @@ export default class ReductionContext {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Mersenne](./primitives.md#class-mersenne)
+See also: [BigNumber](#class-bignumber), [Mersenne](#class-mersenne)
 
 #### Constructor
 
@@ -3302,7 +3302,7 @@ Constructs a new ReductionContext.
 ```ts
 constructor(m: BigNumber | "k256") 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -3323,7 +3323,7 @@ The modulus used for reduction operations.
 ```ts
 m: BigNumber
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 #### Property prime
 
@@ -3332,7 +3332,7 @@ The prime number utilised in the reduction context, typically an instance of Mer
 ```ts
 prime: Mersenne | null
 ```
-See also: [Mersenne](./primitives.md#class-mersenne)
+See also: [Mersenne](#class-mersenne)
 
 #### Method add
 
@@ -3341,7 +3341,7 @@ Performs the addition operation on two BigNumbers in the reduction context.
 ```ts
 add(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3368,7 +3368,7 @@ Converts a BigNumber from reduction context to its regular form.
 ```ts
 convertFrom(num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3394,7 +3394,7 @@ Converts a BigNumber to its equivalent in the reduction context.
 ```ts
 convertTo(num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3420,7 +3420,7 @@ in order to avoid creating a new BigNumber, it modifies the first one with the r
 ```ts
 iadd(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3448,7 +3448,7 @@ Performs an in-place reduction of the given BigNumber by the modulus of the redu
 ```ts
 imod(a: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3474,7 +3474,7 @@ modifying the first BigNumber with the result.
 ```ts
 imul(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3502,7 +3502,7 @@ Calculates the multiplicative inverse of a BigNumber in the reduction context.
 ```ts
 invm(a: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3528,7 +3528,7 @@ modifying the original BigNumber with the result.
 ```ts
 isqr(a: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3555,7 +3555,7 @@ it modifies the first BigNumber with the result.
 ```ts
 isub(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3583,7 +3583,7 @@ Multiplies two BigNumbers in the reduction context.
 ```ts
 mul(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3610,7 +3610,7 @@ Negates a BigNumber in the context of the modulus.
 ```ts
 neg(a: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3635,7 +3635,7 @@ Raises a BigNumber to a power in the reduction context.
 ```ts
 pow(a: BigNumber, num: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3662,7 +3662,7 @@ Performs bitwise shift left operation on a BigNumber in the reduction context.
 ```ts
 shl(a: BigNumber, num: number): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3689,7 +3689,7 @@ Calculates the square of a BigNumber in the reduction context.
 ```ts
 sqr(a: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3714,7 +3714,7 @@ Calculates the square root of a BigNumber in the reduction context.
 ```ts
 sqrt(a: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3739,7 +3739,7 @@ Subtracts one BigNumber from another BigNumber in the reduction context.
 ```ts
 sub(a: BigNumber, b: BigNumber): BigNumber 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Returns
 
@@ -3767,7 +3767,7 @@ conditions are not met.
 ```ts
 verify1(a: BigNumber): void 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -3791,7 +3791,7 @@ conditions are not met.
 ```ts
 verify2(a: BigNumber, b: BigNumber): void 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -3877,7 +3877,7 @@ export class SHA1HMAC {
 }
 ```
 
-See also: [SHA1](./primitives.md#class-sha1)
+See also: [SHA1](#class-sha1)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -4008,7 +4008,7 @@ Updates the `SHA256HMAC` object with part of the message to be hashed.
 ```ts
 update(msg: number[] | string, enc?: "hex"): SHA256HMAC 
 ```
-See also: [SHA256HMAC](./primitives.md#class-sha256hmac)
+See also: [SHA256HMAC](#class-sha256hmac)
 
 Returns
 
@@ -4156,7 +4156,7 @@ Updates the `SHA512HMAC` object with part of the message to be hashed.
 ```ts
 update(msg: number[] | string, enc?: "hex" | "utf8"): SHA512HMAC 
 ```
-See also: [SHA512HMAC](./primitives.md#class-sha512hmac)
+See also: [SHA512HMAC](#class-sha512hmac)
 
 Returns
 
@@ -4225,7 +4225,7 @@ export default class Schnorr {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
+See also: [BigNumber](#class-bignumber), [Point](#class-point), [PrivateKey](#class-privatekey), [PublicKey](#class-publickey)
 
 #### Method generateProof
 
@@ -4238,7 +4238,7 @@ generateProof(aArg: PrivateKey, AArg: PublicKey, BArg: PublicKey, S: Point): {
     z: BigNumber;
 } 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point), [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
+See also: [BigNumber](#class-bignumber), [Point](#class-point), [PrivateKey](#class-privatekey), [PublicKey](#class-publickey)
 
 Returns
 
@@ -4266,7 +4266,7 @@ verifyProof(A: Point, B: Point, S: Point, proof: {
     z: BigNumber;
 }): boolean 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [Point](./primitives.md#class-point)
+See also: [BigNumber](#class-bignumber), [Point](#class-point)
 
 Returns
 
@@ -4311,7 +4311,7 @@ export default class Signature {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [PublicKey](./primitives.md#class-publickey), [verify](./compat.md#variable-verify)
+See also: [BigNumber](#class-bignumber), [PublicKey](#class-publickey), [verify](#variable-verify)
 
 #### Constructor
 
@@ -4320,7 +4320,7 @@ Creates an instance of the Signature class.
 ```ts
 constructor(r: BigNumber, s: BigNumber) 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber)
+See also: [BigNumber](#class-bignumber)
 
 Argument Details
 
@@ -4347,7 +4347,7 @@ The recovery factor is a number between 0 and 3.
 ```ts
 CalculateRecoveryFactor(pubkey: PublicKey, msgHash: BigNumber): number 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [PublicKey](./primitives.md#class-publickey)
+See also: [BigNumber](#class-bignumber), [PublicKey](#class-publickey)
 
 Returns
 
@@ -4375,7 +4375,7 @@ The recovery factor is a number between 0 and 3.
 ```ts
 RecoverPublicKey(recovery: number, e: BigNumber): PublicKey 
 ```
-See also: [BigNumber](./primitives.md#class-bignumber), [PublicKey](./primitives.md#class-publickey)
+See also: [BigNumber](#class-bignumber), [PublicKey](#class-publickey)
 
 Returns
 
@@ -4407,7 +4407,7 @@ We could support recovery functions in future if there's demand.
 ```ts
 static fromCompact(data: number[] | string, enc?: "hex" | "base64"): Signature 
 ```
-See also: [Signature](./primitives.md#class-signature)
+See also: [Signature](#class-signature)
 
 Returns
 
@@ -4435,7 +4435,7 @@ If a string is provided, it is assumed to represent a hexadecimal sequence.
 ```ts
 static fromDER(data: number[] | string, enc?: "hex" | "base64"): Signature 
 ```
-See also: [Signature](./primitives.md#class-signature)
+See also: [Signature](#class-signature)
 
 Returns
 
@@ -4548,7 +4548,7 @@ If the data or key do not match the signature, the function returns false.
 ```ts
 verify(msg: number[] | string, key: PublicKey, enc?: "hex"): boolean 
 ```
-See also: [PublicKey](./primitives.md#class-publickey)
+See also: [PublicKey](#class-publickey)
 
 Returns
 
@@ -4588,7 +4588,7 @@ export default class SymmetricKey extends BigNumber {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [decrypt](./messages.md#variable-decrypt), [encrypt](./messages.md#variable-encrypt)
+See also: [BigNumber](#class-bignumber)
 
 #### Method decrypt
 
@@ -4657,7 +4657,7 @@ Generates a symmetric key randomly.
 ```ts
 static fromRandom(): SymmetricKey 
 ```
-See also: [SymmetricKey](./primitives.md#class-symmetrickey)
+See also: [SymmetricKey](#class-symmetrickey)
 
 Returns
 
@@ -4702,7 +4702,7 @@ export default class TransactionSignature extends Signature {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Script](./script.md#class-script), [Signature](./primitives.md#class-signature), [TransactionInput](./transaction.md#interface-transactioninput), [TransactionOutput](./transaction.md#interface-transactionoutput)
+See also: [BigNumber](#class-bignumber), [Signature](#class-signature)
 
 #### Method hasLowS
 
@@ -4747,7 +4747,7 @@ export class Writer {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [toArray](./primitives.md#variable-toarray)
+See also: [BigNumber](#class-bignumber), [toArray](#variable-toarray)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5026,7 +5026,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 P_PLUS1_DIV4 = (P_BIGINT + 1n) >> 2n
 ```
 
-See also: [P_BIGINT](./primitives.md#variable-p_bigint)
+See also: [P_BIGINT](#variable-p_bigint)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5037,7 +5037,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 biMod = (a: bigint): bigint => red((a % P_BIGINT + P_BIGINT) % P_BIGINT)
 ```
 
-See also: [P_BIGINT](./primitives.md#variable-p_bigint), [red](./primitives.md#function-red)
+See also: [P_BIGINT](#variable-p_bigint), [red](#function-red)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5048,7 +5048,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 biModAdd = (a: bigint, b: bigint): bigint => red(a + b)
 ```
 
-See also: [red](./primitives.md#function-red)
+See also: [red](#function-red)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5070,7 +5070,7 @@ biModInv = (a: bigint): bigint => {
 }
 ```
 
-See also: [BI_ONE](./primitives.md#variable-bi_one), [BI_ZERO](./primitives.md#variable-bi_zero), [P_BIGINT](./primitives.md#variable-p_bigint), [biMod](./primitives.md#variable-bimod)
+See also: [BI_ONE](#variable-bi_one), [BI_ZERO](#variable-bi_zero), [P_BIGINT](#variable-p_bigint), [biMod](#variable-bimod)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5081,7 +5081,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 biModMul = (a: bigint, b: bigint): bigint => red(a * b)
 ```
 
-See also: [red](./primitives.md#function-red)
+See also: [red](#function-red)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5103,7 +5103,7 @@ biModPow = (base: bigint, exp: bigint): bigint => {
 }
 ```
 
-See also: [BI_ONE](./primitives.md#variable-bi_one), [BI_ZERO](./primitives.md#variable-bi_zero), [biMod](./primitives.md#variable-bimod), [biModMul](./primitives.md#variable-bimodmul)
+See also: [BI_ONE](#variable-bi_one), [BI_ZERO](#variable-bi_zero), [biMod](#variable-bimod), [biModMul](#variable-bimodmul)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5114,7 +5114,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 biModSqr = (a: bigint): bigint => biModMul(a, a)
 ```
 
-See also: [biModMul](./primitives.md#variable-bimodmul)
+See also: [biModMul](#variable-bimodmul)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5128,7 +5128,7 @@ biModSqrt = (a: bigint): bigint | null => {
 }
 ```
 
-See also: [P_PLUS1_DIV4](./primitives.md#variable-p_plus1_div4), [biMod](./primitives.md#variable-bimod), [biModMul](./primitives.md#variable-bimodmul), [biModPow](./primitives.md#variable-bimodpow)
+See also: [P_PLUS1_DIV4](#variable-p_plus1_div4), [biMod](#variable-bimod), [biModMul](#variable-bimodmul), [biModPow](#variable-bimodpow)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5139,7 +5139,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 biModSub = (a: bigint, b: bigint): bigint => (a >= b ? a - b : P_BIGINT - (b - a))
 ```
 
-See also: [P_BIGINT](./primitives.md#variable-p_bigint)
+See also: [P_BIGINT](#variable-p_bigint)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5170,7 +5170,7 @@ encode = (arr: number[], enc?: "hex" | "utf8"): string | number[] => {
 }
 ```
 
-See also: [toHex](./primitives.md#variable-tohex), [toUTF8](./primitives.md#variable-toutf8)
+See also: [toHex](#variable-tohex), [toUTF8](#variable-toutf8)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5252,7 +5252,7 @@ fromBase58Check = (str: string, enc?: "hex", prefixLength: number = 1): {
 }
 ```
 
-See also: [fromBase58](./primitives.md#variable-frombase58), [hash256](./primitives.md#variable-hash256), [toHex](./primitives.md#variable-tohex)
+See also: [fromBase58](#variable-frombase58), [hash256](#variable-hash256), [toHex](#variable-tohex)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5282,7 +5282,7 @@ hash160 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
 }
 ```
 
-See also: [RIPEMD160](./primitives.md#class-ripemd160), [SHA256](./primitives.md#class-sha256)
+See also: [RIPEMD160](#class-ripemd160), [SHA256](#class-sha256)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5296,7 +5296,7 @@ hash256 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
 }
 ```
 
-See also: [SHA256](./primitives.md#class-sha256)
+See also: [SHA256](#class-sha256)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5354,7 +5354,7 @@ jpAdd = (P: JacobianPointBI, Q: JacobianPointBI): JacobianPointBI => {
 }
 ```
 
-See also: [BI_ONE](./primitives.md#variable-bi_one), [BI_TWO](./primitives.md#variable-bi_two), [BI_ZERO](./primitives.md#variable-bi_zero), [JacobianPointBI](./primitives.md#interface-jacobianpointbi), [biModMul](./primitives.md#variable-bimodmul), [biModSub](./primitives.md#variable-bimodsub), [jpDouble](./primitives.md#variable-jpdouble)
+See also: [BI_ONE](#variable-bi_one), [BI_TWO](#variable-bi_two), [BI_ZERO](#variable-bi_zero), [JacobianPointBI](#interface-jacobianpointbi), [biModMul](#variable-bimodmul), [biModSub](#variable-bimodsub), [jpDouble](#variable-jpdouble)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5376,7 +5376,7 @@ jpDouble = (P: JacobianPointBI): JacobianPointBI => {
 }
 ```
 
-See also: [BI_EIGHT](./primitives.md#variable-bi_eight), [BI_FOUR](./primitives.md#variable-bi_four), [BI_ONE](./primitives.md#variable-bi_one), [BI_THREE](./primitives.md#variable-bi_three), [BI_TWO](./primitives.md#variable-bi_two), [BI_ZERO](./primitives.md#variable-bi_zero), [JacobianPointBI](./primitives.md#interface-jacobianpointbi), [biModMul](./primitives.md#variable-bimodmul), [biModSub](./primitives.md#variable-bimodsub)
+See also: [BI_EIGHT](#variable-bi_eight), [BI_FOUR](#variable-bi_four), [BI_ONE](#variable-bi_one), [BI_THREE](#variable-bi_three), [BI_TWO](#variable-bi_two), [BI_ZERO](#variable-bi_zero), [JacobianPointBI](#interface-jacobianpointbi), [biModMul](#variable-bimodmul), [biModSub](#variable-bimodsub)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5391,7 +5391,7 @@ jpNeg = (P: JacobianPointBI): JacobianPointBI => {
 }
 ```
 
-See also: [BI_ZERO](./primitives.md#variable-bi_zero), [JacobianPointBI](./primitives.md#interface-jacobianpointbi), [P_BIGINT](./primitives.md#variable-p_bigint)
+See also: [BI_ZERO](#variable-bi_zero), [JacobianPointBI](#interface-jacobianpointbi), [P_BIGINT](#variable-p_bigint)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5449,7 +5449,7 @@ modInvN = (a: bigint): bigint => {
 }
 ```
 
-See also: [N_BIGINT](./primitives.md#variable-n_bigint), [modN](./primitives.md#variable-modn)
+See also: [N_BIGINT](#variable-n_bigint), [modN](#variable-modn)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5460,7 +5460,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 modMulN = (a: bigint, b: bigint): bigint => modN(a * b)
 ```
 
-See also: [modN](./primitives.md#variable-modn)
+See also: [modN](#variable-modn)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5476,7 +5476,7 @@ modN = (a: bigint): bigint => {
 }
 ```
 
-See also: [N_BIGINT](./primitives.md#variable-n_bigint)
+See also: [N_BIGINT](#variable-n_bigint)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5505,7 +5505,7 @@ multiply = function (block0: number[], block1: number[]): number[] {
 }
 ```
 
-See also: [rightShift](./primitives.md#variable-rightshift)
+See also: [rightShift](#variable-rightshift)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5540,7 +5540,7 @@ ripemd160 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
 }
 ```
 
-See also: [RIPEMD160](./primitives.md#class-ripemd160)
+See also: [RIPEMD160](#class-ripemd160)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5601,7 +5601,7 @@ scalarMultiplyWNAF = (k: bigint, P0: {
 }
 ```
 
-See also: [BI_ONE](./primitives.md#variable-bi_one), [BI_ZERO](./primitives.md#variable-bi_zero), [JacobianPointBI](./primitives.md#interface-jacobianpointbi), [jpAdd](./primitives.md#variable-jpadd), [jpDouble](./primitives.md#variable-jpdouble), [jpNeg](./primitives.md#variable-jpneg)
+See also: [BI_ONE](#variable-bi_one), [BI_ZERO](#variable-bi_zero), [JacobianPointBI](#interface-jacobianpointbi), [jpAdd](#variable-jpadd), [jpDouble](#variable-jpdouble), [jpNeg](#variable-jpneg)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5614,7 +5614,7 @@ sha1 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
 }
 ```
 
-See also: [SHA1](./primitives.md#class-sha1)
+See also: [SHA1](#class-sha1)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5627,7 +5627,7 @@ sha256 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
 }
 ```
 
-See also: [SHA256](./primitives.md#class-sha256)
+See also: [SHA256](#class-sha256)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5640,7 +5640,7 @@ sha256hmac = (key: number[] | string, msg: number[] | string, enc?: "hex"): numb
 }
 ```
 
-See also: [SHA256HMAC](./primitives.md#class-sha256hmac)
+See also: [SHA256HMAC](#class-sha256hmac)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5653,7 +5653,7 @@ sha512 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
 }
 ```
 
-See also: [SHA512](./primitives.md#class-sha512)
+See also: [SHA512](#class-sha512)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5666,7 +5666,7 @@ sha512hmac = (key: number[] | string, msg: number[] | string, enc?: "hex"): numb
 }
 ```
 
-See also: [SHA512HMAC](./primitives.md#class-sha512hmac)
+See also: [SHA512HMAC](#class-sha512hmac)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5734,7 +5734,7 @@ sign = (msg: BigNumber, key: BigNumber, forceLowS: boolean = false, customK?: Bi
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [DRBG](./primitives.md#class-drbg), [GX_BIGINT](./primitives.md#variable-gx_bigint), [GY_BIGINT](./primitives.md#variable-gy_bigint), [N_BIGINT](./primitives.md#variable-n_bigint), [Signature](./primitives.md#class-signature), [biModInv](./primitives.md#variable-bimodinv), [biModMul](./primitives.md#variable-bimodmul), [modInvN](./primitives.md#variable-modinvn), [modMulN](./primitives.md#variable-modmuln), [modN](./primitives.md#variable-modn), [scalarMultiplyWNAF](./primitives.md#variable-scalarmultiplywnaf), [toArray](./primitives.md#variable-toarray)
+See also: [BigNumber](#class-bignumber), [DRBG](#class-drbg), [GX_BIGINT](#variable-gx_bigint), [GY_BIGINT](#variable-gy_bigint), [N_BIGINT](#variable-n_bigint), [Signature](#class-signature), [biModInv](#variable-bimodinv), [biModMul](#variable-bimodmul), [modInvN](#variable-modinvn), [modMulN](#variable-modmuln), [modN](#variable-modn), [scalarMultiplyWNAF](#variable-scalarmultiplywnaf), [toArray](#variable-toarray)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5809,7 +5809,7 @@ toBase58Check = (bin: number[], prefix: number[] = [0]): string => {
 }
 ```
 
-See also: [hash256](./primitives.md#variable-hash256), [toBase58](./primitives.md#variable-tobase58)
+See also: [hash256](#variable-hash256), [toBase58](#variable-tobase58)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5826,7 +5826,7 @@ toHex = (msg: number[]): string => {
 }
 ```
 
-See also: [zero2](./primitives.md#variable-zero2)
+See also: [zero2](#variable-zero2)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -5919,7 +5919,7 @@ verify = (msg: BigNumber, sig: Signature, key: Point): boolean => {
 }
 ```
 
-See also: [BI_ZERO](./primitives.md#variable-bi_zero), [BigNumber](./primitives.md#class-bignumber), [GX_BIGINT](./primitives.md#variable-gx_bigint), [GY_BIGINT](./primitives.md#variable-gy_bigint), [N_BIGINT](./primitives.md#variable-n_bigint), [Point](./primitives.md#class-point), [Signature](./primitives.md#class-signature), [biModInv](./primitives.md#variable-bimodinv), [biModMul](./primitives.md#variable-bimodmul), [jpAdd](./primitives.md#variable-jpadd), [modInvN](./primitives.md#variable-modinvn), [modMulN](./primitives.md#variable-modmuln), [modN](./primitives.md#variable-modn), [scalarMultiplyWNAF](./primitives.md#variable-scalarmultiplywnaf)
+See also: [BI_ZERO](#variable-bi_zero), [BigNumber](#class-bignumber), [GX_BIGINT](#variable-gx_bigint), [GY_BIGINT](#variable-gy_bigint), [N_BIGINT](#variable-n_bigint), [Point](#class-point), [Signature](#class-signature), [biModInv](#variable-bimodinv), [biModMul](#variable-bimodmul), [jpAdd](#variable-jpadd), [modInvN](#variable-modinvn), [modMulN](#variable-modmuln), [modN](#variable-modn), [scalarMultiplyWNAF](#variable-scalarmultiplywnaf)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

@@ -17,7 +17,7 @@ export interface TOTPOptions {
 }
 ```
 
-See also: [TOTPAlgorithm](./totp.md#type-totpalgorithm)
+See also: [TOTPAlgorithm](#type-totpalgorithm)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -33,7 +33,7 @@ export class TOTP {
 }
 ```
 
-See also: [TOTPOptions](./totp.md#interface-totpoptions), [TOTPValidateOptions](./totp.md#type-totpvalidateoptions)
+See also: [TOTPOptions](#interface-totpoptions), [TOTPValidateOptions](#type-totpvalidateoptions)
 
 #### Method generate
 
@@ -42,7 +42,7 @@ Generates a Time-based One-Time Password (TOTP).
 ```ts
 static generate(secret: number[], options?: TOTPOptions): string 
 ```
-See also: [TOTPOptions](./totp.md#interface-totpoptions)
+See also: [TOTPOptions](#interface-totpoptions)
 
 Returns
 
@@ -62,7 +62,7 @@ Validates a Time-based One-Time Password (TOTP).
 ```ts
 static validate(secret: number[], passcode: string, options?: TOTPValidateOptions): boolean 
 ```
-See also: [TOTPValidateOptions](./totp.md#type-totpvalidateoptions)
+See also: [TOTPValidateOptions](#type-totpvalidateoptions)
 
 Returns
 
@@ -112,7 +112,7 @@ export type TOTPValidateOptions = TOTPOptions & {
 }
 ```
 
-See also: [TOTPOptions](./totp.md#interface-totpoptions)
+See also: [TOTPOptions](#interface-totpoptions)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 

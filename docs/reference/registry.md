@@ -36,8 +36,6 @@ export interface BasketDefinitionData {
 }
 ```
 
-See also: [PubKeyHex](./wallet.md#type-pubkeyhex)
-
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -76,7 +74,7 @@ export interface CertificateDefinitionData {
 }
 ```
 
-See also: [CertificateFieldDescriptor](./registry.md#interface-certificatefielddescriptor), [PubKeyHex](./wallet.md#type-pubkeyhex)
+See also: [CertificateFieldDescriptor](#interface-certificatefielddescriptor)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -131,8 +129,6 @@ export interface ProtocolDefinitionData {
 }
 ```
 
-See also: [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletProtocol](./wallet.md#type-walletprotocol)
-
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -151,8 +147,6 @@ export interface ProtocolQuery {
 }
 ```
 
-See also: [WalletProtocol](./wallet.md#type-walletprotocol)
-
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -168,7 +162,7 @@ export interface RegistryQueryMapping {
 }
 ```
 
-See also: [BasketQuery](./registry.md#interface-basketquery), [CertificateQuery](./registry.md#interface-certificatequery), [ProtocolQuery](./registry.md#interface-protocolquery)
+See also: [BasketQuery](#interface-basketquery), [CertificateQuery](#interface-certificatequery), [ProtocolQuery](#interface-protocolquery)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -186,8 +180,6 @@ export interface TokenData {
     beef: BEEF;
 }
 ```
-
-See also: [BEEF](./wallet.md#type-beef)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -220,7 +212,7 @@ export class RegistryClient {
 }
 ```
 
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [DefinitionData](./registry.md#type-definitiondata), [DefinitionType](./registry.md#type-definitiontype), [RegistryQueryMapping](./registry.md#interface-registryquerymapping), [RegistryRecord](./registry.md#type-registryrecord), [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [DefinitionData](#type-definitiondata), [DefinitionType](#type-definitiontype), [RegistryQueryMapping](#interface-registryquerymapping), [RegistryRecord](#type-registryrecord)
 
 #### Method listOwnRegistryEntries
 
@@ -231,7 +223,7 @@ Returns parsed registry records including transaction details such as txid, outp
 ```ts
 async listOwnRegistryEntries(definitionType: DefinitionType): Promise<RegistryRecord[]> 
 ```
-See also: [DefinitionType](./registry.md#type-definitiontype), [RegistryRecord](./registry.md#type-registryrecord)
+See also: [DefinitionType](#type-definitiontype), [RegistryRecord](#type-registryrecord)
 
 Returns
 
@@ -253,7 +245,7 @@ to establish canonical references for basket IDs, protocol specs, or certificate
 ```ts
 async registerDefinition(data: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> 
 ```
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [DefinitionData](./registry.md#type-definitiondata)
+See also: [DefinitionData](#type-definitiondata)
 
 Returns
 
@@ -279,7 +271,7 @@ The query object shape depends on the registry type:
 ```ts
 async resolve<T extends DefinitionType>(definitionType: T, query: RegistryQueryMapping[T]): Promise<DefinitionData[]> 
 ```
-See also: [DefinitionData](./registry.md#type-definitiondata), [DefinitionType](./registry.md#type-definitiontype), [RegistryQueryMapping](./registry.md#interface-registryquerymapping)
+See also: [DefinitionData](#type-definitiondata), [DefinitionType](#type-definitiontype), [RegistryQueryMapping](#interface-registryquerymapping)
 
 Returns
 
@@ -299,7 +291,7 @@ Revokes a registry record by spending its associated UTXO.
 ```ts
 async revokeOwnRegistryEntry(registryRecord: RegistryRecord): Promise<BroadcastResponse | BroadcastFailure> 
 ```
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [RegistryRecord](./registry.md#type-registryrecord)
+See also: [RegistryRecord](#type-registryrecord)
 
 Returns
 
@@ -320,8 +312,6 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ```ts
 export function deserializeWalletProtocol(str: string): WalletProtocol 
 ```
-
-See also: [WalletProtocol](./wallet.md#type-walletprotocol)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -346,7 +336,7 @@ Union of all possible definition data objects.
 export type DefinitionData = BasketDefinitionData | ProtocolDefinitionData | CertificateDefinitionData
 ```
 
-See also: [BasketDefinitionData](./registry.md#interface-basketdefinitiondata), [CertificateDefinitionData](./registry.md#interface-certificatedefinitiondata), [ProtocolDefinitionData](./registry.md#interface-protocoldefinitiondata)
+See also: [BasketDefinitionData](#interface-basketdefinitiondata), [CertificateDefinitionData](#interface-certificatedefinitiondata), [ProtocolDefinitionData](#interface-protocoldefinitiondata)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -372,7 +362,7 @@ plus the on-chain token data for the UTXO holding it.
 export type RegistryRecord = DefinitionData & TokenData
 ```
 
-See also: [DefinitionData](./registry.md#type-definitiondata), [TokenData](./registry.md#interface-tokendata)
+See also: [DefinitionData](#type-definitiondata), [TokenData](#interface-tokendata)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

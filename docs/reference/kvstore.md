@@ -4,8 +4,420 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ## Interfaces
 
+| |
+| --- |
+| [KVContext](#interface-kvcontext) |
+| [KVStoreConfig](#interface-kvstoreconfig) |
+| [KVStoreEntry](#interface-kvstoreentry) |
+| [KVStoreGetOptions](#interface-kvstoregetoptions) |
+| [KVStoreLookupResult](#interface-kvstorelookupresult) |
+| [KVStoreQuery](#interface-kvstorequery) |
+| [KVStoreRemoveOptions](#interface-kvstoreremoveoptions) |
+| [KVStoreSetOptions](#interface-kvstoresetoptions) |
+| [KVStoreToken](#interface-kvstoretoken) |
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+
+### Interface: KVContext
+
+```ts
+export interface KVContext {
+    key: string;
+    protocolID: WalletProtocol;
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreConfig
+
+Configuration interface for GlobalKVStore operations.
+Defines all options for connecting to overlay services and managing KVStore behavior.
+
+```ts
+export interface KVStoreConfig {
+    overlayHost?: string;
+    protocolID?: WalletProtocol;
+    serviceName?: string;
+    tokenAmount?: number;
+    topics?: string[];
+    originator?: string;
+    wallet?: WalletInterface;
+    networkPreset?: "mainnet" | "testnet" | "local";
+    acceptDelayedBroadcast?: boolean;
+    tokenSetDescription?: string;
+    tokenUpdateDescription?: string;
+    tokenRemovalDescription?: string;
+}
+```
+
+#### Property acceptDelayedBroadcast
+
+Whether to accept delayed broadcast
+
+```ts
+acceptDelayedBroadcast?: boolean
+```
+
+#### Property networkPreset
+
+Network preset for overlay services
+
+```ts
+networkPreset?: "mainnet" | "testnet" | "local"
+```
+
+#### Property originator
+
+Originator
+
+```ts
+originator?: string
+```
+
+#### Property overlayHost
+
+The overlay service host URL
+
+```ts
+overlayHost?: string
+```
+
+#### Property protocolID
+
+Protocol ID for the KVStore protocol
+
+```ts
+protocolID?: WalletProtocol
+```
+
+#### Property serviceName
+
+Service name for overlay submission
+
+```ts
+serviceName?: string
+```
+
+#### Property tokenAmount
+
+Amount of satoshis for each token
+
+```ts
+tokenAmount?: number
+```
+
+#### Property tokenRemovalDescription
+
+Description for token removal
+
+```ts
+tokenRemovalDescription?: string
+```
+
+#### Property tokenSetDescription
+
+Description for token set
+
+```ts
+tokenSetDescription?: string
+```
+
+#### Property tokenUpdateDescription
+
+Description for token update
+
+```ts
+tokenUpdateDescription?: string
+```
+
+#### Property topics
+
+Topics for overlay submission
+
+```ts
+topics?: string[]
+```
+
+#### Property wallet
+
+Wallet interface for operations
+
+```ts
+wallet?: WalletInterface
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreEntry
+
+KVStore entry returned from queries
+
+```ts
+export interface KVStoreEntry {
+    key: string;
+    value: string;
+    controller: PubKeyHex;
+    protocolID: WalletProtocol;
+    token?: KVStoreToken;
+    history?: string[];
+}
+```
+
+See also: [KVStoreToken](#interface-kvstoretoken)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreGetOptions
+
+Options for configuring KVStore get operations (local processing)
+
+```ts
+export interface KVStoreGetOptions {
+    history?: boolean;
+    includeToken?: boolean;
+    serviceName?: string;
+}
+```
+
+#### Property history
+
+Whether to build and include history for each entry
+
+```ts
+history?: boolean
+```
+
+#### Property includeToken
+
+Whether to include token transaction data in results
+
+```ts
+includeToken?: boolean
+```
+
+#### Property serviceName
+
+Service name for overlay retrieval
+
+```ts
+serviceName?: string
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreLookupResult
+
+Result structure for KVStore lookups from overlay services.
+Contains the transaction output information for a found key-value pair.
+
+```ts
+export interface KVStoreLookupResult {
+    txid: string;
+    outputIndex: number;
+    outputScript: string;
+    satoshis: number;
+    history?: (output: any, currentDepth: number) => Promise<boolean>;
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreQuery
+
+Query parameters for KVStore lookups from overlay services.
+Used when searching for existing key-value pairs in the network.
+
+```ts
+export interface KVStoreQuery {
+    key?: string;
+    controller?: PubKeyHex;
+    protocolID?: WalletProtocol;
+    limit?: number;
+    skip?: number;
+    sortOrder?: "asc" | "desc";
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreRemoveOptions
+
+```ts
+export interface KVStoreRemoveOptions {
+    protocolID?: WalletProtocol;
+    tokenRemovalDescription?: string;
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreSetOptions
+
+```ts
+export interface KVStoreSetOptions {
+    protocolID?: WalletProtocol;
+    tokenSetDescription?: string;
+    tokenUpdateDescription?: string;
+    tokenAmount?: number;
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: KVStoreToken
+
+Token structure containing a KVStore token from overlay services.
+Wraps the transaction data and metadata for a key-value pair.
+
+```ts
+export interface KVStoreToken {
+    txid: string;
+    outputIndex: number;
+    satoshis: number;
+    beef: Beef;
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ## Classes
 
+| |
+| --- |
+| [GlobalKVStore](#class-globalkvstore) |
+| [LocalKVStore](#class-localkvstore) |
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+
+### Class: GlobalKVStore
+
+Implements a global key-value storage system which uses an overlay service to track key-value pairs.
+Each key-value pair is represented by a PushDrop token output.
+Allows getting, setting, and removing key-value pairs with optional fetching by protocolID and history tracking.
+
+```ts
+export class GlobalKVStore {
+    constructor(config: KVStoreConfig = {}) 
+    async get(query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry | KVStoreEntry[] | undefined> 
+    async set(key: string, value: string, options: KVStoreSetOptions = {}): Promise<OutpointString> 
+    async remove(key: string, outputs?: CreateActionOutput[], options: KVStoreRemoveOptions = {}): Promise<HexString> 
+}
+```
+
+See also: [KVStoreConfig](#interface-kvstoreconfig), [KVStoreEntry](#interface-kvstoreentry), [KVStoreGetOptions](#interface-kvstoregetoptions), [KVStoreQuery](#interface-kvstorequery), [KVStoreRemoveOptions](#interface-kvstoreremoveoptions), [KVStoreSetOptions](#interface-kvstoresetoptions)
+
+#### Constructor
+
+Creates an instance of the GlobalKVStore.
+
+```ts
+constructor(config: KVStoreConfig = {}) 
+```
+See also: [KVStoreConfig](#interface-kvstoreconfig)
+
+Argument Details
+
++ **config**
+  + Configuration options for the KVStore. Defaults to empty object.
++ **config.wallet**
+  + Wallet to use for operations. Defaults to WalletClient.
+
+Throws
+
+If the configuration contains invalid parameters.
+
+#### Method get
+
+Retrieves data from the KVStore.
+Can query by key+controller (single result), protocolID, controller, or key (multiple results).
+
+```ts
+async get(query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry | KVStoreEntry[] | undefined> 
+```
+See also: [KVStoreEntry](#interface-kvstoreentry), [KVStoreGetOptions](#interface-kvstoregetoptions), [KVStoreQuery](#interface-kvstorequery)
+
+Returns
+
+Single entry for key+controller queries, array for all other queries
+
+Argument Details
+
++ **query**
+  + Query parameters sent to overlay
++ **options**
+  + Configuration options for the get operation
+
+#### Method remove
+
+Removes the key-value pair associated with the given key from the overlay service.
+
+```ts
+async remove(key: string, outputs?: CreateActionOutput[], options: KVStoreRemoveOptions = {}): Promise<HexString> 
+```
+See also: [KVStoreRemoveOptions](#interface-kvstoreremoveoptions)
+
+Returns
+
+A promise that resolves to the txid of the removal transaction if successful.
+
+Argument Details
+
++ **key**
+  + The key to remove.
++ **outputs**
+  + Additional outputs to include in the removal transaction.
++ **options**
+  + Optional parameters for the removal operation.
+
+Throws
+
+If the key is invalid.
+
+If the key does not exist in the store.
+
+If the overlay service is unreachable or the transaction fails.
+
+If there are existing tokens that cannot be unlocked.
+
+#### Method set
+
+Sets a key-value pair. The current user (wallet identity) becomes the controller.
+
+```ts
+async set(key: string, value: string, options: KVStoreSetOptions = {}): Promise<OutpointString> 
+```
+See also: [KVStoreSetOptions](#interface-kvstoresetoptions)
+
+Returns
+
+The outpoint of the created token
+
+Argument Details
+
++ **key**
+  + The key to set (user computes this however they want)
++ **value**
+  + The value to store
++ **options**
+  + Configuration options for the set operation
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ### Class: LocalKVStore
 
 Implements a key-value storage system backed by transaction outputs managed by a wallet.
@@ -22,8 +434,6 @@ export default class LocalKVStore {
 }
 ```
 
-See also: [OutpointString](./wallet.md#type-outpointstring), [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface), [encrypt](./messages.md#variable-encrypt)
-
 #### Constructor
 
 Creates an instance of the localKVStore.
@@ -31,7 +441,6 @@ Creates an instance of the localKVStore.
 ```ts
 constructor(wallet: WalletInterface = new WalletClient(), context = "kvstore default", encrypt = true, originator?: string, acceptDelayedBroadcast = false) 
 ```
-See also: [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface), [encrypt](./messages.md#variable-encrypt)
 
 Argument Details
 
@@ -110,7 +519,6 @@ to the same key from missing earlier changes.
 ```ts
 async set(key: string, value: string): Promise<OutpointString> 
 ```
-See also: [OutpointString](./wallet.md#type-outpointstring)
 
 Returns
 
@@ -134,3 +542,62 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ## Variables
 
+| |
+| --- |
+| [kvProtocol](#variable-kvprotocol) |
+| [kvStoreInterpreter](#variable-kvstoreinterpreter) |
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+
+### Variable: kvProtocol
+
+```ts
+kvProtocol = {
+    protocolID: 0,
+    key: 1,
+    value: 2,
+    controller: 3,
+    signature: 4
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Variable: kvStoreInterpreter
+
+```ts
+kvStoreInterpreter: InterpreterFunction<string, KVContext> = async (transaction: Transaction, outputIndex: number, ctx?: KVContext): Promise<string | undefined> => {
+    try {
+        const output = transaction.outputs[outputIndex];
+        if (output == null || output.lockingScript == null)
+            return undefined;
+        if (ctx == null || ctx.key == null)
+            return undefined;
+        const decoded = PushDrop.decode(output.lockingScript);
+        if (decoded.fields.length !== Object.keys(kvProtocol).length)
+            return undefined;
+        const key = Utils.toUTF8(decoded.fields[kvProtocol.key]);
+        const protocolID = Utils.toUTF8(decoded.fields[kvProtocol.protocolID]);
+        if (key !== ctx.key || protocolID !== JSON.stringify(ctx.protocolID))
+            return undefined;
+        try {
+            return Utils.toUTF8(decoded.fields[kvProtocol.value]);
+        }
+        catch {
+            return undefined;
+        }
+    }
+    catch {
+        return undefined;
+    }
+}
+```
+
+See also: [KVContext](#interface-kvcontext), [kvProtocol](#variable-kvprotocol)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
