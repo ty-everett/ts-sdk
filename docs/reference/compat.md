@@ -32,8 +32,6 @@ export default class ECIES {
 }
 ```
 
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
-
 #### Method bitcoreDecrypt
 
 Decrypts a message encrypted using the Bitcore variant of ECIES.
@@ -41,7 +39,6 @@ Decrypts a message encrypted using the Bitcore variant of ECIES.
 ```ts
 public static bitcoreDecrypt(encBuf: number[], toPrivateKey: PrivateKey): number[] 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey)
 
 Returns
 
@@ -61,7 +58,6 @@ Encrypts a given message using the Bitcore variant of ECIES.
 ```ts
 public static bitcoreEncrypt(messageBuf: number[], toPublicKey: PublicKey, fromPrivateKey?: PrivateKey, ivBuf?: number[]): number[] 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
 
 Returns
 
@@ -85,7 +81,6 @@ Decrypts a message encrypted using the Electrum ECIES method.
 ```ts
 public static electrumDecrypt(encBuf: number[], toPrivateKey: PrivateKey, fromPublicKey?: PublicKey): number[] 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
 
 Returns
 
@@ -107,7 +102,6 @@ Encrypts a given message using the Electrum ECIES method.
 ```ts
 public static electrumEncrypt(messageBuf: number[], toPublicKey: PublicKey, fromPrivateKey?: PrivateKey, noKey = false): number[] 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
 
 Returns
 
@@ -136,7 +130,6 @@ public static ivkEkM(privKey: PrivateKey, pubKey: PublicKey): {
     kM: number[];
 } 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
 
 Returns
 
@@ -185,8 +178,6 @@ export default class HD {
 }
 ```
 
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
-
 #### Constructor
 
 Constructor for the BIP32 HD wallet.
@@ -195,7 +186,6 @@ Initializes an HD wallet with optional parameters for version bytes, depth, pare
 ```ts
 constructor(versionBytesNum?: number, depth?: number, parentFingerPrint?: number[], childIndex?: number, chainCode?: number[], privKey?: PrivateKey, pubKey?: PublicKey) 
 ```
-See also: [PrivateKey](./primitives.md#class-privatekey), [PublicKey](./primitives.md#class-publickey)
 
 Argument Details
 
@@ -222,7 +212,7 @@ The path specifies the hierarchy of the child key to be derived.
 ```ts
 public derive(path: string): HD 
 ```
-See also: [HD](./compat.md#class-hd)
+See also: [HD](#class-hd)
 
 Returns
 
@@ -241,7 +231,7 @@ This method generates either a private or public child key depending on the curr
 ```ts
 public deriveChild(i: number): HD 
 ```
-See also: [HD](./compat.md#class-hd)
+See also: [HD](#class-hd)
 
 Returns
 
@@ -260,7 +250,7 @@ Parses a binary buffer to set up the wallet's properties.
 ```ts
 public static fromBinary(buf: number[]): HD 
 ```
-See also: [HD](./compat.md#class-hd)
+See also: [HD](#class-hd)
 
 Returns
 
@@ -310,7 +300,7 @@ This method creates a root HD wallet with randomly generated private and public 
 ```ts
 public static fromRandom(): HD 
 ```
-See also: [HD](./compat.md#class-hd)
+See also: [HD](#class-hd)
 
 Returns
 
@@ -324,7 +314,7 @@ This method generates keys and other properties from a given seed, conforming to
 ```ts
 public static fromSeed(bytes: number[]): HD 
 ```
-See also: [HD](./compat.md#class-hd)
+See also: [HD](#class-hd)
 
 Returns
 
@@ -361,7 +351,7 @@ This method decodes a provided string to set up the HD wallet's properties.
 ```ts
 public static fromString(str: string): HD 
 ```
-See also: [HD](./compat.md#class-hd)
+See also: [HD](#class-hd)
 
 Returns
 
@@ -424,7 +414,7 @@ This method strips away the private key information, leaving only the public par
 ```ts
 public toPublic(): HD 
 ```
-See also: [HD](./compat.md#class-hd)
+See also: [HD](#class-hd)
 
 Returns
 
@@ -477,7 +467,7 @@ export default class Mnemonic {
 }
 ```
 
-See also: [wordList](./compat.md#variable-wordlist)
+See also: [wordList](#variable-wordlist)
 
 #### Constructor
 
@@ -486,7 +476,7 @@ Constructs a Mnemonic object.
 ```ts
 constructor(mnemonic?: string, seed?: number[], wordlist = wordList) 
 ```
-See also: [wordList](./compat.md#variable-wordlist)
+See also: [wordList](#variable-wordlist)
 
 Argument Details
 
@@ -584,7 +574,7 @@ Static method to create a Mnemonic instance from a given entropy.
 ```ts
 public static fromEntropy(buf: number[]): Mnemonic 
 ```
-See also: [Mnemonic](./compat.md#class-mnemonic)
+See also: [Mnemonic](#class-mnemonic)
 
 Returns
 
@@ -623,7 +613,7 @@ Static method to generate a Mnemonic instance with a random mnemonic.
 ```ts
 public static fromRandom(bits?: number): Mnemonic 
 ```
-See also: [Mnemonic](./compat.md#class-mnemonic)
+See also: [Mnemonic](#class-mnemonic)
 
 Returns
 
@@ -658,7 +648,7 @@ Static method to create a Mnemonic instance from a mnemonic string.
 ```ts
 public static fromString(str: string): Mnemonic 
 ```
-See also: [Mnemonic](./compat.md#class-mnemonic)
+See also: [Mnemonic](#class-mnemonic)
 
 Returns
 
@@ -805,7 +795,7 @@ export default function fromUtxo(utxo: jsonUtxo, unlockingScriptTemplate: {
 }): TransactionInput 
 ```
 
-See also: [Transaction](./transaction.md#class-transaction), [TransactionInput](./transaction.md#interface-transactioninput), [UnlockingScript](./script.md#class-unlockingscript), [sign](./compat.md#variable-sign)
+See also: [sign](#variable-sign)
 
 Argument Details
 
@@ -849,8 +839,6 @@ magicHash = (messageBuf: number[]): number[] => {
 }
 ```
 
-See also: [Writer](./primitives.md#class-writer), [hash256](./primitives.md#variable-hash256), [toArray](./primitives.md#variable-toarray)
-
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -869,7 +857,7 @@ sign = (message: number[], privateKey: PrivateKey, mode: "raw" | "base64" = "bas
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [PrivateKey](./primitives.md#class-privatekey), [Signature](./primitives.md#class-signature), [magicHash](./compat.md#variable-magichash)
+See also: [magicHash](#variable-magichash)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -883,7 +871,7 @@ verify = (message: number[], sig: Signature, pubKey: PublicKey): boolean => {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [PublicKey](./primitives.md#class-publickey), [Signature](./primitives.md#class-signature), [magicHash](./compat.md#variable-magichash)
+See also: [magicHash](#variable-magichash)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
