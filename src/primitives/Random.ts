@@ -62,6 +62,7 @@ class Rand {
       const crypto = req('crypto')
       if (typeof crypto?.randomBytes === 'function') {
         this._rand = (n: number) => Array.from(crypto.randomBytes(n))
+        return
       }
     } catch {
       // Require not supported or failed, try dynamic import for ESM
