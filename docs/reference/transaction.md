@@ -34,7 +34,7 @@ export interface ArcConfig {
 }
 ```
 
-See also: [HttpClient](#interface-httpclient)
+See also: [HttpClient](./transaction.md#interface-httpclient)
 
 #### Property apiKey
 
@@ -83,7 +83,7 @@ The HTTP client used to make requests to the ARC API.
 ```ts
 httpClient?: HttpClient
 ```
-See also: [HttpClient](#interface-httpclient)
+See also: [HttpClient](./transaction.md#interface-httpclient)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -133,7 +133,7 @@ export interface Broadcaster {
 }
 ```
 
-See also: [BroadcastFailure](#interface-broadcastfailure), [BroadcastResponse](#interface-broadcastresponse), [Transaction](#class-transaction)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [Transaction](./transaction.md#class-transaction)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -181,7 +181,7 @@ export default interface FeeModel {
 }
 ```
 
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -236,7 +236,7 @@ export interface HttpClient {
 }
 ```
 
-See also: [HttpClientRequestOptions](#interface-httpclientrequestoptions), [HttpClientResponse](#type-httpclientresponse)
+See also: [HttpClientRequestOptions](./transaction.md#interface-httpclientrequestoptions), [HttpClientResponse](./transaction.md#type-httpclientresponse)
 
 #### Property request
 
@@ -245,7 +245,7 @@ Makes a request to the server.
 ```ts
 request: <T = any, D = any>(url: string, options: HttpClientRequestOptions<D>) => Promise<HttpClientResponse<T>>
 ```
-See also: [HttpClientRequestOptions](#interface-httpclientrequestoptions), [HttpClientResponse](#type-httpclientresponse)
+See also: [HttpClientRequestOptions](./transaction.md#interface-httpclientrequestoptions), [HttpClientResponse](./transaction.md#type-httpclientresponse)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -308,7 +308,7 @@ export interface HttpsNodejs {
 }
 ```
 
-See also: [HttpClientRequestOptions](#interface-httpclientrequestoptions), [NodejsHttpClientRequest](#interface-nodejshttpclientrequest)
+See also: [HttpClientRequestOptions](./transaction.md#interface-httpclientrequestoptions), [NodejsHttpClientRequest](./transaction.md#interface-nodejshttpclientrequest)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -379,7 +379,7 @@ export default interface TransactionInput {
 }
 ```
 
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction), [UnlockingScript](./script.md#class-unlockingscript), [sign](./compat.md#variable-sign)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -409,6 +409,8 @@ export default interface TransactionOutput {
 }
 ```
 
+See also: [LockingScript](./script.md#class-lockingscript)
+
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -423,7 +425,7 @@ export interface WhatsOnChainConfig {
 }
 ```
 
-See also: [HttpClient](#interface-httpclient)
+See also: [HttpClient](./transaction.md#interface-httpclient)
 
 #### Property apiKey
 
@@ -440,7 +442,7 @@ The HTTP client used to make requests to the API.
 ```ts
 httpClient?: HttpClient
 ```
-See also: [HttpClient](#interface-httpclient)
+See also: [HttpClient](./transaction.md#interface-httpclient)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -485,7 +487,7 @@ export default class ARC implements Broadcaster {
 }
 ```
 
-See also: [ArcConfig](#interface-arcconfig), [BroadcastFailure](#interface-broadcastfailure), [BroadcastResponse](#interface-broadcastresponse), [Broadcaster](#interface-broadcaster), [Transaction](#class-transaction)
+See also: [ArcConfig](./transaction.md#interface-arcconfig), [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [Broadcaster](./transaction.md#interface-broadcaster), [Transaction](./transaction.md#class-transaction)
 
 #### Constructor
 
@@ -494,7 +496,7 @@ Constructs an instance of the ARC broadcaster.
 ```ts
 constructor(URL: string, config?: ArcConfig)
 ```
-See also: [ArcConfig](#interface-arcconfig)
+See also: [ArcConfig](./transaction.md#interface-arcconfig)
 
 Argument Details
 
@@ -525,7 +527,7 @@ Broadcasts a transaction via ARC.
 ```ts
 async broadcast(tx: Transaction): Promise<BroadcastResponse | BroadcastFailure> 
 ```
-See also: [BroadcastFailure](#interface-broadcastfailure), [BroadcastResponse](#interface-broadcastresponse), [Transaction](#class-transaction)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -544,7 +546,7 @@ Handles mixed responses where some transactions succeed and others fail.
 ```ts
 async broadcastMany(txs: Transaction[]): Promise<object[]> 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -607,7 +609,7 @@ export class Beef {
 }
 ```
 
-See also: [BEEF_V2](#variable-beef_v2), [BeefTx](#class-beeftx), [ChainTracker](#interface-chaintracker), [MerklePath](#class-merklepath), [Transaction](#class-transaction)
+See also: [BEEF_V2](./transaction.md#variable-beef_v2), [BeefTx](./transaction.md#class-beeftx), [ChainTracker](./transaction.md#interface-chaintracker), [MerklePath](./transaction.md#class-merklepath), [Reader](./primitives.md#class-reader), [Transaction](./transaction.md#class-transaction), [Writer](./primitives.md#class-writer), [toHex](./primitives.md#variable-tohex), [verify](./compat.md#variable-verify)
 
 #### Method addComputedLeaves
 
@@ -623,7 +625,7 @@ addComputedLeaves(): void
 ```ts
 clone(): Beef 
 ```
-See also: [Beef](#class-beef)
+See also: [Beef](./transaction.md#class-beef)
 
 Returns
 
@@ -638,7 +640,7 @@ To succeed, the Beef must contain all the required transaction and merkle path d
 ```ts
 findAtomicTransaction(txid: string): Transaction | undefined 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -654,7 +656,7 @@ Argument Details
 ```ts
 findBump(txid: string): MerklePath | undefined 
 ```
-See also: [MerklePath](#class-merklepath)
+See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
 
@@ -670,7 +672,7 @@ The result is suitable for signing.
 ```ts
 findTransactionForSigning(txid: string): Transaction | undefined 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -686,7 +688,7 @@ Argument Details
 ```ts
 findTxid(txid: string): BeefTx | undefined 
 ```
-See also: [BeefTx](#class-beeftx)
+See also: [BeefTx](./transaction.md#class-beeftx)
 
 Returns
 
@@ -704,7 +706,7 @@ Constructs an instance of the Beef class based on the provided binary array
 ```ts
 static fromBinary(bin: number[]): Beef 
 ```
-See also: [Beef](#class-beef)
+See also: [Beef](./transaction.md#class-beef)
 
 Returns
 
@@ -722,7 +724,7 @@ Constructs an instance of the Beef class based on the provided string
 ```ts
 static fromString(s: string, enc: "hex" | "utf8" | "base64" = "hex"): Beef 
 ```
-See also: [Beef](#class-beef)
+See also: [Beef](./transaction.md#class-beef)
 
 Returns
 
@@ -777,7 +779,7 @@ original.
 ```ts
 makeTxidOnly(txid: string): BeefTx | undefined 
 ```
-See also: [BeefTx](#class-beeftx)
+See also: [BeefTx](./transaction.md#class-beeftx)
 
 Returns
 
@@ -790,7 +792,7 @@ Merge a MerklePath that is assumed to be fully valid.
 ```ts
 mergeBump(bump: MerklePath): number 
 ```
-See also: [MerklePath](#class-merklepath)
+See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
 
@@ -807,7 +809,7 @@ Replaces existing transaction with same txid.
 ```ts
 mergeRawTx(rawTx: number[], bumpIndex?: number): BeefTx 
 ```
-See also: [BeefTx](#class-beeftx)
+See also: [BeefTx](./transaction.md#class-beeftx)
 
 Returns
 
@@ -829,7 +831,7 @@ Attempts to match an existing bump to the new transaction.
 ```ts
 mergeTransaction(tx: Transaction): BeefTx 
 ```
-See also: [BeefTx](#class-beeftx), [Transaction](#class-transaction)
+See also: [BeefTx](./transaction.md#class-beeftx), [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -928,6 +930,7 @@ Serializes this data to `writer`
 ```ts
 toWriter(writer: Writer): void 
 ```
+See also: [Writer](./primitives.md#class-writer)
 
 #### Method trimKnownTxids
 
@@ -952,7 +955,7 @@ Validity requirements:
 ```ts
 async verify(chainTracker: ChainTracker, allowTxidOnly?: boolean): Promise<boolean> 
 ```
-See also: [ChainTracker](#interface-chaintracker)
+See also: [ChainTracker](./transaction.md#interface-chaintracker)
 
 Argument Details
 
@@ -1028,7 +1031,7 @@ export class BeefParty extends Beef {
 }
 ```
 
-See also: [Beef](#class-beef)
+See also: [Beef](./transaction.md#class-beef)
 
 #### Constructor
 
@@ -1086,7 +1089,7 @@ Array of txids "known" to `party`.
 ```ts
 getTrimmedBeefForParty(party: string): Beef 
 ```
-See also: [Beef](#class-beef)
+See also: [Beef](./transaction.md#class-beef)
 
 Returns
 
@@ -1113,7 +1116,7 @@ has raw transaction and validity proof data.
 ```ts
 mergeBeefFromParty(party: string, beef: number[] | Beef): void 
 ```
-See also: [Beef](#class-beef)
+See also: [Beef](./transaction.md#class-beef)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -1152,14 +1155,14 @@ export default class BeefTx {
 }
 ```
 
-See also: [Transaction](#class-transaction)
+See also: [Reader](./primitives.md#class-reader), [Transaction](./transaction.md#class-transaction), [Writer](./primitives.md#class-writer)
 
 #### Constructor
 
 ```ts
 constructor(tx: Transaction | number[] | string, bumpIndex?: number) 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Argument Details
 
@@ -1192,7 +1195,7 @@ export class FetchHttpClient implements HttpClient {
 }
 ```
 
-See also: [Fetch](#type-fetch), [HttpClient](#interface-httpclient), [HttpClientRequestOptions](#interface-httpclientrequestoptions), [HttpClientResponse](#type-httpclientresponse)
+See also: [Fetch](./transaction.md#type-fetch), [HttpClient](./transaction.md#interface-httpclient), [HttpClientRequestOptions](./transaction.md#interface-httpclientrequestoptions), [HttpClientResponse](./transaction.md#type-httpclientresponse)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -1210,7 +1213,7 @@ export default class LivePolicy extends SatoshisPerKilobyte {
 }
 ```
 
-See also: [SatoshisPerKilobyte](#class-satoshisperkilobyte), [Transaction](#class-transaction)
+See also: [SatoshisPerKilobyte](./transaction.md#class-satoshisperkilobyte), [Transaction](./transaction.md#class-transaction)
 
 #### Constructor
 
@@ -1233,7 +1236,7 @@ Overrides the parent method to use dynamic rate fetching.
 ```ts
 async computeFee(tx: Transaction): Promise<number> 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1251,7 +1254,7 @@ Gets the singleton instance of LivePolicy to ensure cache sharing across the app
 ```ts
 static getInstance(cacheValidityMs: number = 5 * 60 * 1000): LivePolicy 
 ```
-See also: [LivePolicy](#class-livepolicy)
+See also: [LivePolicy](./transaction.md#class-livepolicy)
 
 Returns
 
@@ -1308,7 +1311,7 @@ export default class MerklePath {
 }
 ```
 
-See also: [ChainTracker](#interface-chaintracker), [MerklePathLeaf](#interface-merklepathleaf)
+See also: [ChainTracker](./transaction.md#interface-chaintracker), [MerklePathLeaf](./transaction.md#interface-merklepathleaf), [Reader](./primitives.md#class-reader), [toHex](./primitives.md#variable-tohex), [verify](./compat.md#variable-verify)
 
 #### Method combine
 
@@ -1317,7 +1320,7 @@ Combines this MerklePath with another to create a compound proof.
 ```ts
 combine(other: MerklePath): void 
 ```
-See also: [MerklePath](#class-merklepath)
+See also: [MerklePath](./transaction.md#class-merklepath)
 
 Argument Details
 
@@ -1358,7 +1361,7 @@ Does not add computed leaves to path.
 ```ts
 findOrComputeLeaf(height: number, offset: number): MerklePathLeaf | undefined 
 ```
-See also: [MerklePathLeaf](#interface-merklepathleaf)
+See also: [MerklePathLeaf](./transaction.md#interface-merklepathleaf)
 
 #### Method fromBinary
 
@@ -1367,7 +1370,7 @@ Creates a MerklePath instance from a binary array.
 ```ts
 static fromBinary(bump: number[]): MerklePath 
 ```
-See also: [MerklePath](#class-merklepath)
+See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
 
@@ -1383,7 +1386,7 @@ Argument Details
 ```ts
 static fromCoinbaseTxidAndHeight(txid: string, height: number): MerklePath 
 ```
-See also: [MerklePath](#class-merklepath)
+See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
 
@@ -1403,7 +1406,7 @@ Creates a MerklePath instance from a hexadecimal string.
 ```ts
 static fromHex(hex: string): MerklePath 
 ```
-See also: [MerklePath](#class-merklepath)
+See also: [MerklePath](./transaction.md#class-merklepath)
 
 Returns
 
@@ -1455,7 +1458,7 @@ Verifies if the given transaction ID is part of the Merkle tree at the specified
 ```ts
 async verify(txid: string, chainTracker: ChainTracker): Promise<boolean> 
 ```
-See also: [ChainTracker](#interface-chaintracker)
+See also: [ChainTracker](./transaction.md#interface-chaintracker)
 
 Returns
 
@@ -1482,7 +1485,7 @@ export class NodejsHttpClient implements HttpClient {
 }
 ```
 
-See also: [HttpClient](#interface-httpclient), [HttpClientRequestOptions](#interface-httpclientrequestoptions), [HttpClientResponse](#type-httpclientresponse), [HttpsNodejs](#interface-httpsnodejs)
+See also: [HttpClient](./transaction.md#interface-httpclient), [HttpClientRequestOptions](./transaction.md#interface-httpclientrequestoptions), [HttpClientResponse](./transaction.md#type-httpclientresponse), [HttpsNodejs](./transaction.md#interface-httpsnodejs)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -1499,7 +1502,7 @@ export default class SatoshisPerKilobyte implements FeeModel {
 }
 ```
 
-See also: [FeeModel](#interface-feemodel), [Transaction](#class-transaction)
+See also: [FeeModel](./transaction.md#interface-feemodel), [Transaction](./transaction.md#class-transaction)
 
 #### Constructor
 
@@ -1521,7 +1524,7 @@ Computes the fee for a given transaction.
 ```ts
 async computeFee(tx: Transaction): Promise<number> 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1606,7 +1609,7 @@ export default class Transaction {
 }
 ```
 
-See also: [BroadcastFailure](#interface-broadcastfailure), [BroadcastResponse](#interface-broadcastresponse), [Broadcaster](#interface-broadcaster), [ChainTracker](#interface-chaintracker), [FeeModel](#interface-feemodel), [LivePolicy](#class-livepolicy), [MerklePath](#class-merklepath), [TransactionInput](#interface-transactioninput), [TransactionOutput](#interface-transactionoutput), [defaultBroadcaster](#function-defaultbroadcaster), [defaultChainTracker](#function-defaultchaintracker)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [Broadcaster](./transaction.md#interface-broadcaster), [ChainTracker](./transaction.md#interface-chaintracker), [FeeModel](./transaction.md#interface-feemodel), [LivePolicy](./transaction.md#class-livepolicy), [MerklePath](./transaction.md#class-merklepath), [Reader](./primitives.md#class-reader), [TransactionInput](./transaction.md#interface-transactioninput), [TransactionOutput](./transaction.md#interface-transactionoutput), [defaultBroadcaster](./transaction.md#function-defaultbroadcaster), [defaultChainTracker](./transaction.md#function-defaultchaintracker), [sign](./compat.md#variable-sign), [toHex](./primitives.md#variable-tohex), [verify](./compat.md#variable-verify)
 
 #### Method addInput
 
@@ -1615,7 +1618,7 @@ Adds a new input to the transaction.
 ```ts
 addInput(input: TransactionInput): void 
 ```
-See also: [TransactionInput](#interface-transactioninput)
+See also: [TransactionInput](./transaction.md#interface-transactioninput)
 
 Argument Details
 
@@ -1633,7 +1636,7 @@ Adds a new output to the transaction.
 ```ts
 addOutput(output: TransactionOutput): void 
 ```
-See also: [TransactionOutput](#interface-transactionoutput)
+See also: [TransactionOutput](./transaction.md#interface-transactionoutput)
 
 Argument Details
 
@@ -1662,7 +1665,7 @@ Broadcasts a transaction.
 ```ts
 async broadcast(broadcaster: Broadcaster = defaultBroadcaster()): Promise<BroadcastResponse | BroadcastFailure> 
 ```
-See also: [BroadcastFailure](#interface-broadcastfailure), [BroadcastResponse](#interface-broadcastresponse), [Broadcaster](#interface-broadcaster), [defaultBroadcaster](#function-defaultbroadcaster)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [Broadcaster](./transaction.md#interface-broadcaster), [defaultBroadcaster](./transaction.md#function-defaultbroadcaster)
 
 Returns
 
@@ -1682,7 +1685,7 @@ If fee is a number, the transaction uses that value as fee.
 ```ts
 async fee(modelOrFee: FeeModel | number = LivePolicy.getInstance(), changeDistribution: "equal" | "random" = "equal"): Promise<void> 
 ```
-See also: [FeeModel](#interface-feemodel), [LivePolicy](#class-livepolicy)
+See also: [FeeModel](./transaction.md#interface-feemodel), [LivePolicy](./transaction.md#class-livepolicy)
 
 Argument Details
 
@@ -1700,7 +1703,7 @@ Extracts the subject transaction and supporting merkle path and source transacti
 ```ts
 static fromAtomicBEEF(beef: number[]): Transaction 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1721,7 +1724,7 @@ If no TXID is provided, the last transaction in the BEEF data is returned, or th
 ```ts
 static fromBEEF(beef: number[], txid?: string): Transaction 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1741,7 +1744,7 @@ Creates a Transaction instance from a binary array.
 ```ts
 static fromBinary(bin: number[]): Transaction 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1759,7 +1762,7 @@ Creates a new transaction, linked to its inputs and their associated merkle path
 ```ts
 static fromEF(ef: number[]): Transaction 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1777,7 +1780,7 @@ Creates a Transaction instance from a hexadecimal string.
 ```ts
 static fromHex(hex: string): Transaction 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1798,7 +1801,7 @@ If no TXID is provided, the last transaction in the BEEF data is returned.
 ```ts
 static fromHexBEEF(hex: string, txid?: string): Transaction 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -1818,7 +1821,7 @@ Creates a Transaction instance from a hexadecimal string encoded EF.
 ```ts
 static fromHexEF(hex: string): Transaction 
 ```
-See also: [Transaction](#class-transaction)
+See also: [Transaction](./transaction.md#class-transaction)
 
 Returns
 
@@ -2085,7 +2088,7 @@ Verifies the legitimacy of the Bitcoin transaction according to the rules of SPV
 ```ts
 async verify(chainTracker: ChainTracker | "scripts only" = defaultChainTracker(), feeModel?: FeeModel, memoryLimit?: number): Promise<boolean> 
 ```
-See also: [ChainTracker](#interface-chaintracker), [FeeModel](#interface-feemodel), [defaultChainTracker](#function-defaultchaintracker)
+See also: [ChainTracker](./transaction.md#interface-chaintracker), [FeeModel](./transaction.md#interface-feemodel), [defaultChainTracker](./transaction.md#function-defaultchaintracker)
 
 Returns
 
@@ -2126,7 +2129,7 @@ export default class WhatsOnChain implements ChainTracker {
 }
 ```
 
-See also: [ChainTracker](#interface-chaintracker), [HttpClient](#interface-httpclient), [WhatsOnChainConfig](#interface-whatsonchainconfig)
+See also: [ChainTracker](./transaction.md#interface-chaintracker), [HttpClient](./transaction.md#interface-httpclient), [WhatsOnChainConfig](./transaction.md#interface-whatsonchainconfig)
 
 #### Constructor
 
@@ -2135,7 +2138,7 @@ Constructs an instance of the WhatsOnChain ChainTracker.
 ```ts
 constructor(network: "main" | "test" | "stn" = "main", config: WhatsOnChainConfig = {}) 
 ```
-See also: [WhatsOnChainConfig](#interface-whatsonchainconfig)
+See also: [WhatsOnChainConfig](./transaction.md#interface-whatsonchainconfig)
 
 Argument Details
 
@@ -2167,7 +2170,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export function defaultBroadcaster(isTestnet: boolean = false, config: ArcConfig = {}): Broadcaster 
 ```
 
-See also: [ArcConfig](#interface-arcconfig), [Broadcaster](#interface-broadcaster)
+See also: [ArcConfig](./transaction.md#interface-arcconfig), [Broadcaster](./transaction.md#interface-broadcaster)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -2178,7 +2181,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export function defaultChainTracker(): ChainTracker 
 ```
 
-See also: [ChainTracker](#interface-chaintracker)
+See also: [ChainTracker](./transaction.md#interface-chaintracker)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -2193,7 +2196,7 @@ If running in a Node environment, it falls back to using the Node `https` module
 export function defaultHttpClient(): HttpClient 
 ```
 
-See also: [HttpClient](#interface-httpclient)
+See also: [HttpClient](./transaction.md#interface-httpclient)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -2206,7 +2209,7 @@ Convenience type guard for response from `Broadcaster.broadcast`
 export function isBroadcastFailure(r: BroadcastResponse | BroadcastFailure): r is BroadcastFailure 
 ```
 
-See also: [BroadcastFailure](#interface-broadcastfailure), [BroadcastResponse](#interface-broadcastresponse)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -2219,7 +2222,7 @@ Convenience type guard for response from `Broadcaster.broadcast`
 export function isBroadcastResponse(r: BroadcastResponse | BroadcastFailure): r is BroadcastResponse 
 ```
 
-See also: [BroadcastFailure](#interface-broadcastfailure), [BroadcastResponse](#interface-broadcastresponse)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -2245,7 +2248,7 @@ Makes a request to the server.
 export type Fetch = (url: string, options: FetchOptions) => Promise<Response>
 ```
 
-See also: [FetchOptions](#interface-fetchoptions)
+See also: [FetchOptions](./transaction.md#interface-fetchoptions)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
