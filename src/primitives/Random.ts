@@ -9,6 +9,12 @@
 class Rand {
   _rand: (n: number) => number[] // ✅ Explicit function type
 
+  getRandomValues (obj: any, n: number) {
+    const arr = new Uint8Array(n)
+    obj.crypto.getRandomValues(arr)
+    return Array.from(arr)
+  }
+
   constructor () {
     const noRand = (): never => {
       throw new Error(
@@ -21,10 +27,8 @@ class Rand {
     // Try globalThis.crypto (works in Node.js 18+, modern browsers, and Deno)
     if (typeof globalThis !== 'undefined' && typeof (globalThis as any).crypto?.getRandomValues === 'function') {
       this._rand = (n) => {
-        const arr = new Uint8Array(n)
         /* eslint-disable-next-line */
-        ;(globalThis as any).crypto.getRandomValues(arr)
-        return Array.from(arr)
+        return this.getRandomValues(globalThis as any, n)
       }
       return
     }
@@ -32,10 +36,8 @@ class Rand {
     // Try self.crypto (Web Workers and Service Workers)
     if (typeof self !== 'undefined' && typeof self.crypto?.getRandomValues === 'function') {
       this._rand = (n) => {
-        const arr = new Uint8Array(n)
         /* eslint-disable-next-line */
-        self.crypto.getRandomValues(arr)
-        return Array.from(arr)
+        return this.getRandomValues(self as any, n)
       }
       return
     }
@@ -43,10 +45,8 @@ class Rand {
     // Try window.crypto (browsers)
     if (typeof window !== 'undefined' && typeof (window as any).crypto?.getRandomValues === 'function') {
       this._rand = (n) => {
-        const arr = new Uint8Array(n)
         /* eslint-disable-next-line */
-        ;(window as any).crypto.getRandomValues(arr)
-        return Array.from(arr)
+        return this.getRandomValues(window as any, n)
       }
       return
     }
