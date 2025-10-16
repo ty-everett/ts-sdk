@@ -1,12 +1,10 @@
 /**
  * Random number generator that works across all JavaScript environments.
  *
- * This implementation tries multiple approaches to find a secure random source:
- * 1. Web Crypto API via globalThis.crypto (Node.js 15+, modern browsers)
- * 2. Web Crypto API via self.crypto (Web Workers, Service Workers)
- * 3. Web Crypto API via window.crypto (browsers)
- * 4. Node.js crypto module via require() (Node.js CJS)
- * 5. Node.js crypto module via dynamic import() (Node.js ESM)
+ * This implementation uses the Web Crypto API which is available in:
+ * - Node.js 18+ via globalThis.crypto
+ * - Modern browsers via globalThis.crypto, self.crypto, or window.crypto
+ * - Web Workers and Service Workers via self.crypto
  */
 class Rand {
   _rand: (n: number) => number[] // ✅ Explicit function type
@@ -20,8 +18,7 @@ class Rand {
 
     this._rand = noRand // Assign the function
 
-    // Try Web Crypto API (available in browsers and Node.js 15+)
-    // Check globalThis first (most universal, works everywhere)
+    // Try globalThis.crypto (works in Node.js 18+, modern browsers, and Deno)
     if (typeof globalThis !== 'undefined' && typeof (globalThis as any).crypto?.getRandomValues === 'function') {
       this._rand = (n) => {
         const arr = new Uint8Array(n)
@@ -54,49 +51,8 @@ class Rand {
       return
     }
 
-    // For Node.js environments without Web Crypto API, try to load crypto module
-    // Try require first (works in CJS and is synchronous)
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-      const req = new Function('moduleName', 'return require(moduleName)')
-      const crypto = req('crypto')
-      if (typeof crypto?.randomBytes === 'function') {
-        this._rand = (n: number) => Array.from(crypto.randomBytes(n))
-      }
-    } catch {
-      // Require not supported or failed, try dynamic import for ESM
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-        const importCrypto = new Function('return import("crypto")')
-        const cryptoPromise = importCrypto() as Promise<any>
-
-        // Set up lazy initialization for ESM environments
-        let cryptoModule: any = null
-        let isReady = false
-
-        cryptoPromise.then((crypto) => {
-          if (typeof crypto?.randomBytes === 'function') {
-            cryptoModule = crypto
-          }
-          isReady = true
-        }).catch(() => {
-          isReady = true
-        })
-
-        this._rand = (n: number) => {
-          if (!isReady) {
-            throw new Error('Crypto module is still initializing. Please try again.')
-          }
-          if (typeof cryptoModule?.randomBytes === 'function') {
-            return Array.from(cryptoModule.randomBytes(n))
-          }
-          throw new Error('No secure random number generator is available in this environment.')
-        }
-      } catch {
-        // Neither require nor import worked
-        this._rand = noRand
-      }
-    }
+    // No crypto available
+    this._rand = noRand
   }
 
   generate (len: number): number[] {
