@@ -1,3 +1,13 @@
+/**
+ * Random number generator that works across all JavaScript environments.
+ *
+ * This implementation tries multiple approaches to find a secure random source:
+ * 1. Web Crypto API via globalThis.crypto (Node.js 15+, modern browsers)
+ * 2. Web Crypto API via self.crypto (Web Workers, Service Workers)
+ * 3. Web Crypto API via window.crypto (browsers)
+ * 4. Node.js crypto module via require() (Node.js CJS)
+ * 5. Node.js crypto module via dynamic import() (Node.js ESM)
+ */
 class Rand {
   _rand: (n: number) => number[] // ✅ Explicit function type
 
@@ -12,7 +22,7 @@ class Rand {
 
     // Try Web Crypto API (available in browsers and Node.js 15+)
     // Check globalThis first (most universal, works everywhere)
-    if (typeof globalThis !== 'undefined' && (globalThis as any).crypto?.getRandomValues) {
+    if (typeof globalThis !== 'undefined' && typeof (globalThis as any).crypto?.getRandomValues === 'function') {
       this._rand = (n) => {
         const arr = new Uint8Array(n)
         /* eslint-disable-next-line */
@@ -23,7 +33,7 @@ class Rand {
     }
 
     // Try self.crypto (Web Workers and Service Workers)
-    if (typeof self !== 'undefined' && self.crypto?.getRandomValues) {
+    if (typeof self !== 'undefined' && typeof self.crypto?.getRandomValues === 'function') {
       this._rand = (n) => {
         const arr = new Uint8Array(n)
         /* eslint-disable-next-line */
@@ -34,7 +44,7 @@ class Rand {
     }
 
     // Try window.crypto (browsers)
-    if (typeof window !== 'undefined' && (window as any).crypto?.getRandomValues) {
+    if (typeof window !== 'undefined' && typeof (window as any).crypto?.getRandomValues === 'function') {
       this._rand = (n) => {
         const arr = new Uint8Array(n)
         /* eslint-disable-next-line */
@@ -47,38 +57,37 @@ class Rand {
     // For Node.js environments without Web Crypto API, try to load crypto module
     // Try require first (works in CJS and is synchronous)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
       const req = new Function('moduleName', 'return require(moduleName)')
       const crypto = req('crypto')
-      if (crypto?.randomBytes && typeof crypto.randomBytes === 'function') {
+      if (typeof crypto?.randomBytes === 'function') {
         this._rand = (n: number) => Array.from(crypto.randomBytes(n))
-        return
       }
     } catch {
       // Require not supported or failed, try dynamic import for ESM
       try {
-        // eslint-disable-next-line @typescript-eslint/no-implied-eval
+        // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
         const importCrypto = new Function('return import("crypto")')
         const cryptoPromise = importCrypto() as Promise<any>
-        
+
         // Set up lazy initialization for ESM environments
         let cryptoModule: any = null
         let isReady = false
-        
+
         cryptoPromise.then((crypto) => {
-          if (crypto?.randomBytes && typeof crypto.randomBytes === 'function') {
+          if (typeof crypto?.randomBytes === 'function') {
             cryptoModule = crypto
           }
           isReady = true
         }).catch(() => {
           isReady = true
         })
-        
+
         this._rand = (n: number) => {
           if (!isReady) {
             throw new Error('Crypto module is still initializing. Please try again.')
           }
-          if (cryptoModule?.randomBytes) {
+          if (typeof cryptoModule?.randomBytes === 'function') {
             return Array.from(cryptoModule.randomBytes(n))
           }
           throw new Error('No secure random number generator is available in this environment.')
