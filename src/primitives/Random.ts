@@ -2,6 +2,7 @@
  * Random number generator that works across modern JavaScript environments.
  *
  * This implementation uses the Web Crypto API which is available in:
+ * - Node.js 6+ via require('crypto').randomBytes()
  * - Node.js 18+ via globalThis.crypto
  * - Modern browsers via globalThis.crypto, self.crypto, or window.crypto
  * - Web Workers and Service Workers via self.crypto
@@ -13,7 +14,7 @@
 class Rand {
   _rand: (n: number) => number[] // ✅ Explicit function type
 
-  getRandomValues (obj: any, n: number) {
+  getRandomValues (obj: any, n: number): number[] {
     const arr = new Uint8Array(n)
     obj.crypto.getRandomValues(arr)
     return Array.from(arr)
@@ -35,6 +36,22 @@ class Rand {
         return this.getRandomValues(globalThis as any, n)
       }
       return
+    }
+
+    // Node.js fallback for versions < 18
+    if (typeof process !== 'undefined' && process.release?.name === 'node') {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const crypto = require('crypto')
+        if (typeof crypto.randomBytes === 'function') {
+          this._rand = (n) => {
+            return Array.from(crypto.randomBytes(n))
+          }
+          return
+        }
+      } catch (e) {
+        // crypto module not available, continue to other checks
+      }
     }
 
     // Try self.crypto (Web Workers and Service Workers)
@@ -61,7 +78,7 @@ class Rand {
         // Try to require the polyfill - this will populate globalThis.crypto
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         require('react-native-get-random-values')
-        
+
         if (typeof (globalThis as any).crypto?.getRandomValues === 'function') {
           this._rand = (n) => {
             /* eslint-disable-next-line */
