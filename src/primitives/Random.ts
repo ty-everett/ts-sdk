@@ -1,5 +1,24 @@
+/**
+ * Random number generator that works across modern JavaScript environments.
+ *
+ * This implementation uses the Web Crypto API which is available in:
+ * - Node.js 6+ via require('crypto').randomBytes()
+ * - Node.js 18+ via globalThis.crypto
+ * - Modern browsers via globalThis.crypto, self.crypto, or window.crypto
+ * - Web Workers and Service Workers via self.crypto
+ * - Deno and Bun via globalThis.crypto
+ * - React Native (requires react-native-get-random-values polyfill)
+ *
+ * @throws {Error} If no secure random number generator is available
+ */
 class Rand {
   _rand: (n: number) => number[] // ✅ Explicit function type
+
+  getRandomValues (obj: any, n: number): number[] {
+    const arr = new Uint8Array(n)
+    obj.crypto.getRandomValues(arr)
+    return Array.from(arr)
+  }
 
   constructor () {
     const noRand = (): never => {
@@ -10,29 +29,79 @@ class Rand {
 
     this._rand = noRand // Assign the function
 
-    if (typeof self === 'object') {
-      /* eslint-disable-next-line */
-      if (self.crypto?.getRandomValues) {
-        this._rand = (n) => {
-          const arr = new Uint8Array(n)
-          /* eslint-disable-next-line */
-          self.crypto.getRandomValues(arr);
-          return [...arr]
-        }
-      } /* if (typeof window === 'object') */ else {
-        this._rand = noRand
-      }
-    } else {
-      try {
+    // Try globalThis.crypto (works in Node.js 18+, modern browsers, and Deno)
+    if (typeof globalThis !== 'undefined' && typeof (globalThis as any).crypto?.getRandomValues === 'function') {
+      this._rand = (n) => {
         /* eslint-disable-next-line */
-        const crypto = require("crypto");
+        return this.getRandomValues(globalThis as any, n)
+      }
+      return
+    }
+
+    // Node.js fallback for versions < 18
+    if (typeof process !== 'undefined' && process.release?.name === 'node') {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const crypto = require('crypto')
         if (typeof crypto.randomBytes === 'function') {
-          this._rand = (n: number) => [...crypto.randomBytes(n)]
+          this._rand = (n) => {
+            return Array.from(crypto.randomBytes(n))
+          }
+          return
         }
-      } catch {
-        this._rand = noRand
+      } catch (e) {
+        // crypto module not available, continue to other checks
       }
     }
+
+    // Try self.crypto (Web Workers and Service Workers)
+    if (typeof self !== 'undefined' && typeof self.crypto?.getRandomValues === 'function') {
+      this._rand = (n) => {
+        /* eslint-disable-next-line */
+        return this.getRandomValues(self as any, n)
+      }
+      return
+    }
+
+    // Try window.crypto (browsers)
+    if (typeof window !== 'undefined' && typeof (window as any).crypto?.getRandomValues === 'function') {
+      this._rand = (n) => {
+        /* eslint-disable-next-line */
+        return this.getRandomValues(window as any, n)
+      }
+      return
+    }
+
+    // React Native support - try to load polyfill
+    if (typeof navigator !== 'undefined' && (navigator as any).product === 'ReactNative') {
+      try {
+        // Try to require the polyfill - this will populate globalThis.crypto
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        require('react-native-get-random-values')
+
+        if (typeof (globalThis as any).crypto?.getRandomValues === 'function') {
+          this._rand = (n) => {
+            /* eslint-disable-next-line */
+            return this.getRandomValues(globalThis as any, n)
+          }
+          return
+        }
+      } catch (e) {
+        // Polyfill not available - provide helpful error
+        this._rand = (): never => {
+          throw new Error(
+            'React Native detected but crypto is not available. ' +
+            'Please install and import "react-native-get-random-values" at the top of your entry file:\n' +
+            'npm install react-native-get-random-values\n' +
+            'Then add: import "react-native-get-random-values" to your index.js/App.js'
+          )
+        }
+        return
+      }
+    }
+
+    // No crypto available
+    this._rand = noRand
   }
 
   generate (len: number): number[] {

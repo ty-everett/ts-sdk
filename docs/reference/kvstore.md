@@ -29,6 +29,8 @@ export interface KVContext {
 }
 ```
 
+See also: [WalletProtocol](./wallet.md#type-walletprotocol)
+
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -53,6 +55,8 @@ export interface KVStoreConfig {
     tokenRemovalDescription?: string;
 }
 ```
+
+See also: [WalletInterface](./wallet.md#interface-walletinterface), [WalletProtocol](./wallet.md#type-walletprotocol)
 
 #### Property acceptDelayedBroadcast
 
@@ -93,6 +97,7 @@ Protocol ID for the KVStore protocol
 ```ts
 protocolID?: WalletProtocol
 ```
+See also: [WalletProtocol](./wallet.md#type-walletprotocol)
 
 #### Property serviceName
 
@@ -149,6 +154,7 @@ Wallet interface for operations
 ```ts
 wallet?: WalletInterface
 ```
+See also: [WalletInterface](./wallet.md#interface-walletinterface)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -168,7 +174,7 @@ export interface KVStoreEntry {
 }
 ```
 
-See also: [KVStoreToken](#interface-kvstoretoken)
+See also: [KVStoreToken](./kvstore.md#interface-kvstoretoken), [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletProtocol](./wallet.md#type-walletprotocol)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -246,6 +252,8 @@ export interface KVStoreQuery {
 }
 ```
 
+See also: [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletProtocol](./wallet.md#type-walletprotocol)
+
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -257,6 +265,8 @@ export interface KVStoreRemoveOptions {
     tokenRemovalDescription?: string;
 }
 ```
+
+See also: [WalletProtocol](./wallet.md#type-walletprotocol)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -271,6 +281,8 @@ export interface KVStoreSetOptions {
     tokenAmount?: number;
 }
 ```
+
+See also: [WalletProtocol](./wallet.md#type-walletprotocol)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -288,6 +300,8 @@ export interface KVStoreToken {
     beef: Beef;
 }
 ```
+
+See also: [Beef](./transaction.md#class-beef)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -318,7 +332,7 @@ export class GlobalKVStore {
 }
 ```
 
-See also: [KVStoreConfig](#interface-kvstoreconfig), [KVStoreEntry](#interface-kvstoreentry), [KVStoreGetOptions](#interface-kvstoregetoptions), [KVStoreQuery](#interface-kvstorequery), [KVStoreRemoveOptions](#interface-kvstoreremoveoptions), [KVStoreSetOptions](#interface-kvstoresetoptions)
+See also: [CreateActionOutput](./wallet.md#interface-createactionoutput), [HexString](./wallet.md#type-hexstring), [KVStoreConfig](./kvstore.md#interface-kvstoreconfig), [KVStoreEntry](./kvstore.md#interface-kvstoreentry), [KVStoreGetOptions](./kvstore.md#interface-kvstoregetoptions), [KVStoreQuery](./kvstore.md#interface-kvstorequery), [KVStoreRemoveOptions](./kvstore.md#interface-kvstoreremoveoptions), [KVStoreSetOptions](./kvstore.md#interface-kvstoresetoptions), [OutpointString](./wallet.md#type-outpointstring)
 
 #### Constructor
 
@@ -327,7 +341,7 @@ Creates an instance of the GlobalKVStore.
 ```ts
 constructor(config: KVStoreConfig = {}) 
 ```
-See also: [KVStoreConfig](#interface-kvstoreconfig)
+See also: [KVStoreConfig](./kvstore.md#interface-kvstoreconfig)
 
 Argument Details
 
@@ -348,7 +362,7 @@ Can query by key+controller (single result), protocolID, controller, or key (mul
 ```ts
 async get(query: KVStoreQuery, options: KVStoreGetOptions = {}): Promise<KVStoreEntry | KVStoreEntry[] | undefined> 
 ```
-See also: [KVStoreEntry](#interface-kvstoreentry), [KVStoreGetOptions](#interface-kvstoregetoptions), [KVStoreQuery](#interface-kvstorequery)
+See also: [KVStoreEntry](./kvstore.md#interface-kvstoreentry), [KVStoreGetOptions](./kvstore.md#interface-kvstoregetoptions), [KVStoreQuery](./kvstore.md#interface-kvstorequery)
 
 Returns
 
@@ -368,7 +382,7 @@ Removes the key-value pair associated with the given key from the overlay servic
 ```ts
 async remove(key: string, outputs?: CreateActionOutput[], options: KVStoreRemoveOptions = {}): Promise<HexString> 
 ```
-See also: [KVStoreRemoveOptions](#interface-kvstoreremoveoptions)
+See also: [CreateActionOutput](./wallet.md#interface-createactionoutput), [HexString](./wallet.md#type-hexstring), [KVStoreRemoveOptions](./kvstore.md#interface-kvstoreremoveoptions)
 
 Returns
 
@@ -400,7 +414,7 @@ Sets a key-value pair. The current user (wallet identity) becomes the controller
 ```ts
 async set(key: string, value: string, options: KVStoreSetOptions = {}): Promise<OutpointString> 
 ```
-See also: [KVStoreSetOptions](#interface-kvstoresetoptions)
+See also: [KVStoreSetOptions](./kvstore.md#interface-kvstoresetoptions), [OutpointString](./wallet.md#type-outpointstring)
 
 Returns
 
@@ -434,6 +448,8 @@ export default class LocalKVStore {
 }
 ```
 
+See also: [OutpointString](./wallet.md#type-outpointstring), [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface), [encrypt](./messages.md#variable-encrypt)
+
 #### Constructor
 
 Creates an instance of the localKVStore.
@@ -441,6 +457,7 @@ Creates an instance of the localKVStore.
 ```ts
 constructor(wallet: WalletInterface = new WalletClient(), context = "kvstore default", encrypt = true, originator?: string, acceptDelayedBroadcast = false) 
 ```
+See also: [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface), [encrypt](./messages.md#variable-encrypt)
 
 Argument Details
 
@@ -519,6 +536,7 @@ to the same key from missing earlier changes.
 ```ts
 async set(key: string, value: string): Promise<OutpointString> 
 ```
+See also: [OutpointString](./wallet.md#type-outpointstring)
 
 Returns
 
@@ -596,7 +614,7 @@ kvStoreInterpreter: InterpreterFunction<string, KVContext> = async (transaction:
 }
 ```
 
-See also: [KVContext](#interface-kvcontext), [kvProtocol](#variable-kvprotocol)
+See also: [KVContext](./kvstore.md#interface-kvcontext), [PushDrop](./script.md#class-pushdrop), [Transaction](./transaction.md#class-transaction), [kvProtocol](./kvstore.md#variable-kvprotocol), [toUTF8](./primitives.md#variable-toutf8)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

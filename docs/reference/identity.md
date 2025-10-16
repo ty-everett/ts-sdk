@@ -41,6 +41,8 @@ export interface IdentityClientOptions {
 }
 ```
 
+See also: [WalletProtocol](./wallet.md#type-walletprotocol)
+
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
@@ -66,7 +68,7 @@ export class ContactsManager {
 }
 ```
 
-See also: [Contact](#type-contact), [DisplayableIdentity](#interface-displayableidentity)
+See also: [Contact](./identity.md#type-contact), [DisplayableIdentity](./identity.md#interface-displayableidentity), [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletInterface](./wallet.md#interface-walletinterface)
 
 #### Method getContacts
 
@@ -75,7 +77,7 @@ Load all records from the contacts basket
 ```ts
 async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
 ```
-See also: [Contact](#type-contact)
+See also: [Contact](./identity.md#type-contact), [PubKeyHex](./wallet.md#type-pubkeyhex)
 
 Returns
 
@@ -110,7 +112,7 @@ Save or update a Metanet contact
 ```ts
 async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
 ```
-See also: [DisplayableIdentity](#interface-displayableidentity)
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
 Argument Details
 
@@ -139,7 +141,7 @@ export class IdentityClient {
 }
 ```
 
-See also: [Contact](#type-contact), [DEFAULT_IDENTITY_CLIENT_OPTIONS](#variable-default_identity_client_options), [DisplayableIdentity](#interface-displayableidentity)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [Contact](./identity.md#type-contact), [DEFAULT_IDENTITY_CLIENT_OPTIONS](./identity.md#variable-default_identity_client_options), [DiscoverByAttributesArgs](./wallet.md#interface-discoverbyattributesargs), [DiscoverByIdentityKeyArgs](./wallet.md#interface-discoverbyidentitykeyargs), [DisplayableIdentity](./identity.md#interface-displayableidentity), [IdentityCertificate](./wallet.md#interface-identitycertificate), [OriginatorDomainNameStringUnder250Bytes](./wallet.md#type-originatordomainnamestringunder250bytes), [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletCertificate](./wallet.md#interface-walletcertificate), [WalletInterface](./wallet.md#interface-walletinterface)
 
 #### Method getContacts
 
@@ -151,7 +153,7 @@ Load all records from the contacts basket
 ```ts
 public async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
 ```
-See also: [Contact](#type-contact)
+See also: [Contact](./identity.md#type-contact), [PubKeyHex](./wallet.md#type-pubkeyhex)
 
 Returns
 
@@ -175,7 +177,7 @@ Parse out identity and certifier attributes to display from an IdentityCertifica
 ```ts
 static parseIdentity(identityToParse: IdentityCertificate): DisplayableIdentity 
 ```
-See also: [DisplayableIdentity](#interface-displayableidentity)
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity), [IdentityCertificate](./wallet.md#interface-identitycertificate)
 
 Returns
 
@@ -194,6 +196,7 @@ The publicly revealed certificate is included in a blockchain transaction and br
 ```ts
 async publiclyRevealAttributes(certificate: WalletCertificate, fieldsToReveal: CertificateFieldNameUnder50Bytes[]): Promise<BroadcastResponse | BroadcastFailure> 
 ```
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [WalletCertificate](./wallet.md#interface-walletcertificate)
 
 Returns
 
@@ -217,6 +220,7 @@ Remove a contact from the contacts basket
 ```ts
 public async removeContact(identityKey: PubKeyHex): Promise<void> 
 ```
+See also: [PubKeyHex](./wallet.md#type-pubkeyhex)
 
 Argument Details
 
@@ -230,7 +234,7 @@ Resolves displayable identity certificates by specific identity attributes, issu
 ```ts
 async resolveByAttributes(args: DiscoverByAttributesArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
 ```
-See also: [DisplayableIdentity](#interface-displayableidentity)
+See also: [DiscoverByAttributesArgs](./wallet.md#interface-discoverbyattributesargs), [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
 Returns
 
@@ -250,7 +254,7 @@ Resolves displayable identity certificates, issued to a given identity key by a 
 ```ts
 async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
 ```
-See also: [DisplayableIdentity](#interface-displayableidentity)
+See also: [DiscoverByIdentityKeyArgs](./wallet.md#interface-discoverbyidentitykeyargs), [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
 Returns
 
@@ -270,7 +274,7 @@ Save or update a Metanet contact
 ```ts
 public async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
 ```
-See also: [DisplayableIdentity](#interface-displayableidentity)
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
 Argument Details
 
@@ -294,7 +298,7 @@ export type Contact = DisplayableIdentity & {
 }
 ```
 
-See also: [DisplayableIdentity](#interface-displayableidentity)
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -324,7 +328,7 @@ DEFAULT_IDENTITY_CLIENT_OPTIONS: IdentityClientOptions = {
 }
 ```
 
-See also: [IdentityClientOptions](#interface-identityclientoptions)
+See also: [IdentityClientOptions](./identity.md#interface-identityclientoptions)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -362,7 +366,7 @@ defaultIdentity: DisplayableIdentity = {
 }
 ```
 
-See also: [DisplayableIdentity](#interface-displayableidentity)
+See also: [DisplayableIdentity](./identity.md#interface-displayableidentity)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.3 - 2025-10-16](#183---2025-10-16)
 - [1.8.2 - 2025-10-03](#182---2025-10-03)
 - [1.8.1 - 2025-10-02](#181---2025-10-02)
 - [1.8.0 - 2025-10-02](#180---2025-10-02)
@@ -160,6 +161,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.8.3] - 2025-10-16
+
+### Added
+
+- **Random**: New random number generator that works across all JavaScript environments.
 
 ---
 
