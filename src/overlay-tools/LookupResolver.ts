@@ -176,7 +176,9 @@ export default class LookupResolver {
     this.networkPreset = config.networkPreset ?? 'mainnet'
     this.facilitator = config.facilitator ?? new HTTPSOverlayLookupFacilitator(undefined, this.networkPreset === 'local')
     this.slapTrackers = config.slapTrackers ?? (this.networkPreset === 'mainnet' ? DEFAULT_SLAP_TRACKERS : DEFAULT_TESTNET_SLAP_TRACKERS)
-    this.hostOverrides = config.hostOverrides ?? {}
+    const hostOverrides = config.hostOverrides ?? {}
+    this.assertValidOverrideServices(hostOverrides)
+    this.hostOverrides = hostOverrides
     this.additionalHosts = config.additionalHosts ?? {}
 
     // cache tuning
@@ -374,5 +376,13 @@ export default class LookupResolver {
   private evictOldest<T>(m: Map<string, T>): void {
     const firstKey = m.keys().next().value
     if (firstKey !== undefined) m.delete(firstKey)
+  }
+
+  private assertValidOverrideServices (overrides: Record<string, string[]>): void {
+    for (const service of Object.keys(overrides)) {
+      if (!service.startsWith('ls_')) {
+        throw new Error(`Host override service names must start with "ls_": ${service}`)
+      }
+    }
   }
 }
