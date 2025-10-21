@@ -1,5 +1,6 @@
 import { Transaction } from '../transaction/index.js'
 import OverlayAdminTokenTemplate from './OverlayAdminTokenTemplate.js'
+import * as Utils from '../primitives/utils.js'
 
 // Only bind window.fetch in the browser
 const defaultFetch = typeof window !== 'undefined' ? fetch.bind(window) : fetch
@@ -135,14 +136,47 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
     try {
       const fco: RequestInit = {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Aggregation': 'yes'
+        },
         body: JSON.stringify({ service: question.service, query: question.query }),
         signal: controller?.signal
       }
       const response: Response = await this.fetchClient(`${url}/lookup`, fco)
 
       if (!response.ok) throw new Error(`Failed to facilitate lookup (HTTP ${response.status})`)
-      return await response.json()
+      if (response.headers.get('content-type') === 'application/json') {
+        return await response.json()
+      } else {
+        const payload = await response.arrayBuffer()
+        const r = new Utils.Reader([...new Uint8Array(payload)])
+        const nOutpoints = r.readVarIntNum()
+        const outpoints: Array<{ txid: string, outputIndex: number, context?: number[] }> = []
+        for (let i = 0; i < nOutpoints; i++) {
+          const txid = Utils.toHex(r.read(32))
+          const outputIndex = r.readVarIntNum()
+          const contextLength = r.readVarIntNum()
+          let context
+          if (contextLength > 0) {
+            context = r.read(contextLength)
+          }
+          outpoints.push({
+            txid,
+            outputIndex,
+            context
+          })
+        }
+        const beef = r.read()
+        return {
+          type: 'output-list',
+          outputs: outpoints.map(x => ({
+            outputIndex: x.outputIndex,
+            context: x.context,
+            beef: Transaction.fromBEEF(beef, x.txid).toBEEF()
+          }))
+        }
+      }
     } catch (e) {
       // Normalize timeouts to a consistent error message
       if ((e as any)?.name === 'AbortError') throw new Error('Request timed out')

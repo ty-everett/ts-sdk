@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.5 - 2025-10-21](#185---2025-10-21)
 - [1.8.4 - 2025-10-20](#184---2025-10-20)
 - [1.8.3 - 2025-10-16](#183---2025-10-16)
 - [1.8.2 - 2025-10-03](#182---2025-10-03)
@@ -162,6 +163,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.8.5] - 2025-10-21
+
+### Added
+
+- **LookupResolver**: Support compact binary return format
 
 ---
 
