@@ -1,4 +1,4 @@
-import { Beef, Transaction } from '../transaction/index.js'
+import { Transaction } from '../transaction/index.js'
 import OverlayAdminTokenTemplate from './OverlayAdminTokenTemplate.js'
 import * as Utils from '../primitives/utils.js'
 
