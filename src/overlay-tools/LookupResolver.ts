@@ -33,6 +33,15 @@ export type LookupAnswer =
       context?: number[]
     }>
   }
+  | {
+    type: 'aggregated-output-list'
+    beef: number[]
+    outputs: Array<{
+      txid: string
+      outputIndex: number
+      context?: number[]
+    }>
+  }
 
 /** Default SLAP trackers */
 export const DEFAULT_SLAP_TRACKERS: string[] = [
