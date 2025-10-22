@@ -41,6 +41,7 @@ export interface KVStoreQuery {
   key?: string
   controller?: PubKeyHex
   protocolID?: WalletProtocol
+  tags?: string[]
   limit?: number
   skip?: number
   sortOrder?: 'asc' | 'desc'
@@ -63,6 +64,7 @@ export interface KVStoreSetOptions {
   tokenSetDescription?: string
   tokenUpdateDescription?: string
   tokenAmount?: number
+  tags?: string[]
 }
 
 export interface KVStoreRemoveOptions {
@@ -78,6 +80,7 @@ export interface KVStoreEntry {
   value: string
   controller: PubKeyHex
   protocolID: WalletProtocol
+  tags?: string[]
   token?: KVStoreToken
   history?: string[]
 }
@@ -110,5 +113,6 @@ export const kvProtocol = {
   key: 1,
   value: 2,
   controller: 3,
-  signature: 4
+  tags: 4,
+  signature: 5 // Note: signature moves to position 5 when tags are present
 }

@@ -10,7 +10,8 @@ export interface KVContext { key: string, protocolID: WalletProtocol }
 /**
  * KVStore interpreter used by Historian.
  *
- * Validates the KVStore PushDrop tokens: [protocolID, key, value, controller, signature].
+ * Validates the KVStore PushDrop tokens: [protocolID, key, value, controller, signature] (old format)
+ * or [protocolID, key, value, controller, tags, signature] (new format).
  * Filters outputs by the provided key in the interpreter context.
  * Produces the plaintext value for matching outputs; returns undefined otherwise.
  *
@@ -30,8 +31,12 @@ export const kvStoreInterpreter: InterpreterFunction<string, KVContext> = async 
     // Decode the KVStore token
     const decoded = PushDrop.decode(output.lockingScript)
 
-    // Validate KVStore token format (must have 5 fields: [protocolID, key, value, controller, signature])
-    if (decoded.fields.length !== Object.keys(kvProtocol).length) return undefined
+    // Support backwards compatibility: old format without tags, new format with tags
+    const expectedFieldCount = Object.keys(kvProtocol).length
+    const hasTagsField = decoded.fields.length === expectedFieldCount
+    const isOldFormat = decoded.fields.length === expectedFieldCount - 1
+    
+    if (!isOldFormat && !hasTagsField) return undefined
 
     // Only return values for the given key and protocolID
     const key = Utils.toUTF8(decoded.fields[kvProtocol.key])

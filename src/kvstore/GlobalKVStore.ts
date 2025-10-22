@@ -138,6 +138,7 @@ export class GlobalKVStore {
     const tokenSetDescription = (options.tokenSetDescription != null && options.tokenSetDescription !== '') ? options.tokenSetDescription : `Create KVStore value for ${key}`
     const tokenUpdateDescription = (options.tokenUpdateDescription != null && options.tokenUpdateDescription !== '') ? options.tokenUpdateDescription : `Update KVStore value for ${key}`
     const tokenAmount = options.tokenAmount ?? this.config.tokenAmount
+    const tags = options.tags ?? []
 
     try {
       // Check for existing token to spend
@@ -146,13 +147,20 @@ export class GlobalKVStore {
 
       // Create PushDrop locking script
       const pushdrop = new PushDrop(this.wallet, this.config.originator)
+      const lockingScriptFields = [
+        Utils.toArray(JSON.stringify(protocolID), 'utf8'),
+        Utils.toArray(key, 'utf8'),
+        Utils.toArray(value, 'utf8'),
+        Utils.toArray(controller, 'hex')
+      ]
+      
+      // Add tags as optional 5th field for backwards compatibility
+      if (tags.length > 0) {
+        lockingScriptFields.push(Utils.toArray(JSON.stringify(tags), 'utf8'))
+      }
+      
       const lockingScript = await pushdrop.lock(
-        [
-          Utils.toArray(JSON.stringify(protocolID), 'utf8'),
-          Utils.toArray(key, 'utf8'),
-          Utils.toArray(value, 'utf8'),
-          Utils.toArray(controller, 'hex')
-        ],
+        lockingScriptFields,
         protocolID ?? this.config.protocolID as WalletProtocol,
         Utils.toUTF8(Utils.toArray(key, 'utf8')),
         'anyone',
@@ -409,7 +417,12 @@ export class GlobalKVStore {
         const output = tx.outputs[result.outputIndex]
         const decoded = PushDrop.decode(output.lockingScript)
 
-        if (decoded.fields.length !== 5) {
+        // Support backwards compatibility: old format without tags, new format with tags
+        const expectedFieldCount = Object.keys(kvProtocol).length
+        const hasTagsField = decoded.fields.length === expectedFieldCount
+        const isOldFormat = decoded.fields.length === expectedFieldCount - 1
+        
+        if (!isOldFormat && !hasTagsField) {
           continue
         }
 
@@ -429,11 +442,23 @@ export class GlobalKVStore {
           continue
         }
 
+        // Extract tags if present (backwards compatible)
+        let tags: string[] | undefined
+        if (hasTagsField && decoded.fields[kvProtocol.tags]) {
+          try {
+            tags = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.tags]))
+          } catch (e) {
+            // If tags parsing fails, continue without tags
+            tags = undefined
+          }
+        }
+
         const entry: KVStoreEntry = {
           key: Utils.toUTF8(decoded.fields[kvProtocol.key]),
           value: Utils.toUTF8(decoded.fields[kvProtocol.value]),
           controller: Utils.toHex(decoded.fields[kvProtocol.controller]),
-          protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID]))
+          protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID])),
+          tags: tags
         }
 
         if (options.includeToken === true) {
