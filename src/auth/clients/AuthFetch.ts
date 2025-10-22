@@ -18,6 +18,8 @@ interface SimplifiedFetchRequestOptions {
   headers?: Record<string, string>
   body?: any
   retryCounter?: number
+  paymentContext?: PaymentRetryContext
+  paymentRetryAttempts?: number
 }
 
 interface AuthPeer {
@@ -25,6 +27,32 @@ interface AuthPeer {
   identityKey?: string
   supportsMutualAuth?: boolean
   pendingCertificateRequests: Array<true>
+}
+
+interface PaymentErrorLogEntry {
+  attempt: number
+  timestamp: string
+  message: string
+  stack?: string
+}
+
+interface PaymentRetryContext {
+  satoshisRequired: number
+  transactionBase64: string
+  derivationPrefix: string
+  derivationSuffix: string
+  serverIdentityKey: string
+  clientIdentityKey: string
+  attempts: number
+  maxAttempts: number
+  errors: PaymentErrorLogEntry[]
+  requestSummary: {
+    url: string
+    method: string
+    headers: Record<string, string>
+    bodyType: string
+    bodyByteLength: number
+  }
 }
 
 const PAYMENT_VERSION = '1.0'
@@ -445,16 +473,12 @@ export class AuthFetch {
     config: SimplifiedFetchRequestOptions = {},
     originalResponse: Response
   ): Promise<Response | null> {
-    // Make sure the server is using the correct payment version
     const paymentVersion = originalResponse.headers.get('x-bsv-payment-version')
     if (!paymentVersion || paymentVersion !== PAYMENT_VERSION) {
       throw new Error(`Unsupported x-bsv-payment-version response header. Client version: ${PAYMENT_VERSION}, Server version: ${paymentVersion}`)
     }
 
-    // Get required headers from the 402 response
-    const satoshisRequiredHeader = originalResponse.headers.get(
-      'x-bsv-payment-satoshis-required'
-    )
+    const satoshisRequiredHeader = originalResponse.headers.get('x-bsv-payment-satoshis-required')
     if (!satoshisRequiredHeader) {
       throw new Error('Missing x-bsv-payment-satoshis-required response header.')
     }
@@ -473,18 +497,117 @@ export class AuthFetch {
       throw new Error('Missing x-bsv-payment-derivation-prefix response header.')
     }
 
-    // Create a random suffix for the derivation path
+    let paymentContext = config.paymentContext
+    if (paymentContext != null) {
+      const requirementsChanged = !this.isPaymentContextCompatible(
+        paymentContext,
+        satoshisRequired,
+        serverIdentityKey,
+        derivationPrefix
+      )
+      if (requirementsChanged) {
+        this.logPaymentAttempt('warn', 'Server adjusted payment requirements; regenerating transaction', this.composePaymentLogDetails(url, paymentContext))
+        paymentContext = await this.createPaymentContext(
+          url,
+          config,
+          satoshisRequired,
+          serverIdentityKey,
+          derivationPrefix
+        )
+      }
+    } else {
+      paymentContext = await this.createPaymentContext(
+        url,
+        config,
+        satoshisRequired,
+        serverIdentityKey,
+        derivationPrefix
+      )
+    }
+
+    if (paymentContext.attempts >= paymentContext.maxAttempts) {
+      throw this.buildPaymentFailureError(url, paymentContext, new Error('Maximum payment attempts exceeded before retrying'))
+    }
+
+    const headersWithPayment: Record<string, string> = {
+      ...(config.headers ?? {})
+    }
+    headersWithPayment['x-bsv-payment'] = JSON.stringify({
+      derivationPrefix: paymentContext.derivationPrefix,
+      derivationSuffix: paymentContext.derivationSuffix,
+      transaction: paymentContext.transactionBase64
+    })
+
+    const nextConfig: SimplifiedFetchRequestOptions = {
+      ...config,
+      headers: headersWithPayment,
+      paymentContext
+    }
+
+    if (typeof nextConfig.retryCounter !== 'number') {
+      nextConfig.retryCounter = 3
+    }
+
+    const attemptNumber = paymentContext.attempts + 1
+    const maxAttempts = paymentContext.maxAttempts
+    paymentContext.attempts = attemptNumber
+    const attemptDetails = this.composePaymentLogDetails(url, paymentContext)
+    this.logPaymentAttempt('warn', `Attempting paid request (${attemptNumber}/${maxAttempts})`, attemptDetails)
+
+    try {
+      const response = await this.fetch(url, nextConfig)
+      this.logPaymentAttempt('info', `Paid request attempt ${attemptNumber} succeeded`, attemptDetails)
+      return response
+    } catch (error) {
+      const errorEntry = this.createPaymentErrorEntry(paymentContext.attempts, error)
+      paymentContext.errors.push(errorEntry)
+      this.logPaymentAttempt('error', `Paid request attempt ${attemptNumber} failed`, {
+        ...attemptDetails,
+        error: {
+          message: errorEntry.message,
+          stack: errorEntry.stack
+        }
+      })
+
+      if (paymentContext.attempts >= paymentContext.maxAttempts) {
+        throw this.buildPaymentFailureError(url, paymentContext, error)
+      }
+
+      const delayMs = this.getPaymentRetryDelay(paymentContext.attempts)
+      await this.wait(delayMs)
+      return this.handlePaymentAndRetry(url, nextConfig, originalResponse)
+    }
+  }
+
+  private isPaymentContextCompatible (
+    context: PaymentRetryContext,
+    satoshisRequired: number,
+    serverIdentityKey: string,
+    derivationPrefix: string
+  ): boolean {
+    return (
+      context.satoshisRequired === satoshisRequired &&
+      context.serverIdentityKey === serverIdentityKey &&
+      context.derivationPrefix === derivationPrefix
+    )
+  }
+
+  private async createPaymentContext (
+    url: string,
+    config: SimplifiedFetchRequestOptions,
+    satoshisRequired: number,
+    serverIdentityKey: string,
+    derivationPrefix: string
+  ): Promise<PaymentRetryContext> {
     const derivationSuffix = await createNonce(this.wallet, undefined, this.originator)
 
-    // Derive the script hex from the server identity key
     const { publicKey: derivedPublicKey } = await this.wallet.getPublicKey({
-      protocolID: [2, '3241645161d8'], // wallet payment protocol
+      protocolID: [2, '3241645161d8'],
       keyID: `${derivationPrefix} ${derivationSuffix}`,
       counterparty: serverIdentityKey
     }, this.originator)
     const lockingScript = new P2PKH().lock(PublicKey.fromString(derivedPublicKey).toAddress()).toHex()
 
-    // Create the payment transaction using createAction
     const { tx } = await this.wallet.createAction({
       description: `Payment for request to ${new URL(url).origin}`,
       outputs: [{
@@ -498,19 +621,205 @@ export class AuthFetch {
       }
     }, this.originator)
 
+    const { publicKey: clientIdentityKey } = await this.wallet.getPublicKey({ identityKey: true }, this.originator)
 
-
-    // Attach the payment to the request headers
-    config.headers = config.headers || {}
-    config.headers['x-bsv-payment'] = JSON.stringify({
+    return {
+      satoshisRequired,
+      transactionBase64: Utils.toBase64(tx),
       derivationPrefix,
       derivationSuffix,
-      transaction: Utils.toBase64(tx)
-    })
-    config.retryCounter ??= 3
+      serverIdentityKey,
+      clientIdentityKey,
+      attempts: 0,
+      maxAttempts: this.getMaxPaymentAttempts(config),
+      errors: [],
+      requestSummary: this.buildPaymentRequestSummary(url, config)
+    }
+  }
 
-    // Re-attempt request with payment attached
-    return this.fetch(url, config)
+  private getMaxPaymentAttempts (config: SimplifiedFetchRequestOptions): number {
+    const attempts = typeof config.paymentRetryAttempts === 'number' ? config.paymentRetryAttempts : undefined
+    if (typeof attempts === 'number' && attempts > 0) {
+      return Math.floor(attempts)
+    }
+    return 3
+  }
+
+  private buildPaymentRequestSummary (
+    url: string,
+    config: SimplifiedFetchRequestOptions
+  ): PaymentRetryContext['requestSummary'] {
+    const headers = { ...(config.headers ?? {}) }
+    const method = typeof config.method === 'string' ? config.method.toUpperCase() : 'GET'
+    const bodySummary = this.describeRequestBodyForLogging(config.body)
+
+    return {
+      url,
+      method,
+      headers,
+      bodyType: bodySummary.type,
+      bodyByteLength: bodySummary.byteLength
+    }
+  }
+
+  private describeRequestBodyForLogging (body: any): { type: string, byteLength: number } {
+    if (body == null) {
+      return { type: 'none', byteLength: 0 }
+    }
+
+    if (typeof body === 'string') {
+      return { type: 'string', byteLength: Utils.toArray(body, 'utf8').length }
+    }
+
+    if (Array.isArray(body)) {
+      if (body.every((item) => typeof item === 'number')) {
+        return { type: 'number[]', byteLength: body.length }
+      }
+      return { type: 'array', byteLength: body.length }
+    }
+
+    if (typeof ArrayBuffer !== 'undefined' && body instanceof ArrayBuffer) {
+      return { type: 'ArrayBuffer', byteLength: body.byteLength }
+    }
+
+    if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView(body)) {
+      return {
+        type: body.constructor != null ? body.constructor.name : 'TypedArray',
+        byteLength: body.byteLength
+      }
+    }
+
+    if (typeof Blob !== 'undefined' && body instanceof Blob) {
+      return { type: 'Blob', byteLength: body.size }
+    }
+
+    if (typeof FormData !== 'undefined' && body instanceof FormData) {
+      return { type: 'FormData', byteLength: 0 }
+    }
+
+    if (typeof URLSearchParams !== 'undefined' && body instanceof URLSearchParams) {
+      const serialized = body.toString()
+      return { type: 'URLSearchParams', byteLength: Utils.toArray(serialized, 'utf8').length }
+    }
+
+    if (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream) {
+      return { type: 'ReadableStream', byteLength: 0 }
+    }
+
+    try {
+      const serialized = JSON.stringify(body)
+      if (typeof serialized === 'string') {
+        return { type: 'object', byteLength: Utils.toArray(serialized, 'utf8').length }
+      }
+    } catch (_) {
+      // Ignore JSON serialization issues for logging purposes.
+    }
+
+    return { type: typeof body, byteLength: 0 }
+  }
+
+  private composePaymentLogDetails (url: string, context: PaymentRetryContext): Record<string, any> {
+    return {
+      url,
+      request: context.requestSummary,
+      payment: {
+        satoshis: context.satoshisRequired,
+        transactionBase64: context.transactionBase64,
+        derivationPrefix: context.derivationPrefix,
+        derivationSuffix: context.derivationSuffix,
+        serverIdentityKey: context.serverIdentityKey,
+        clientIdentityKey: context.clientIdentityKey
+      },
+      attempts: {
+        used: context.attempts,
+        max: context.maxAttempts
+      },
+      errors: context.errors
+    }
+  }
+
+  private logPaymentAttempt (
+    level: 'info' | 'warn' | 'error',
+    message: string,
+    details: Record<string, any>
+  ): void {
+    const prefix = '[AuthFetch][Payment]'
+    if (level === 'error') {
+      console.error(`${prefix} ${message}`, details)
+    } else if (level === 'warn') {
+      console.warn(`${prefix} ${message}`, details)
+    } else {
+      if (typeof console.info === 'function') {
+        console.info(`${prefix} ${message}`, details)
+      } else {
+        console.log(`${prefix} ${message}`, details)
+      }
+    }
+  }
+
+  private createPaymentErrorEntry (attempt: number, error: unknown): PaymentErrorLogEntry {
+    const entry: PaymentErrorLogEntry = {
+      attempt,
+      timestamp: new Date().toISOString(),
+      message: '',
+      stack: undefined
+    }
+
+    if (error instanceof Error) {
+      entry.message = error.message
+      entry.stack = error.stack ?? undefined
+    } else {
+      entry.message = String(error)
+    }
+
+    return entry
+  }
+
+  private getPaymentRetryDelay (attempt: number): number {
+    const baseDelay = 250
+    const multiplier = Math.min(attempt, 5)
+    return baseDelay * multiplier
+  }
+
+  private async wait (ms: number): Promise<void> {
+    if (ms <= 0) {
+      return
+    }
+    await new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  private buildPaymentFailureError (
+    url: string,
+    context: PaymentRetryContext,
+    lastError: unknown
+  ): Error {
+    const message = `Paid request to ${url} failed after ${context.attempts}/${context.maxAttempts} attempts. Sent ${context.satoshisRequired} satoshis to ${context.serverIdentityKey}.`
+    const error = new Error(message)
+
+    const failureDetails = {
+      request: context.requestSummary,
+      payment: {
+        satoshis: context.satoshisRequired,
+        transactionBase64: context.transactionBase64,
+        derivationPrefix: context.derivationPrefix,
+        derivationSuffix: context.derivationSuffix,
+        serverIdentityKey: context.serverIdentityKey,
+        clientIdentityKey: context.clientIdentityKey
+      },
+      attempts: {
+        used: context.attempts,
+        max: context.maxAttempts
+      },
+      errors: context.errors
+    }
+
+    ;(error as any).details = failureDetails
+
+    if (lastError instanceof Error) {
+      ;(error as any).cause = lastError
+    }
+
+    return error
   }
 
   private async normalizeBodyToNumberArray(body: BodyInit | null | undefined): Promise<number[]> {

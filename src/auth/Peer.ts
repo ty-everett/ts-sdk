@@ -149,13 +149,8 @@ export class Peer {
 
     try {
       await this.transport.send(generalMessage)
-    } catch (error: any) {
-      const e = new Error(
-        `Failed to send message to peer ${peerSession.peerIdentityKey ?? 'unknown'
-        }: ${String(error.message)}`
-      )
-      e.stack = error.stack
-      throw e
+    } catch (error: unknown) {
+      this.propagateTransportError(peerSession.peerIdentityKey, error)
     }
   }
 
@@ -215,11 +210,8 @@ export class Peer {
 
     try {
       await this.transport.send(certRequestMessage)
-    } catch (error: any) {
-      throw new Error(
-        `Failed to send certificate request message to peer ${peerSession.peerIdentityKey ?? 'unknown'
-        }: ${String(error.message)}`
-      )
+    } catch (error: unknown) {
+      this.propagateTransportError(peerSession.peerIdentityKey, error)
     }
   }
 
@@ -422,6 +414,25 @@ export class Peer {
    */
   private stopListeningForInitialResponses (callbackID: number): void {
     this.onInitialResponseReceivedCallbacks.delete(callbackID)
+  }
+
+  private propagateTransportError (peerIdentityKey: string | undefined, error: unknown): never {
+    if (error instanceof Error) {
+      if (peerIdentityKey != null) {
+        const existingDetails = (error as any).details
+        if (existingDetails != null && typeof existingDetails === 'object') {
+          if (existingDetails.peerIdentityKey == null) {
+            existingDetails.peerIdentityKey = peerIdentityKey
+          }
+        } else {
+          (error as any).details = { peerIdentityKey }
+        }
+      }
+      throw error
+    }
+
+    const message = `Failed to send message to peer ${peerIdentityKey ?? 'unknown'}: ${String(error)}`
+    throw new Error(message)
   }
 
   /**
@@ -734,12 +745,8 @@ export class Peer {
 
     try {
       await this.transport.send(certificateResponse)
-    } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      throw new Error(
-        `Failed to send certificate response message to peer ${peerSession.peerIdentityKey ?? 'unknown'
-        }: ${errorMessage}`
-      )
+    } catch (error: unknown) {
+      this.propagateTransportError(peerSession.peerIdentityKey, error)
     }
   }
 
