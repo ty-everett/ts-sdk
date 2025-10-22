@@ -44,27 +44,37 @@ export class SimplifiedFetchTransport implements Transport {
       return await new Promise((resolve, reject) => {
         void (async () => {
           try {
-            const responsePromise = this.fetchClient(`${this.baseUrl}/.well-known/auth`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(message)
-            })
+            const authUrl = `${this.baseUrl}/.well-known/auth`
+            const responsePromise = (async () => {
+              try {
+                return await this.fetchClient(authUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(message)
+                })
+              } catch (error) {
+                throw this.createNetworkError(authUrl, error)
+              }
+            })()
 
             // For initialRequest message, mark connection as established and start pool.
             if (message.messageType !== 'initialRequest') {
               resolve()
             }
+
             const response = await responsePromise
-            // Handle the response if data is received and callback is set
-            if (response.ok && (this.onDataCallback != null)) {
+            if (!response.ok) {
+              const responseBodyArray = Array.from(new Uint8Array(await response.arrayBuffer()))
+              throw this.createUnauthenticatedResponseError(authUrl, response, responseBodyArray)
+            }
+
+            if (this.onDataCallback != null) {
               const responseMessage = await response.json()
               this.onDataCallback(responseMessage as AuthMessage)
-            } else {
-            // Server may be a non authenticated server
-              throw new Error('HTTP server failed to authenticate')
             }
+
             if (message.messageType === 'initialRequest') {
               resolve()
             }
@@ -118,22 +128,39 @@ export class SimplifiedFetchTransport implements Transport {
       }
 
       // Send the actual fetch request to the server
-      const response = await this.fetchClient(url, {
-        method: httpRequestWithAuthHeaders.method,
-        headers: httpRequestWithAuthHeaders.headers,
-        body: httpRequestWithAuthHeaders.body
-      })
-
-      // Check for an acceptable status
-      if (response.status === 500 && (response.headers.get('x-bsv-auth-request-id') == null &&
-          response.headers.get('x-bsv-auth-requested-certificates') == null)) {
-        // Try parsing JSON error
-        const errorInfo = await response.json()
-        // Otherwise just throw whatever we got
-        throw new Error(`HTTP ${response.status} - ${JSON.stringify(errorInfo)}`)
+      let response: Response
+      try {
+        response = await this.fetchClient(url, {
+          method: httpRequestWithAuthHeaders.method,
+          headers: httpRequestWithAuthHeaders.headers,
+          body: httpRequestWithAuthHeaders.body
+        })
+      } catch (error) {
+        throw this.createNetworkError(url, error)
       }
 
-      const parsedBody = await response.arrayBuffer()
+      const responseBodyBuffer = await response.arrayBuffer()
+      const responseBodyArray = Array.from(new Uint8Array(responseBodyBuffer))
+
+      const missingAuthHeaders = ['x-bsv-auth-version', 'x-bsv-auth-identity-key', 'x-bsv-auth-signature']
+        .filter(headerName => {
+          const headerValue = response.headers.get(headerName)
+          return headerValue == null || headerValue.trim().length === 0
+        })
+
+      if (missingAuthHeaders.length > 0) {
+        throw this.createUnauthenticatedResponseError(url, response, responseBodyArray, missingAuthHeaders)
+      }
+
+      const requestedCertificatesHeader = response.headers.get('x-bsv-auth-requested-certificates')
+      let requestedCertificates: RequestedCertificateSet | undefined
+      if (requestedCertificatesHeader != null) {
+        try {
+          requestedCertificates = JSON.parse(requestedCertificatesHeader) as RequestedCertificateSet
+        } catch (error) {
+          throw this.createMalformedHeaderError(url, 'x-bsv-auth-requested-certificates', requestedCertificatesHeader, error)
+        }
+      }
       const payloadWriter = new Utils.Writer()
       if (response.headers.get('x-bsv-auth-request-id') != null) {
         payloadWriter.write(Utils.toArray(response.headers.get('x-bsv-auth-request-id'), 'base64'))
@@ -171,12 +198,9 @@ export class SimplifiedFetchTransport implements Transport {
       }
 
       // Handle body
-      if (parsedBody != null) {
-        const bodyAsArray = Array.from(new Uint8Array(parsedBody))
-        payloadWriter.writeVarIntNum(bodyAsArray.length)
-        payloadWriter.write(bodyAsArray)
-      } else {
-        payloadWriter.writeVarIntNum(-1)
+      payloadWriter.writeVarIntNum(responseBodyArray.length)
+      if (responseBodyArray.length > 0) {
+        payloadWriter.write(responseBodyArray)
       }
 
       // Build the correct AuthMessage for the response
@@ -184,16 +208,16 @@ export class SimplifiedFetchTransport implements Transport {
         version: response.headers.get('x-bsv-auth-version'),
         messageType: response.headers.get('x-bsv-auth-message-type') === 'certificateRequest' ? 'certificateRequest' : 'general',
         identityKey: response.headers.get('x-bsv-auth-identity-key'),
-        nonce: response.headers.get('x-bsv-auth-nonce'),
-        yourNonce: response.headers.get('x-bsv-auth-your-nonce'),
-        requestedCertificates: JSON.parse(response.headers.get('x-bsv-auth-requested-certificates')) as RequestedCertificateSet,
+        nonce: response.headers.get('x-bsv-auth-nonce') ?? undefined,
+        yourNonce: response.headers.get('x-bsv-auth-your-nonce') ?? undefined,
+        requestedCertificates,
         payload: payloadWriter.toArray(),
         signature: Utils.toArray(response.headers.get('x-bsv-auth-signature'), 'hex')
       }
 
       // If the server didn't provide the correct authentication headers, throw an error
       if (responseMessage.version == null) {
-        throw new Error('HTTP server failed to authenticate')
+        throw this.createUnauthenticatedResponseError(url, response, responseBodyArray)
       }
 
       // Handle the response if data is received and callback is set
@@ -212,6 +236,132 @@ export class SimplifiedFetchTransport implements Transport {
     this.onDataCallback = (m) => {
       void callback(m)
     }
+  }
+
+  private createNetworkError (url: string, originalError: unknown): Error {
+    const baseMessage = `Network error while sending authenticated request to ${url}`
+    if (originalError instanceof Error) {
+      const error = new Error(`${baseMessage}: ${originalError.message}`)
+      error.stack = originalError.stack
+      ;(error as any).cause = originalError
+      return error
+    }
+    return new Error(`${baseMessage}: ${String(originalError)}`)
+  }
+
+  private createUnauthenticatedResponseError (
+    url: string,
+    response: Response,
+    bodyBytes: number[],
+    missingHeaders: string[] = []
+  ): Error {
+    const statusText = (response.statusText ?? '').trim()
+    const statusDescription = statusText.length > 0
+      ? `${response.status} ${statusText}`
+      : `${response.status}`
+    const headerMessage = missingHeaders.length > 0
+      ? `missing headers: ${missingHeaders.join(', ')}`
+      : 'response lacked required BSV auth headers'
+    const bodyPreview = this.getBodyPreview(bodyBytes, response.headers.get('content-type'))
+    const parts = [`Received HTTP ${statusDescription} from ${url} without valid BSV authentication (${headerMessage})`]
+    if (bodyPreview != null) {
+      parts.push(`body preview: ${bodyPreview}`)
+    }
+
+    const error = new Error(parts.join(' - '))
+    ;(error as any).details = {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      missingHeaders,
+      bodyPreview
+    }
+    return error
+  }
+
+  private createMalformedHeaderError (
+    url: string,
+    headerName: string,
+    headerValue: string,
+    cause: unknown
+  ): Error {
+    const errorMessage = `Failed to parse ${headerName} returned by ${url}: ${headerValue}`
+    if (cause instanceof Error) {
+      const error = new Error(`${errorMessage}. ${cause.message}`)
+      error.stack = cause.stack
+      ;(error as any).cause = cause
+      return error
+    }
+    return new Error(`${errorMessage}. ${String(cause)}`)
+  }
+
+  private getBodyPreview (bodyBytes: number[], contentType: string | null): string | undefined {
+    if (bodyBytes.length === 0) {
+      return undefined
+    }
+
+    const maxBytesForPreview = 1024
+    const truncated = bodyBytes.length > maxBytesForPreview
+    const slice = truncated ? bodyBytes.slice(0, maxBytesForPreview) : bodyBytes
+    const isText = this.isTextualContent(contentType, slice)
+
+    let preview: string
+    if (isText) {
+      try {
+        preview = Utils.toUTF8(slice)
+      } catch {
+        preview = this.formatBinaryPreview(slice, truncated)
+      }
+    } else {
+      preview = this.formatBinaryPreview(slice, truncated)
+    }
+
+    if (preview.length > 512) {
+      preview = `${preview.slice(0, 512)}…`
+    }
+    if (truncated) {
+      preview = `${preview} (truncated)`
+    }
+    return preview
+  }
+
+  private isTextualContent (contentType: string | null, sample: number[]): boolean {
+    if (sample.length === 0) {
+      return false
+    }
+
+    if (contentType != null) {
+      const lowered = contentType.toLowerCase()
+      const textualTokens = [
+        'application/json',
+        'application/problem+json',
+        'application/xml',
+        'application/xhtml+xml',
+        'application/javascript',
+        'application/ecmascript',
+        'application/x-www-form-urlencoded',
+        'text/'
+      ]
+      if (textualTokens.some(token => lowered.includes(token)) || lowered.includes('charset=')) {
+        return true
+      }
+    }
+
+    const printableCount = sample.reduce((count, byte) => {
+      if (byte === 9 || byte === 10 || byte === 13) {
+        return count + 1
+      }
+      if (byte >= 32 && byte <= 126) {
+        return count + 1
+      }
+      return count
+    }, 0)
+    return (printableCount / sample.length) > 0.8
+  }
+
+  private formatBinaryPreview (bytes: number[], truncated: boolean): string {
+    const hex = bytes.map(byte => byte.toString(16).padStart(2, '0')).join('')
+    return `0x${hex}${truncated ? '…' : ''}`
   }
 
   /**

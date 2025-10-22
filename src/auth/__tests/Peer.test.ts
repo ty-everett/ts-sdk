@@ -7,6 +7,7 @@ import { VerifiableCertificate } from '../../auth/certificates/VerifiableCertifi
 import { MasterCertificate } from '../../auth/certificates/MasterCertificate.js'
 import { getVerifiableCertificates } from '../../auth/utils/getVerifiableCertificates.js'
 import { CompletedProtoWallet } from '../certificates/__tests/CompletedProtoWallet.js'
+import { SimplifiedFetchTransport } from '../../auth/transports/SimplifiedFetchTransport.js'
 
 const certifierPrivKey = new PrivateKey(21)
 const alicePrivKey = new PrivateKey(22)
@@ -355,7 +356,7 @@ describe('Peer class mutual authentication and certificate exchange', () => {
           // console.error(e)
         })
       })
-    })
+  })
 
     await alice.toPeer(Utils.toArray('Hello Bob!'))
     await bobReceivedGeneralMessage
@@ -363,6 +364,57 @@ describe('Peer class mutual authentication and certificate exchange', () => {
     expect(certificatesReceivedByAlice).toEqual([])
     expect(certificatesReceivedByBob).toEqual([aliceVerifiableCertificate])
   }, 15000)
+
+  describe('propagateTransportError', () => {
+    const createPeerInstance = (): Peer => {
+      const transport: Transport = {
+        send: jest.fn(async (_message: AuthMessage) => {}),
+        onData: async () => {}
+      }
+      return new Peer({} as WalletInterface, transport)
+    }
+
+    it('adds peer identity details to existing errors', () => {
+      const peer = createPeerInstance()
+      const originalError = new Error('send failed')
+
+      let thrown: Error | undefined
+      try {
+        (peer as any).propagateTransportError('peer-public-key', originalError)
+      } catch (error) {
+        thrown = error as Error
+      }
+
+      expect(thrown).toBe(originalError)
+      expect((thrown as any).details).toEqual({ peerIdentityKey: 'peer-public-key' })
+    })
+
+    it('preserves existing details when appending peer identity', () => {
+      const peer = createPeerInstance()
+      const originalError = new Error('existing details')
+      ;(originalError as any).details = { status: 503 }
+
+      let thrown: Error | undefined
+      try {
+        (peer as any).propagateTransportError('peer-public-key', originalError)
+      } catch (error) {
+        thrown = error as Error
+      }
+
+      expect(thrown).toBe(originalError)
+      expect((thrown as any).details).toEqual({
+        status: 503,
+        peerIdentityKey: 'peer-public-key'
+      })
+    })
+
+    it('wraps non-error values with a helpful message', () => {
+      const peer = createPeerInstance()
+      expect(() => (peer as any).propagateTransportError(undefined, 'timeout')).toThrow(
+        'Failed to send message to peer unknown: timeout'
+      )
+    })
+  })
 
   it('Alice requests Bob to present his library card before lending him a book', async () => {
     const alicePubKey = (await walletA.getPublicKey({ identityKey: true }))
@@ -818,4 +870,189 @@ describe('Peer class mutual authentication and certificate exchange', () => {
     expect(certificatesReceivedByAlice).toEqual([bobVerifiableCertificate])
     expect(certificatesReceivedByBob).toEqual([aliceVerifiableCertificate])
   }, 20000)
+
+  describe('Transport Error Handling', () => {
+    const privKey = PrivateKey.fromRandom()
+
+    test('Should trigger "Failed to send message to peer" error with network failure', async () => {
+      // Create a mock fetch that always fails
+      const failingFetch = (jest.fn() as any).mockRejectedValue(new Error('Network connection failed'))
+      
+      // Create a transport that will fail
+      const transport = new SimplifiedFetchTransport('http://localhost:9999', failingFetch)
+      
+      // Create a peer with the failing transport
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      // Register a dummy onData callback (required before sending)
+      await transport.onData(async (message) => {
+        // This won't be called due to network failure
+      })
+
+      // Try to send a message to peer - this should fail and trigger the error
+      try {
+        await peer.toPeer([1, 2, 3, 4], '03abc123def456')
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('Network connection failed')
+      }
+    }, 15000)
+
+    test('Should trigger error with connection timeout', async () => {
+      // Create a fetch that times out
+      const timeoutFetch = (jest.fn() as any).mockImplementation(() => {
+        return new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(new Error('Request timeout'))
+          }, 100)
+        })
+      })
+      
+      const transport = new SimplifiedFetchTransport('http://localhost:9999', timeoutFetch)
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      await transport.onData(async (message) => {})
+
+      try {
+        await peer.toPeer([5, 6, 7, 8], '03def789abc123')
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('Request timeout')
+      }
+    }, 15000)
+
+    test('Should trigger error with DNS resolution failure', async () => {
+      // Create a fetch that fails with DNS error
+      const dnsFetch = (jest.fn() as any).mockRejectedValue({
+        code: 'ENOTFOUND',
+        errno: -3008,
+        message: 'getaddrinfo ENOTFOUND nonexistent.domain'
+      })
+      
+      const transport = new SimplifiedFetchTransport('http://nonexistent.domain:3000', dnsFetch)
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      await transport.onData(async (message) => {})
+
+      try {
+        await peer.toPeer([9, 10, 11, 12], '03xyz987fed654')
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('[object Object]')
+      }
+    }, 15000)
+
+    test('Should trigger error during certificate request send', async () => {
+      // Create a failing fetch
+      const failingFetch = (jest.fn() as any).mockRejectedValue(new Error('Connection reset by peer'))
+      
+      const transport = new SimplifiedFetchTransport('http://localhost:9999', failingFetch)
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      await transport.onData(async (message) => {})
+
+      try {
+        // Try to send a certificate request - this should also trigger the error
+        await peer.requestCertificates({
+          certifiers: ['03certifier123'],
+          types: { 'type1': ['field1'] }
+        }, '03abc123def456')
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('Connection reset by peer')
+      }
+    }, 15000)
+
+    test('Should trigger error during certificate response send', async () => {
+      // Create a failing fetch
+      const failingFetch = (jest.fn() as any).mockRejectedValue(new Error('Socket hang up'))
+      
+      const transport = new SimplifiedFetchTransport('http://localhost:9999', failingFetch)
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      await transport.onData(async (message) => {})
+
+      try {
+        // Try to send a certificate response - this should also trigger the error
+        await peer.sendCertificateResponse('03verifier123', [])
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('Socket hang up')
+      }
+    }, 15000)
+
+    test('Should propagate network errors with proper details', async () => {
+      // Create a fetch that throws a custom error
+      const customError = new Error('Custom transport error')
+      customError.stack = 'Custom stack trace'
+      const failingFetch = (jest.fn() as any).mockRejectedValue(customError)
+      
+      const transport = new SimplifiedFetchTransport('http://localhost:9999', failingFetch)
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      await transport.onData(async (message) => {})
+
+      try {
+        await peer.toPeer([13, 14, 15, 16], '03peer123456')
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        // Should create a network error wrapping the original error
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('Custom transport error')
+        expect(error.cause).toBeDefined()
+        expect(error.cause.message).toBe('Custom transport error')
+      }
+    }, 15000)
+
+    test('Should handle non-Error transport failures', async () => {
+      // Create a fetch that throws a non-Error object
+      const failingFetch = (jest.fn() as any).mockRejectedValue('String error message')
+      
+      const transport = new SimplifiedFetchTransport('http://localhost:9999', failingFetch)
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      await transport.onData(async (message) => {})
+
+      try {
+        await peer.toPeer([17, 18, 19, 20], '03peer789abc')
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        // Should create network error for non-Error objects
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('String error message')
+      }
+    }, 15000)
+
+    test('Should handle undefined peer identity gracefully', async () => {
+      // Create a failing fetch
+      const failingFetch = (jest.fn() as any).mockRejectedValue('Network failure')
+      
+      const transport = new SimplifiedFetchTransport('http://localhost:9999', failingFetch)
+      const wallet = new CompletedProtoWallet(privKey)
+      const peer = new Peer(wallet, transport)
+      
+      await transport.onData(async (message) => {})
+
+      try {
+        // Try to send to an undefined peer (this might happen in some edge cases)
+        await peer.toPeer([21, 22, 23, 24], undefined as any)
+        fail('Expected error to be thrown')
+      } catch (error: any) {
+        expect(error.message).toContain('Network error while sending authenticated request')
+        expect(error.message).toContain('Network failure')
+      }
+    }, 15000)
+  })
 })
