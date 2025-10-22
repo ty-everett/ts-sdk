@@ -355,7 +355,7 @@ describe('Peer class mutual authentication and certificate exchange', () => {
           // console.error(e)
         })
       })
-    })
+  })
 
     await alice.toPeer(Utils.toArray('Hello Bob!'))
     await bobReceivedGeneralMessage
@@ -363,6 +363,57 @@ describe('Peer class mutual authentication and certificate exchange', () => {
     expect(certificatesReceivedByAlice).toEqual([])
     expect(certificatesReceivedByBob).toEqual([aliceVerifiableCertificate])
   }, 15000)
+
+  describe('propagateTransportError', () => {
+    const createPeerInstance = (): Peer => {
+      const transport: Transport = {
+        send: jest.fn(async (_message: AuthMessage) => {}),
+        onData: async () => {}
+      }
+      return new Peer({} as WalletInterface, transport)
+    }
+
+    it('adds peer identity details to existing errors', () => {
+      const peer = createPeerInstance()
+      const originalError = new Error('send failed')
+
+      let thrown: Error | undefined
+      try {
+        (peer as any).propagateTransportError('peer-public-key', originalError)
+      } catch (error) {
+        thrown = error as Error
+      }
+
+      expect(thrown).toBe(originalError)
+      expect((thrown as any).details).toEqual({ peerIdentityKey: 'peer-public-key' })
+    })
+
+    it('preserves existing details when appending peer identity', () => {
+      const peer = createPeerInstance()
+      const originalError = new Error('existing details')
+      ;(originalError as any).details = { status: 503 }
+
+      let thrown: Error | undefined
+      try {
+        (peer as any).propagateTransportError('peer-public-key', originalError)
+      } catch (error) {
+        thrown = error as Error
+      }
+
+      expect(thrown).toBe(originalError)
+      expect((thrown as any).details).toEqual({
+        status: 503,
+        peerIdentityKey: 'peer-public-key'
+      })
+    })
+
+    it('wraps non-error values with a helpful message', () => {
+      const peer = createPeerInstance()
+      expect(() => (peer as any).propagateTransportError(undefined, 'timeout')).toThrow(
+        'Failed to send message to peer unknown: timeout'
+      )
+    })
+  })
 
   it('Alice requests Bob to present his library card before lending him a book', async () => {
     const alicePubKey = (await walletA.getPublicKey({ identityKey: true }))
