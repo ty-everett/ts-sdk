@@ -146,9 +146,7 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
       const response: Response = await this.fetchClient(`${url}/lookup`, fco)
 
       if (!response.ok) throw new Error(`Failed to facilitate lookup (HTTP ${response.status})`)
-      if (response.headers.get('content-type') === 'application/json') {
-        return await response.json()
-      } else {
+      if (response.headers.get('content-type') === 'application/octet-stream') {
         const payload = await response.arrayBuffer()
         const r = new Utils.Reader([...new Uint8Array(payload)])
         const nOutpoints = r.readVarIntNum()
@@ -176,6 +174,8 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
             beef: Transaction.fromBEEF(beef, x.txid).toBEEF()
           }))
         }
+      } else {
+        return await response.json()
       }
     } catch (e) {
       // Normalize timeouts to a consistent error message
