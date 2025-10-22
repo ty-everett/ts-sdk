@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.7 - 2025-10-22](#187---2025-10-22)
 - [1.8.5 - 2025-10-21](#185---2025-10-21)
 - [1.8.4 - 2025-10-20](#184---2025-10-20)
 - [1.8.3 - 2025-10-16](#183---2025-10-16)
@@ -163,6 +164,15 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.8.7] - 2025-10-22
+
+### Fixed
+
+- **Auth**: Peer transport now preserves detailed `SimplifiedFetchTransport` errors instead of replacing them with generic peer send failures.
+- Improved error handling when payments are involved
 
 ---
 
