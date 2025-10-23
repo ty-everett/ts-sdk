@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.8 - 2025-10-22](#188---2025-10-22)
 - [1.8.7 - 2025-10-22](#187---2025-10-22)
 - [1.8.5 - 2025-10-21](#185---2025-10-21)
 - [1.8.4 - 2025-10-20](#184---2025-10-20)
@@ -164,6 +165,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.8.8] - 2025-10-22
+
+### Added
+
+- **GlobalKVStore**: Support for tags in set/get operations
 
 ---
 
