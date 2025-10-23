@@ -287,6 +287,46 @@ describe('GlobalKVStore', () => {
         })
       })
 
+      it('returns entry with tags when token includes tags field', async () => {
+        primeResolverWithOneOutput(mockResolver)
+
+        const originalDecode = (MockPushDrop as any).decode
+        ;(MockPushDrop as any).decode = jest.fn().mockReturnValue({
+          fields: [
+            Array.from(Buffer.from(JSON.stringify([1, 'kvstore']))), // protocolID
+            Array.from(Buffer.from(TEST_KEY)), // key
+            Array.from(Buffer.from(TEST_VALUE)), // value
+            Array.from(Buffer.from(TEST_CONTROLLER, 'hex')), // controller
+            // tags field as JSON string so Utils.toUTF8 returns it directly
+            '["alpha","beta"]',
+            Array.from(Buffer.from('signature')) // signature
+          ]
+        })
+
+        const result = await kvStore.get({ key: TEST_KEY })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(1)
+        if (Array.isArray(result) && result.length > 0) {
+          expect(result[0].tags).toEqual(['alpha', 'beta'])
+        }
+
+        ;(MockPushDrop as any).decode = originalDecode
+      })
+
+      it('omits tags when token is in old-format (no tags field)', async () => {
+        primeResolverWithOneOutput(mockResolver)
+
+        // primePushDropDecodeToValidValue() already sets old-format (no tags)
+        const result = await kvStore.get({ key: TEST_KEY })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toHaveLength(1)
+        if (Array.isArray(result) && result.length > 0) {
+          expect(result[0].tags).toBeUndefined()
+        }
+      })
+
       it('returns entry with history when history=true', async () => {
         primeResolverWithOneOutput(mockResolver)
         mockHistorian.buildHistory.mockResolvedValue(['oldValue', TEST_VALUE])
@@ -318,6 +358,67 @@ describe('GlobalKVStore', () => {
             protocolID: [1, 'kvstore']
           })
         })
+      })
+
+      it('forwards tags-only queries to the resolver', async () => {
+        primeResolverEmpty(mockResolver)
+
+        const tags = ['group:music', 'env:prod']
+        const result = await kvStore.get({ tags })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(mockResolver.query).toHaveBeenCalledWith({
+          service: 'ls_kvstore',
+          query: expect.objectContaining({ tags })
+        })
+      })
+
+      it('forwards tagQueryMode "all" to the resolver (default)', async () => {
+        primeResolverEmpty(mockResolver)
+
+        const tags = ['music', 'rock']
+        const result = await kvStore.get({ tags, tagQueryMode: 'all' })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(mockResolver.query).toHaveBeenCalledWith({
+          service: 'ls_kvstore',
+          query: expect.objectContaining({ 
+            tags,
+            tagQueryMode: 'all'
+          })
+        })
+      })
+
+      it('forwards tagQueryMode "any" to the resolver', async () => {
+        primeResolverEmpty(mockResolver)
+
+        const tags = ['music', 'jazz']
+        const result = await kvStore.get({ tags, tagQueryMode: 'any' })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(mockResolver.query).toHaveBeenCalledWith({
+          service: 'ls_kvstore',
+          query: expect.objectContaining({ 
+            tags,
+            tagQueryMode: 'any'
+          })
+        })
+      })
+
+      it('defaults to tagQueryMode "all" when not specified', async () => {
+        primeResolverEmpty(mockResolver)
+
+        const tags = ['category:news']
+        const result = await kvStore.get({ tags })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(mockResolver.query).toHaveBeenCalledWith({
+          service: 'ls_kvstore',
+          query: expect.objectContaining({ tags })
+        })
+        // Verify tagQueryMode is not explicitly set (will default to 'all' on server side)
+        const call = (mockResolver.query as jest.Mock).mock.calls[0][0]
+        expect(call.query.tagQueryMode).toBeUndefined()
       })
 
       it('includes token data when includeToken=true for key queries', async () => {
@@ -642,6 +743,34 @@ describe('GlobalKVStore', () => {
         )
         expect(outpoint).toBe(`${TEST_TXID}.0`)
         expect(mockBroadcaster.broadcast).toHaveBeenCalled()
+      })
+
+      it('includes tags field in locking script when options.tags provided', async () => {
+        primeResolverEmpty(mockResolver)
+
+        // Override PushDrop to capture the instance used within set()
+        const originalImpl = (MockPushDrop as any).mockImplementation
+        const mockLockingScript = { toHex: () => 'mockLockingScriptHex' }
+        const localPushDrop = {
+          lock: jest.fn().mockResolvedValue(mockLockingScript),
+          unlock: jest.fn().mockReturnValue({
+            sign: jest.fn().mockResolvedValue({ toHex: () => 'mockUnlockingScript' })
+          })
+        }
+        ;(MockPushDrop as any).mockImplementation(() => localPushDrop as any)
+
+        const providedTags = ['primary', 'news']
+        await kvStore.set(TEST_KEY, TEST_VALUE, { tags: providedTags })
+
+        // Validate PushDrop.lock was called with 5 fields (protocolID, key, value, controller, tags)
+        expect(localPushDrop.lock).toHaveBeenCalled()
+        const lockArgs = (localPushDrop.lock as jest.Mock).mock.calls[0]
+        const fields = lockArgs[0]
+        expect(Array.isArray(fields)).toBe(true)
+        expect(fields.length).toBe(5)
+
+        // Restore original implementation
+        ;(MockPushDrop as any).mockImplementation = originalImpl
       })
 
       it('updates existing token when one exists', async () => {
