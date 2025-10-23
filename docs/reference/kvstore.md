@@ -169,6 +169,7 @@ export interface KVStoreEntry {
     value: string;
     controller: PubKeyHex;
     protocolID: WalletProtocol;
+    tags?: string[];
     token?: KVStoreToken;
     history?: string[];
 }
@@ -246,6 +247,7 @@ export interface KVStoreQuery {
     key?: string;
     controller?: PubKeyHex;
     protocolID?: WalletProtocol;
+    tags?: string[];
     limit?: number;
     skip?: number;
     sortOrder?: "asc" | "desc";
@@ -279,6 +281,7 @@ export interface KVStoreSetOptions {
     tokenSetDescription?: string;
     tokenUpdateDescription?: string;
     tokenAmount?: number;
+    tags?: string[];
 }
 ```
 
@@ -577,7 +580,8 @@ kvProtocol = {
     key: 1,
     value: 2,
     controller: 3,
-    signature: 4
+    tags: 4,
+    signature: 5
 }
 ```
 
@@ -595,7 +599,10 @@ kvStoreInterpreter: InterpreterFunction<string, KVContext> = async (transaction:
         if (ctx == null || ctx.key == null)
             return undefined;
         const decoded = PushDrop.decode(output.lockingScript);
-        if (decoded.fields.length !== Object.keys(kvProtocol).length)
+        const expectedFieldCount = Object.keys(kvProtocol).length;
+        const hasTagsField = decoded.fields.length === expectedFieldCount;
+        const isOldFormat = decoded.fields.length === expectedFieldCount - 1;
+        if (!isOldFormat && !hasTagsField)
             return undefined;
         const key = Utils.toUTF8(decoded.fields[kvProtocol.key]);
         const protocolID = Utils.toUTF8(decoded.fields[kvProtocol.protocolID]);
