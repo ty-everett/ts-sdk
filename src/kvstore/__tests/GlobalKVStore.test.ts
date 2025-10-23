@@ -373,6 +373,54 @@ describe('GlobalKVStore', () => {
         })
       })
 
+      it('forwards tagQueryMode "all" to the resolver (default)', async () => {
+        primeResolverEmpty(mockResolver)
+
+        const tags = ['music', 'rock']
+        const result = await kvStore.get({ tags, tagQueryMode: 'all' })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(mockResolver.query).toHaveBeenCalledWith({
+          service: 'ls_kvstore',
+          query: expect.objectContaining({ 
+            tags,
+            tagQueryMode: 'all'
+          })
+        })
+      })
+
+      it('forwards tagQueryMode "any" to the resolver', async () => {
+        primeResolverEmpty(mockResolver)
+
+        const tags = ['music', 'jazz']
+        const result = await kvStore.get({ tags, tagQueryMode: 'any' })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(mockResolver.query).toHaveBeenCalledWith({
+          service: 'ls_kvstore',
+          query: expect.objectContaining({ 
+            tags,
+            tagQueryMode: 'any'
+          })
+        })
+      })
+
+      it('defaults to tagQueryMode "all" when not specified', async () => {
+        primeResolverEmpty(mockResolver)
+
+        const tags = ['category:news']
+        const result = await kvStore.get({ tags })
+
+        expect(Array.isArray(result)).toBe(true)
+        expect(mockResolver.query).toHaveBeenCalledWith({
+          service: 'ls_kvstore',
+          query: expect.objectContaining({ tags })
+        })
+        // Verify tagQueryMode is not explicitly set (will default to 'all' on server side)
+        const call = (mockResolver.query as jest.Mock).mock.calls[0][0]
+        expect(call.query.tagQueryMode).toBeUndefined()
+      })
+
       it('includes token data when includeToken=true for key queries', async () => {
         primeResolverWithOneOutput(mockResolver)
 

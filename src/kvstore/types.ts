@@ -42,6 +42,12 @@ export interface KVStoreQuery {
   controller?: PubKeyHex
   protocolID?: WalletProtocol
   tags?: string[]
+  /** 
+   * Controls tag matching behavior when tags are specified.
+   * - 'all': Requires all specified tags to be present (default)
+   * - 'any': Requires at least one of the specified tags to be present
+   */
+  tagQueryMode?: 'all' | 'any'
   limit?: number
   skip?: number
   sortOrder?: 'asc' | 'desc'
