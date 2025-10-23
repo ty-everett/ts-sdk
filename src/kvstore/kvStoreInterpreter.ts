@@ -35,7 +35,7 @@ export const kvStoreInterpreter: InterpreterFunction<string, KVContext> = async 
     const expectedFieldCount = Object.keys(kvProtocol).length
     const hasTagsField = decoded.fields.length === expectedFieldCount
     const isOldFormat = decoded.fields.length === expectedFieldCount - 1
-    
+
     if (!isOldFormat && !hasTagsField) return undefined
 
     // Only return values for the given key and protocolID

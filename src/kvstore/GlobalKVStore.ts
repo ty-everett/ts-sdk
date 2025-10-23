@@ -153,12 +153,12 @@ export class GlobalKVStore {
         Utils.toArray(value, 'utf8'),
         Utils.toArray(controller, 'hex')
       ]
-      
+
       // Add tags as optional 5th field for backwards compatibility
       if (tags.length > 0) {
         lockingScriptFields.push(Utils.toArray(JSON.stringify(tags), 'utf8'))
       }
-      
+
       const lockingScript = await pushdrop.lock(
         lockingScriptFields,
         protocolID ?? this.config.protocolID as WalletProtocol,
@@ -421,7 +421,7 @@ export class GlobalKVStore {
         const expectedFieldCount = Object.keys(kvProtocol).length
         const hasTagsField = decoded.fields.length === expectedFieldCount
         const isOldFormat = decoded.fields.length === expectedFieldCount - 1
-        
+
         if (!isOldFormat && !hasTagsField) {
           continue
         }
@@ -444,7 +444,7 @@ export class GlobalKVStore {
 
         // Extract tags if present (backwards compatible)
         let tags: string[] | undefined
-        if (hasTagsField && decoded.fields[kvProtocol.tags]) {
+        if (hasTagsField && decoded.fields[kvProtocol.tags] != null) {
           try {
             tags = JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.tags]))
           } catch (e) {
@@ -458,7 +458,7 @@ export class GlobalKVStore {
           value: Utils.toUTF8(decoded.fields[kvProtocol.value]),
           controller: Utils.toHex(decoded.fields[kvProtocol.controller]),
           protocolID: JSON.parse(Utils.toUTF8(decoded.fields[kvProtocol.protocolID])),
-          tags: tags
+          tags
         }
 
         if (options.includeToken === true) {
