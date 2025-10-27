@@ -3,10 +3,10 @@
 import { AuthMessage, RequestedCertificateSet, Transport } from '../types.js'
 import * as Utils from '../../primitives/utils.js'
 
-const defaultFetch: typeof fetch | undefined = 
+const defaultFetch: typeof fetch = 
   typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
     ? globalThis.fetch.bind(globalThis)
-    : undefined
+    : fetch
 
 /**
  * Implements an HTTP-specific transport for handling Peer mutual authentication messages.

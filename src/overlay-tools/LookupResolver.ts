@@ -2,10 +2,10 @@ import { Transaction } from '../transaction/index.js'
 import OverlayAdminTokenTemplate from './OverlayAdminTokenTemplate.js'
 import * as Utils from '../primitives/utils.js'
 
-const defaultFetch: typeof fetch | undefined =
+const defaultFetch: typeof fetch = 
   typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
     ? globalThis.fetch.bind(globalThis)
-    : undefined
+    : fetch
 
 /**
  * The question asked to the Overlay Services Engine when a consumer of state wishes to look up information.
