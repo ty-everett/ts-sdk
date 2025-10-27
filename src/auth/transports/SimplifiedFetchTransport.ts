@@ -3,8 +3,10 @@
 import { AuthMessage, RequestedCertificateSet, Transport } from '../types.js'
 import * as Utils from '../../primitives/utils.js'
 
-// Only bind window.fetch in the browser
-const defaultFetch = typeof window !== 'undefined' ? fetch.bind(window) : fetch
+const defaultFetch: typeof fetch | undefined = 
+  typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
+    ? globalThis.fetch.bind(globalThis)
+    : undefined
 
 /**
  * Implements an HTTP-specific transport for handling Peer mutual authentication messages.
@@ -21,6 +23,12 @@ export class SimplifiedFetchTransport implements Transport {
    * @param fetchClient - A fetch implementation to use for HTTP requests (default: global fetch).
    */
   constructor (baseUrl: string, fetchClient = defaultFetch) {
+    if (typeof fetchClient !== 'function') {
+      throw new Error(
+        'SimplifiedFetchTransport requires a fetch implementation. ' +
+        'In environments without fetch, provide a polyfill or custom implementation.'
+      )
+    }
     this.fetchClient = fetchClient
     this.baseUrl = baseUrl
   }

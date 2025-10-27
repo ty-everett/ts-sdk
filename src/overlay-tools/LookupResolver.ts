@@ -2,8 +2,10 @@ import { Transaction } from '../transaction/index.js'
 import OverlayAdminTokenTemplate from './OverlayAdminTokenTemplate.js'
 import * as Utils from '../primitives/utils.js'
 
-// Only bind window.fetch in the browser
-const defaultFetch = typeof window !== 'undefined' ? fetch.bind(window) : fetch
+const defaultFetch: typeof fetch | undefined = 
+  typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
+    ? globalThis.fetch.bind(globalThis)
+    : undefined
 
 /**
  * The question asked to the Overlay Services Engine when a consumer of state wishes to look up information.
@@ -113,6 +115,12 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
   allowHTTP: boolean
 
   constructor (httpClient = defaultFetch, allowHTTP: boolean = false) {
+    if (typeof httpClient !== 'function') {
+      throw new Error(
+        'HTTPSOverlayLookupFacilitator requires a fetch implementation. ' +
+        'In environments without fetch, provide a polyfill or custom implementation.'
+      )
+    }
     this.fetchClient = httpClient
     this.allowHTTP = allowHTTP
   }
