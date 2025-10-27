@@ -248,6 +248,7 @@ export interface KVStoreQuery {
     controller?: PubKeyHex;
     protocolID?: WalletProtocol;
     tags?: string[];
+    tagQueryMode?: "all" | "any";
     limit?: number;
     skip?: number;
     sortOrder?: "asc" | "desc";
@@ -255,6 +256,16 @@ export interface KVStoreQuery {
 ```
 
 See also: [PubKeyHex](./wallet.md#type-pubkeyhex), [WalletProtocol](./wallet.md#type-walletprotocol)
+
+#### Property tagQueryMode
+
+Controls tag matching behavior when tags are specified.
+- 'all': Requires all specified tags to be present (default)
+- 'any': Requires at least one of the specified tags to be present
+
+```ts
+tagQueryMode?: "all" | "any"
+```
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
