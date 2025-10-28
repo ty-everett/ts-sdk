@@ -272,10 +272,10 @@ export function validateCreateActionOutput(o: CreateActionOutput): ValidCreateAc
 }
 
 /**
- * Set all default true/false booleans to true or false if undefined.
- * Set all possibly undefined numbers to their default values.
- * Set all possibly undefined arrays to empty arrays.
- * Convert string outpoints to `{ txid: string, vout: number }`
+ * Normalize and validate CreateActionOptions, applying defaults for booleans/numbers/arrays.
+ *
+ * @param options - CreateActionOptions or undefined
+ * @returns ValidCreateActionOptions with defaults applied
  */
 export function validateCreateActionOptions(options?: CreateActionOptions): ValidCreateActionOptions {
   const o = options || {}
