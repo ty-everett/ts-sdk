@@ -15,9 +15,11 @@ export class WalletError extends Error {
   }
 
   /**
-   * Safely serializes a WalletError derived, WERR_REVIEW_ACTIONS (special case), Error or unknown error to JSON.
+   * Safely serializes a WalletError (including special cases), Error or unknown error to JSON.
    *
    * Safely means avoiding deep, large, circular issues.
+   * 
+   * Example deserialization can be found in HTTPWalletJSON.ts of bsv ts-sdk.
    *
    * @param error
    * @returns stringified JSON representation of the error such that it can be desirialized to a WalletError.
