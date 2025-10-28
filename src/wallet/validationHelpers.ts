@@ -6,7 +6,6 @@ import {
   Base64String,
   BasketInsertion,
   BasketStringUnder300Bytes,
-  Beef,
   BEEF,
   BooleanDefaultFalse,
   BooleanDefaultTrue,
@@ -41,10 +40,11 @@ import {
   SignActionSpend,
   TrustSelf,
   TXIDHexString,
-  Utils,
   WalletPayment
-} from '@bsv/sdk'
+} from './Wallet.interfaces.js'
+import * as Utils from '../primitives/utils.js'
 import WERR_INVALID_PARAMETER from './WERR_INVALID_PARAMETER.js'
+import Beef from '../transaction/Beef.js'
 
 export function parseWalletOutpoint(outpoint: string): {
   txid: string
@@ -83,6 +83,15 @@ function validateOptionalStringLength(
   return validateStringLength(s, name, min, max)
 }
 
+/**
+ * Validate a satoshi amount.
+ *
+ * @param v - value to validate (integer number of satoshis)
+ * @param name - parameter name used in error messages
+ * @param min - optional minimum allowed satoshi value
+ * @returns validated satoshi number
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateSatoshis(v: number | undefined, name: string, min?: number): number {
   if (v === undefined || !Number.isInteger(v) || v < 0 || v > 21e14)
     throw new WERR_INVALID_PARAMETER(name, 'a valid number of satoshis')
@@ -90,6 +99,16 @@ export function validateSatoshis(v: number | undefined, name: string, min?: numb
   return v
 }
 
+/**
+ * Validate an optional integer. Returns undefined or the validated integer.
+ *
+ * @param v - value to validate (may be undefined)
+ * @param name - parameter name used in error messages
+ * @param min - optional minimum value
+ * @param max - optional maximum value
+ * @returns validated integer or undefined
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateOptionalInteger(
   v: number | undefined,
   name: string,
@@ -100,6 +119,17 @@ export function validateOptionalInteger(
   return validateInteger(v, name, undefined, min, max)
 }
 
+/**
+ * Validate an integer, applying an optional default.
+ *
+ * @param v - value to validate (may be undefined)
+ * @param name - parameter name used in error messages
+ * @param defaultValue - value to return when v is undefined
+ * @param min - optional minimum allowed value
+ * @param max - optional maximum allowed value
+ * @returns validated integer
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateInteger(
   v: number | undefined,
   name: string,
@@ -118,10 +148,28 @@ export function validateInteger(
   return v
 }
 
+/**
+ * Validate a non-negative integer (zero allowed).
+ *
+ * @param v - value to validate
+ * @param name - parameter name used in error messages
+ * @returns validated integer
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validatePositiveIntegerOrZero(v: number, name: string): number {
   return validateInteger(v, name, 0, 0)
 }
 
+/**
+ * Validate string length in bytes for UTF-8 encoded string.
+ *
+ * @param s - string to validate
+ * @param name - parameter name used in error messages
+ * @param min - optional minimum byte length
+ * @param max - optional maximum byte length
+ * @returns the original string when valid
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateStringLength(s: string, name: string, min?: number, max?: number): string {
   const bytes = Utils.toArray(s, 'utf8').length
   if (min !== undefined && bytes < min) throw new WERR_INVALID_PARAMETER(name, `at least ${min} length.`)
@@ -129,23 +177,57 @@ export function validateStringLength(s: string, name: string, min?: number, max?
   return s
 }
 
+/**
+ * Validate an optional basket string (1..300 bytes).
+ *
+ * @param s - basket string or undefined
+ * @returns validated basket string or undefined
+ */
 function validateOptionalBasket(s?: string): string | undefined {
   if (s === undefined) return undefined
   return validateBasket(s)
 }
 
+/**
+ * Validate basket identifier (1..300 bytes).
+ *
+ * @param s - basket string
+ * @returns validated basket string
+ */
 function validateBasket(s: string): string {
   return validateIdentifier(s, 'basket', 1, 300)
 }
 
+/**
+ * Validate label identifier (1..300 bytes).
+ *
+ * @param s - label string
+ * @returns validated label string
+ */
 function validateLabel(s: string): string {
   return validateIdentifier(s, 'label', 1, 300)
 }
 
+/**
+ * Validate tag identifier (1..300 bytes).
+ *
+ * @param s - tag string
+ * @returns validated tag string
+ */
 function validateTag(s: string): string {
   return validateIdentifier(s, 'tag', 1, 300)
 }
 
+/**
+ * Normalize and validate an identifier (trim, lowercase, byte length).
+ *
+ * @param s - input string
+ * @param name - name used in errors
+ * @param min - optional minimum byte length
+ * @param max - optional maximum byte length
+ * @returns normalized identifier
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 function validateIdentifier(s: string, name: string, min?: number, max?: number): string {
   s = s.trim().toLowerCase()
   const bytes = Utils.toArray(s, 'utf8').length
@@ -154,6 +236,15 @@ function validateIdentifier(s: string, name: string, min?: number, max?: number)
   return s
 }
 
+/**
+ * Validate an optional Base64 encoded string.
+ *
+ * @param s - base64 string or undefined
+ * @param name - parameter name used in error messages
+ * @param min - optional minimum decoded byte length
+ * @param max - optional maximum decoded byte length
+ * @returns validated base64 string or undefined
+ */
 function validateOptionalBase64String(
   s: string | undefined,
   name: string,
@@ -164,6 +255,16 @@ function validateOptionalBase64String(
   return validateBase64String(s, name, min, max)
 }
 
+/**
+ * Validate a Base64 string (structure and decoded size).
+ *
+ * @param s - base64 string
+ * @param name - parameter name used in error messages
+ * @param min - optional minimum decoded byte length
+ * @param max - optional maximum decoded byte length
+ * @returns validated base64 string
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 function validateBase64String(s: string, name: string, min?: number, max?: number): string {
   // Remove any whitespace and check if the string length is valid for Base64
   s = s.trim()
@@ -193,8 +294,10 @@ function validateOptionalHexString(
 }
 
 /**
- * @param s
- * @param name
+ * Validate a hex string (even length, hex chars) and optional length bounds (character count).
+ *
+ * @param s - hex string
+ * @param name - parameter name used in error messages
  * @param min if valid, string length minimum (not bytes)
  * @param max if valid, string length maximum (not bytes)
  * @returns
@@ -209,6 +312,12 @@ function validateHexString(s: string, name: string, min?: number, max?: number):
   return s
 }
 
+/**
+ * Check whether a string is a valid hex string (even length and hex characters).
+ *
+ * @param s - input string
+ * @returns true when s is a valid hex string
+ */
 export function isHexString(s: string): boolean {
   s = s.trim()
   if (s.length % 2 === 1) return false
@@ -218,8 +327,7 @@ export function isHexString(s: string): boolean {
 }
 
 /**
- * @typedef {string & { minLength: 5, maxLength: 2000 }} DescriptionString5to2000Bytes
- * A string used for descriptions, with a length between 5 and 2000 characters.
+ * DescriptionString5to2000Bytes alias type (documented).
  */
 export type DescriptionString5to2000Bytes = string
 
@@ -233,6 +341,16 @@ export interface ValidCreateActionInput {
   unlockingScriptLength: PositiveInteger
 }
 
+/**
+ * Validate a CreateActionInput structure.
+ *
+ * Ensures either unlockingScript or unlockingScriptLength is provided and consistent,
+ * validates outpoint, description length, and sequence number.
+ *
+ * @param i - CreateActionInput to validate
+ * @returns ValidCreateActionInput
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateCreateActionInput(i: CreateActionInput): ValidCreateActionInput {
   if (i.unlockingScript === undefined && i.unlockingScriptLength === undefined)
     throw new WERR_INVALID_PARAMETER('unlockingScript, unlockingScriptLength', `at least one valid value.`)
@@ -259,6 +377,13 @@ export interface ValidCreateActionOutput {
   tags: BasketStringUnder300Bytes[]
 }
 
+/**
+ * Validate CreateActionOutput fields: locking script, satoshis, description, basket, tags.
+ *
+ * @param o - CreateActionOutput to validate
+ * @returns ValidCreateActionOutput
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateCreateActionOutput(o: CreateActionOutput): ValidCreateActionOutput {
   const vo: ValidCreateActionOutput = {
     lockingScript: validateHexString(o.lockingScript, 'lockingScript'),
@@ -414,6 +539,12 @@ export function validateSignActionOptions(options?: SignActionOptions): ValidSig
   return vo
 }
 
+/**
+ * Validate SignActionArgs and apply defaults/flags.
+ *
+ * @param args - SignActionArgs to validate
+ * @returns ValidSignActionArgs
+ */
 export function validateSignActionArgs(args: SignActionArgs): ValidSignActionArgs {
   const vargs: ValidSignActionArgs = {
     spends: args.spends,
@@ -437,6 +568,12 @@ export interface ValidAbortActionArgs extends ValidWalletSignerArgs {
   reference: Base64String
 }
 
+/**
+ * Validate AbortActionArgs (ensures reference is a valid base64 string).
+ *
+ * @param args - AbortActionArgs
+ * @returns ValidAbortActionArgs
+ */
 export function validateAbortActionArgs(args: AbortActionArgs): ValidAbortActionArgs {
   const vargs: ValidAbortActionArgs = {
     reference: validateBase64String(args.reference, 'reference')
@@ -451,6 +588,12 @@ export interface ValidWalletPayment {
   senderIdentityKey: PubKeyHex
 }
 
+/**
+ * Validate wallet payment remittance structure.
+ *
+ * @param args - WalletPayment or undefined
+ * @returns ValidWalletPayment or undefined
+ */
 export function validateWalletPayment(args?: WalletPayment): ValidWalletPayment | undefined {
   if (args === undefined) return undefined
   const v: ValidWalletPayment = {
@@ -467,6 +610,12 @@ export interface ValidBasketInsertion {
   tags: BasketStringUnder300Bytes[]
 }
 
+/**
+ * Validate a BasketInsertion structure (basket, custom instructions, tags).
+ *
+ * @param args - BasketInsertion or undefined
+ * @returns ValidBasketInsertion or undefined
+ */
 export function validateBasketInsertion(args?: BasketInsertion): ValidBasketInsertion | undefined {
   if (args === undefined) return undefined
   const v: ValidBasketInsertion = {
@@ -484,6 +633,12 @@ export interface ValidInternalizeOutput {
   insertionRemittance?: ValidBasketInsertion
 }
 
+/**
+ * Validate an InternalizeOutput entry.
+ *
+ * @param args - InternalizeOutput to validate
+ * @returns ValidInternalizeOutput
+ */
 export function validateInternalizeOutput(args: InternalizeOutput): ValidInternalizeOutput {
   if (args.protocol !== 'basket insertion' && args.protocol !== 'wallet payment')
     throw new WERR_INVALID_PARAMETER('protocol', `'basket insertion' or 'wallet payment'`)
@@ -504,6 +659,12 @@ export interface ValidInternalizeActionArgs extends ValidWalletSignerArgs {
   seekPermission: BooleanDefaultTrue
 }
 
+/**
+ * Validate originator string (trim/lowercase and part length checks).
+ *
+ * @param s - originator string or undefined
+ * @returns normalized originator or undefined
+ */
 export function validateOriginator(s?: string): string | undefined {
   if (s === undefined) return undefined
   s = s.trim().toLowerCase()
@@ -514,6 +675,13 @@ export function validateOriginator(s?: string): string | undefined {
   }
 }
 
+/**
+ * Validate InternalizeActionArgs: tx, outputs, description, labels, permission flag.
+ *
+ * @param args - InternalizeActionArgs to validate
+ * @returns ValidInternalizeActionArgs
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateInternalizeActionArgs(args: InternalizeActionArgs): ValidInternalizeActionArgs {
   const vargs: ValidInternalizeActionArgs = {
     tx: args.tx,
@@ -536,11 +704,26 @@ export function validateInternalizeActionArgs(args: InternalizeActionArgs): Vali
   return vargs
 }
 
+/**
+ * Validate an optional outpoint string (txid.vout).
+ *
+ * @param outpoint - outpoint string or undefined
+ * @param name - parameter name used in error messages
+ * @returns validated outpoint string or undefined
+ */
 export function validateOptionalOutpointString(outpoint: string | undefined, name: string): string | undefined {
   if (outpoint === undefined) return undefined
   return validateOutpointString(outpoint, name)
 }
 
+/**
+ * Validate an outpoint string of the form txid.vout.
+ *
+ * @param outpoint - outpoint string
+ * @param name - parameter name used in error messages
+ * @returns normalized outpoint string (validated txid and vout)
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
 export function validateOutpointString(outpoint: string, name: string): string {
   const s = outpoint.split('.')
   if (s.length !== 2 || !Number.isInteger(Number(s[1])))
@@ -555,6 +738,12 @@ export interface ValidRelinquishOutputArgs extends ValidWalletSignerArgs {
   output: OutpointString
 }
 
+/**
+ * Validate RelinquishOutputArgs (basket and output).
+ *
+ * @param args - RelinquishOutputArgs
+ * @returns ValidRelinquishOutputArgs
+ */
 export function validateRelinquishOutputArgs(args: RelinquishOutputArgs): ValidRelinquishOutputArgs {
   const vargs: ValidRelinquishOutputArgs = {
     basket: validateBasket(args.basket),
@@ -570,6 +759,12 @@ export interface ValidRelinquishCertificateArgs extends ValidWalletSignerArgs {
   certifier: PubKeyHex
 }
 
+/**
+ * Validate RelinquishCertificateArgs (type, serialNumber, certifier).
+ *
+ * @param args - RelinquishCertificateArgs
+ * @returns ValidRelinquishCertificateArgs
+ */
 export function validateRelinquishCertificateArgs(args: RelinquishCertificateArgs): ValidRelinquishCertificateArgs {
   const vargs: ValidRelinquishCertificateArgs = {
     type: validateBase64String(args.type, 'type'),
@@ -597,6 +792,12 @@ export interface ValidListCertificatesArgs extends ValidWalletSignerArgs {
   privilegedReason?: DescriptionString5to50Bytes
 }
 
+/**
+ * Validate ListCertificatesArgs: certifiers, types, paging, and optional privileged reason.
+ *
+ * @param args - ListCertificatesArgs
+ * @returns ValidListCertificatesArgs
+ */
 export function validateListCertificatesArgs(args: ListCertificatesArgs): ValidListCertificatesArgs {
   const vargs: ValidListCertificatesArgs = {
     certifiers: defaultEmpty(args.certifiers.map(c => validateHexString(c.trim(), 'certifiers'))),
@@ -667,41 +868,6 @@ function validateOptionalKeyringForSubject(
   return validateKeyringForSubject(kr, name)
 }
 
-/**
- *
- * @param args
- * @param subject Must be valid for "direct" `acquisitionProtocol`. public key of the certificate subject.
- * @returns
- */
-export async function validateAcquireCertificateArgs(
-  args: AcquireCertificateArgs
-): Promise<ValidAcquireCertificateArgs> {
-  const vargs: ValidAcquireCertificateArgs = {
-    acquisitionProtocol: args.acquisitionProtocol,
-    type: validateBase64String(args.type, 'type'),
-    serialNumber: validateOptionalBase64String(args.serialNumber, 'serialNumber'),
-    certifier: validateHexString(args.certifier, 'certifier'),
-    revocationOutpoint: validateOptionalOutpointString(args.revocationOutpoint, 'revocationOutpoint'),
-    fields: validateCertificateFields(args.fields),
-    signature: validateOptionalHexString(args.signature, 'signature'),
-    certifierUrl: args.certifierUrl,
-    keyringRevealer: validateOptionalKeyringRevealer(args.keyringRevealer, 'keyringRevealer'),
-    keyringForSubject: validateOptionalKeyringForSubject(args.keyringForSubject, 'keyringForSubject'),
-    privileged: defaultFalse(args.privileged),
-    privilegedReason: validateOptionalStringLength(args.privilegedReason, 'privilegedReason', 5, 50)
-  }
-  if (vargs.privileged && !vargs.privilegedReason)
-    throw new WERR_INVALID_PARAMETER('privilegedReason', `valid when 'privileged' is true `)
-  if (vargs.acquisitionProtocol === 'direct') {
-    if (!vargs.serialNumber)
-      throw new WERR_INVALID_PARAMETER('serialNumber', 'valid when acquisitionProtocol is "direct"')
-    if (!vargs.signature) throw new WERR_INVALID_PARAMETER('signature', 'valid when acquisitionProtocol is "direct"')
-    if (!vargs.revocationOutpoint)
-      throw new WERR_INVALID_PARAMETER('revocationOutpoint', 'valid when acquisitionProtocol is "direct"')
-  }
-  return vargs
-}
-
 export interface ValidAcquireDirectCertificateArgs extends ValidWalletSignerArgs {
   type: Base64String
   serialNumber: Base64String
@@ -739,6 +905,13 @@ export interface ValidAcquireIssuanceCertificateArgs extends ValidWalletSignerAr
   privilegedReason?: DescriptionString5to50Bytes
 }
 
+/**
+ * Validate issuance-specific acquire certificate args.
+ *
+ * @param args - AcquireCertificateArgs with acquisitionProtocol === 'issuance'
+ * @returns ValidAcquireIssuanceCertificateArgs
+ * @throws when args contain fields invalid for issuance
+ */
 export function validateAcquireIssuanceCertificateArgs(
   args: AcquireCertificateArgs
 ): ValidAcquireIssuanceCertificateArgs {
@@ -768,6 +941,14 @@ export function validateAcquireIssuanceCertificateArgs(
   }
   return vargs
 }
+
+/**
+ * Validate direct-acquisition-specific acquire certificate args.
+ *
+ * @param args - AcquireCertificateArgs with acquisitionProtocol === 'direct'
+ * @returns ValidAcquireDirectCertificateArgs
+ * @throws when args contain fields invalid for direct acquisition
+ */
 export function validateAcquireDirectCertificateArgs(args: AcquireCertificateArgs): ValidAcquireDirectCertificateArgs {
   if (args.acquisitionProtocol !== 'direct')
     throw new Error('Only acquire direct certificate requests allowed here.')
@@ -812,6 +993,12 @@ export interface ValidProveCertificateArgs extends ValidWalletSignerArgs {
   privilegedReason?: DescriptionString5to50Bytes
 }
 
+/**
+ * Validate ProveCertificateArgs including optional certificate fields and reveal list.
+ *
+ * @param args - ProveCertificateArgs
+ * @returns ValidProveCertificateArgs
+ */
 export function validateProveCertificateArgs(args: ProveCertificateArgs): ValidProveCertificateArgs {
   if (args.privileged && !args.privilegedReason)
     throw new WERR_INVALID_PARAMETER('privilegedReason', `valid when 'privileged' is true `)
@@ -843,6 +1030,12 @@ export interface ValidDiscoverByIdentityKeyArgs extends ValidWalletSignerArgs {
   seekPermission: boolean
 }
 
+/**
+ * Validate DiscoverByIdentityKeyArgs, enforcing identity key length and defaults.
+ *
+ * @param args - DiscoverByIdentityKeyArgs
+ * @returns ValidDiscoverByIdentityKeyArgs
+ */
 export function validateDiscoverByIdentityKeyArgs(args: DiscoverByIdentityKeyArgs): ValidDiscoverByIdentityKeyArgs {
   const vargs: ValidDiscoverByIdentityKeyArgs = {
     identityKey: validateHexString(args.identityKey, 'identityKey', 66, 66),
@@ -869,6 +1062,12 @@ function validateAttributes(
   return attributes
 }
 
+/**
+ * Validate DiscoverByAttributesArgs: attributes, limit, offset, and permission flag.
+ *
+ * @param args - DiscoverByAttributesArgs
+ * @returns ValidDiscoverByAttributesArgs
+ */
 export function validateDiscoverByAttributesArgs(args: DiscoverByAttributesArgs): ValidDiscoverByAttributesArgs {
   const vargs: ValidDiscoverByAttributesArgs = {
     attributes: validateAttributes(args.attributes),

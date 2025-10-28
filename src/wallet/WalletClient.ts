@@ -41,6 +41,23 @@ import WalletWireTransceiver from './substrates/WalletWireTransceiver.js'
 import HTTPWalletWire from './substrates/HTTPWalletWire.js'
 import HTTPWalletJSON from './substrates/HTTPWalletJSON.js'
 import ReactNativeWebView from './substrates/ReactNativeWebView.js'
+import {
+  validateAbortActionArgs,
+  validateAcquireDirectCertificateArgs,
+  validateAcquireIssuanceCertificateArgs,
+  validateCreateActionArgs,
+  validateDiscoverByAttributesArgs,
+  validateDiscoverByIdentityKeyArgs,
+  validateInternalizeActionArgs,
+  validateListActionsArgs,
+  validateListCertificatesArgs,
+  validateListOutputsArgs,
+  validateProveCertificateArgs,
+  validateRelinquishCertificateArgs,
+  validateRelinquishOutputArgs,
+  validateSignActionArgs
+} from './validationHelpers.js'
+import { WERR_INVALID_PARAMETER } from './WERR_INVALID_PARAMETER.js'
 
 const MAX_XDM_RESPONSE_WAIT = 200
 
@@ -133,6 +150,7 @@ export default class WalletClient implements WalletInterface {
   }
 
   async createAction (args: CreateActionArgs): Promise<CreateActionResult> {
+    validateCreateActionArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).createAction(
       args,
@@ -141,6 +159,7 @@ export default class WalletClient implements WalletInterface {
   }
 
   async signAction (args: SignActionArgs): Promise<SignActionResult> {
+    validateSignActionArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).signAction(
       args,
@@ -151,6 +170,7 @@ export default class WalletClient implements WalletInterface {
   async abortAction (args: {
     reference: Base64String
   }): Promise<{ aborted: true }> {
+    validateAbortActionArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).abortAction(
       args,
@@ -159,6 +179,7 @@ export default class WalletClient implements WalletInterface {
   }
 
   async listActions (args: ListActionsArgs): Promise<ListActionsResult> {
+    validateListActionsArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).listActions(
       args,
@@ -169,6 +190,7 @@ export default class WalletClient implements WalletInterface {
   async internalizeAction (
     args: InternalizeActionArgs
   ): Promise<{ accepted: true }> {
+    validateInternalizeActionArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).internalizeAction(
       args,
@@ -177,6 +199,7 @@ export default class WalletClient implements WalletInterface {
   }
 
   async listOutputs (args: ListOutputsArgs): Promise<ListOutputsResult> {
+    validateListOutputsArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).listOutputs(
       args,
@@ -188,6 +211,7 @@ export default class WalletClient implements WalletInterface {
     basket: BasketStringUnder300Bytes
     output: OutpointString
   }): Promise<{ relinquished: true }> {
+    validateRelinquishOutputArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).relinquishOutput(
       args,
@@ -352,6 +376,12 @@ export default class WalletClient implements WalletInterface {
   async acquireCertificate (
     args: AcquireCertificateArgs
   ): Promise<AcquireCertificateResult> {
+    if (args.acquisitionProtocol === 'direct')
+      validateAcquireDirectCertificateArgs(args)
+    else if (args.acquisitionProtocol === 'issuance')
+      validateAcquireIssuanceCertificateArgs(args)
+    else
+      throw new WERR_INVALID_PARAMETER('acquisitionProtocol', `valid.${args.acquisitionProtocol} is unrecognized.`)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).acquireCertificate(
       args,
@@ -367,6 +397,7 @@ export default class WalletClient implements WalletInterface {
     privileged?: BooleanDefaultFalse
     privilegedReason?: DescriptionString5to50Bytes
   }): Promise<ListCertificatesResult> {
+    validateListCertificatesArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).listCertificates(
       args,
@@ -377,6 +408,7 @@ export default class WalletClient implements WalletInterface {
   async proveCertificate (
     args: ProveCertificateArgs
   ): Promise<ProveCertificateResult> {
+    validateProveCertificateArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).proveCertificate(
       args,
@@ -389,6 +421,7 @@ export default class WalletClient implements WalletInterface {
     serialNumber: Base64String
     certifier: PubKeyHex
   }): Promise<{ relinquished: true }> {
+    validateRelinquishCertificateArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).relinquishCertificate(
       args,
@@ -401,6 +434,7 @@ export default class WalletClient implements WalletInterface {
     limit?: PositiveIntegerDefault10Max10000
     offset?: PositiveIntegerOrZero
   }): Promise<DiscoverCertificatesResult> {
+    validateDiscoverByIdentityKeyArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).discoverByIdentityKey(
       args,
@@ -413,6 +447,7 @@ export default class WalletClient implements WalletInterface {
     limit?: PositiveIntegerDefault10Max10000
     offset?: PositiveIntegerOrZero
   }): Promise<DiscoverCertificatesResult> {
+    validateDiscoverByAttributesArgs(args)
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).discoverByAttributes(
       args,

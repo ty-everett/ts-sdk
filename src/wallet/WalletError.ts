@@ -13,6 +13,55 @@ export class WalletError extends Error {
       Error.captureStackTrace(this, this.constructor)
     }
   }
+
+  /**
+   * Safely serializes a WalletError derived, WERR_REVIEW_ACTIONS (special case), Error or unknown error to JSON.
+   *
+   * Safely means avoiding deep, large, circular issues.
+   *
+   * @param error
+   * @returns stringified JSON representation of the error such that it can be desirialized to a WalletError.
+   */
+  static unknownToJson(error: any): string {
+    let json: string | undefined
+    let e: any | undefined
+    if (typeof error === 'object' && error?.constructor.name.startsWith('WERR_')) {
+      e = {
+        name: error.constructor.name,
+        message: error.message,
+        isError: true
+      }
+      if (e.name === 'WERR_REVIEW_ACTIONS') {
+        e.reviewActionResults = error.reviewActionResults
+        e.sendWithResults = error.sendWithResults
+        e.txid = error.txid
+        e.tx = error.tx
+        e.noSendChange = error.noSendChange
+        e.code = 5
+      } else if (e.name === 'WERR_INVALID_PARAMETER') {
+        e.parameter = error.parameter
+        e.code = 6
+      } else if (e.name === 'WERR_INSUFFICIENT_FUNDS') {
+        e.totalSatoshisNeeded = error.totalSatoshisNeeded
+        e.moreSatoshisNeeded = error.moreSatoshisNeeded
+        e.code = 7
+      }
+    } else if (error instanceof Error) {
+      e = {
+        name: error.constructor.name,
+        message: error.message,
+        isError: true
+      }
+    } else {
+      e = {
+        name: 'WERR_UNKNOWN',
+        message: String(error),
+        isError: true
+      }
+    }
+    json = JSON.stringify(e)
+    return json
+  }
 }
 
 // NOTE: Enum values must not exceed the UInt8 range (0–255)
@@ -22,6 +71,8 @@ export enum walletErrors {
   invalidHmac = 3,
   invalidSignature = 4,
   reviewActions = 5,
+  invalidParameter = 6,
+  insufficientFunds = 7,
 }
 
 export type WalletErrorCode = keyof typeof walletErrors
