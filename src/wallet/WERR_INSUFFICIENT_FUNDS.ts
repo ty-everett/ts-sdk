@@ -14,7 +14,7 @@ export class WERR_INSUFFICIENT_FUNDS extends Error {
    * @param totalSatoshisNeeded Total satoshis required to fund transactions after net of required inputs and outputs.
    * @param moreSatoshisNeeded Shortfall on total satoshis required to fund transactions after net of required inputs and outputs.
    */
-  constructor(
+  constructor (
     public totalSatoshisNeeded: number,
     public moreSatoshisNeeded: number
   ) {

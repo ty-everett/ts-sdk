@@ -376,12 +376,7 @@ export default class WalletClient implements WalletInterface {
   async acquireCertificate (
     args: AcquireCertificateArgs
   ): Promise<AcquireCertificateResult> {
-    if (args.acquisitionProtocol === 'direct')
-      validateAcquireDirectCertificateArgs(args)
-    else if (args.acquisitionProtocol === 'issuance')
-      validateAcquireIssuanceCertificateArgs(args)
-    else
-      throw new WERR_INVALID_PARAMETER('acquisitionProtocol', `valid.${args.acquisitionProtocol} is unrecognized.`)
+    if (args.acquisitionProtocol === 'direct') { validateAcquireDirectCertificateArgs(args) } else if (args.acquisitionProtocol === 'issuance') { validateAcquireIssuanceCertificateArgs(args) } else { throw new WERR_INVALID_PARAMETER('acquisitionProtocol', `valid.${args.acquisitionProtocol} is unrecognized.`) }
     await this.connectToSubstrate()
     return await (this.substrate as WalletInterface).acquireCertificate(
       args,

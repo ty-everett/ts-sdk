@@ -7,7 +7,7 @@ export class WERR_INVALID_PARAMETER extends Error {
   code: number
   isError: boolean = true
 
-  constructor(
+  constructor (
     public parameter: string,
     mustBe?: string
   ) {
@@ -18,4 +18,3 @@ export class WERR_INVALID_PARAMETER extends Error {
 }
 
 export default WERR_INVALID_PARAMETER
-
