@@ -36,7 +36,9 @@ import {
   VersionString7To30Bytes,
 } from '../Wallet.interfaces.js'
 import { WERR_REVIEW_ACTIONS } from '../WERR_REVIEW_ACTIONS.js'
+import { WERR_INVALID_PARAMETER } from '../WERR_INVALID_PARAMETER.js'
 import { toOriginHeader } from './utils/toOriginHeader.js'
+import WERR_INSUFFICIENT_FUNDS from '../WERR_INSUFFICIENT_FUNDS.js'
 
 export default class HTTPWalletJSON implements WalletInterface {
   baseUrl: string
@@ -84,17 +86,25 @@ export default class HTTPWalletJSON implements WalletInterface {
 
       // Check the HTTP status on the original response
       if (!res.ok) {
-        if (res.status === 400 && data.isError && data.code === 5) {
-          const err = new WERR_REVIEW_ACTIONS(data.reviewActionResults, data.sendWithResults, data.txid, data.tx, data.noSendChange)
-          throw err
-        } else {
-          const err = {
-            call,
-            args,
-            message: data.message ?? `HTTP Client error ${res.status}`
+        if (res.status === 400 && data.isError) {
+          let err: any
+          switch (data.code) {
+            case 5:
+              err = new WERR_REVIEW_ACTIONS(data.reviewActionResults, data.sendWithResults, data.txid, data.tx, data.noSendChange); break;
+            case 6:
+              err = new WERR_INVALID_PARAMETER(data.parameter); err.message = data.message; break;
+            case 7:
+              err = new WERR_INSUFFICIENT_FUNDS(data.totalSatoshisNeeded, data.moreSatoshisNeeded); break;
+            default: break;
           }
-          throw new Error(JSON.stringify(err))
+          if (err) throw err
         }
+        const err = {
+          call,
+          args,
+          message: data.message ?? `HTTP Client error ${res.status}`
+        }
+        throw new Error(JSON.stringify(err))
       }
       return data
     }

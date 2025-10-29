@@ -6,31 +6,39 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [AbortActionArgs](#interface-abortactionargs) | [IdentityCertificate](#interface-identitycertificate) | [SignActionArgs](#interface-signactionargs) |
-| [AbortActionResult](#interface-abortactionresult) | [IdentityCertifier](#interface-identitycertifier) | [SignActionOptions](#interface-signactionoptions) |
-| [AcquireCertificateArgs](#interface-acquirecertificateargs) | [InternalizeActionArgs](#interface-internalizeactionargs) | [SignActionResult](#interface-signactionresult) |
-| [AuthenticatedResult](#interface-authenticatedresult) | [InternalizeActionResult](#interface-internalizeactionresult) | [SignActionSpend](#interface-signactionspend) |
-| [BasketInsertion](#interface-basketinsertion) | [InternalizeOutput](#interface-internalizeoutput) | [SignableTransaction](#interface-signabletransaction) |
-| [CertificateResult](#interface-certificateresult) | [KeyDeriverApi](#interface-keyderiverapi) | [VerifyHmacArgs](#interface-verifyhmacargs) |
-| [CreateActionArgs](#interface-createactionargs) | [KeyLinkageResult](#interface-keylinkageresult) | [VerifyHmacResult](#interface-verifyhmacresult) |
-| [CreateActionInput](#interface-createactioninput) | [ListActionsArgs](#interface-listactionsargs) | [VerifySignatureArgs](#interface-verifysignatureargs) |
-| [CreateActionOptions](#interface-createactionoptions) | [ListActionsResult](#interface-listactionsresult) | [VerifySignatureResult](#interface-verifysignatureresult) |
-| [CreateActionOutput](#interface-createactionoutput) | [ListCertificatesArgs](#interface-listcertificatesargs) | [WalletAction](#interface-walletaction) |
-| [CreateActionResult](#interface-createactionresult) | [ListCertificatesResult](#interface-listcertificatesresult) | [WalletActionInput](#interface-walletactioninput) |
-| [CreateHmacArgs](#interface-createhmacargs) | [ListOutputsArgs](#interface-listoutputsargs) | [WalletActionOutput](#interface-walletactionoutput) |
-| [CreateHmacResult](#interface-createhmacresult) | [ListOutputsResult](#interface-listoutputsresult) | [WalletCertificate](#interface-walletcertificate) |
-| [CreateSignatureArgs](#interface-createsignatureargs) | [ProveCertificateArgs](#interface-provecertificateargs) | [WalletDecryptArgs](#interface-walletdecryptargs) |
-| [CreateSignatureResult](#interface-createsignatureresult) | [ProveCertificateResult](#interface-provecertificateresult) | [WalletDecryptResult](#interface-walletdecryptresult) |
-| [DiscoverByAttributesArgs](#interface-discoverbyattributesargs) | [RelinquishCertificateArgs](#interface-relinquishcertificateargs) | [WalletEncryptArgs](#interface-walletencryptargs) |
-| [DiscoverByIdentityKeyArgs](#interface-discoverbyidentitykeyargs) | [RelinquishCertificateResult](#interface-relinquishcertificateresult) | [WalletEncryptResult](#interface-walletencryptresult) |
-| [DiscoverCertificatesResult](#interface-discovercertificatesresult) | [RelinquishOutputArgs](#interface-relinquishoutputargs) | [WalletEncryptionArgs](#interface-walletencryptionargs) |
-| [GetHeaderArgs](#interface-getheaderargs) | [RelinquishOutputResult](#interface-relinquishoutputresult) | [WalletErrorObject](#interface-walleterrorobject) |
-| [GetHeaderResult](#interface-getheaderresult) | [RevealCounterpartyKeyLinkageArgs](#interface-revealcounterpartykeylinkageargs) | [WalletInterface](#interface-walletinterface) |
-| [GetHeightResult](#interface-getheightresult) | [RevealCounterpartyKeyLinkageResult](#interface-revealcounterpartykeylinkageresult) | [WalletOutput](#interface-walletoutput) |
-| [GetNetworkResult](#interface-getnetworkresult) | [RevealSpecificKeyLinkageArgs](#interface-revealspecifickeylinkageargs) | [WalletPayment](#interface-walletpayment) |
-| [GetPublicKeyArgs](#interface-getpublickeyargs) | [RevealSpecificKeyLinkageResult](#interface-revealspecifickeylinkageresult) | [WalletWire](#interface-walletwire) |
-| [GetPublicKeyResult](#interface-getpublickeyresult) | [ReviewActionResult](#interface-reviewactionresult) |  |
-| [GetVersionResult](#interface-getversionresult) | [SendWithResult](#interface-sendwithresult) |  |
+| [AbortActionArgs](#interface-abortactionargs) | [ListActionsResult](#interface-listactionsresult) | [ValidDiscoverByIdentityKeyArgs](#interface-validdiscoverbyidentitykeyargs) |
+| [AbortActionResult](#interface-abortactionresult) | [ListCertificatesArgs](#interface-listcertificatesargs) | [ValidInternalizeActionArgs](#interface-validinternalizeactionargs) |
+| [AcquireCertificateArgs](#interface-acquirecertificateargs) | [ListCertificatesResult](#interface-listcertificatesresult) | [ValidInternalizeOutput](#interface-validinternalizeoutput) |
+| [AuthenticatedResult](#interface-authenticatedresult) | [ListOutputsArgs](#interface-listoutputsargs) | [ValidListActionsArgs](#interface-validlistactionsargs) |
+| [BasketInsertion](#interface-basketinsertion) | [ListOutputsResult](#interface-listoutputsresult) | [ValidListCertificatesArgs](#interface-validlistcertificatesargs) |
+| [CertificateResult](#interface-certificateresult) | [OutPoint](#interface-outpoint) | [ValidListOutputsArgs](#interface-validlistoutputsargs) |
+| [CreateActionArgs](#interface-createactionargs) | [ProveCertificateArgs](#interface-provecertificateargs) | [ValidProcessActionArgs](#interface-validprocessactionargs) |
+| [CreateActionInput](#interface-createactioninput) | [ProveCertificateResult](#interface-provecertificateresult) | [ValidProcessActionOptions](#interface-validprocessactionoptions) |
+| [CreateActionOptions](#interface-createactionoptions) | [RelinquishCertificateArgs](#interface-relinquishcertificateargs) | [ValidProveCertificateArgs](#interface-validprovecertificateargs) |
+| [CreateActionOutput](#interface-createactionoutput) | [RelinquishCertificateResult](#interface-relinquishcertificateresult) | [ValidRelinquishCertificateArgs](#interface-validrelinquishcertificateargs) |
+| [CreateActionResult](#interface-createactionresult) | [RelinquishOutputArgs](#interface-relinquishoutputargs) | [ValidRelinquishOutputArgs](#interface-validrelinquishoutputargs) |
+| [CreateHmacArgs](#interface-createhmacargs) | [RelinquishOutputResult](#interface-relinquishoutputresult) | [ValidSignActionArgs](#interface-validsignactionargs) |
+| [CreateHmacResult](#interface-createhmacresult) | [RevealCounterpartyKeyLinkageArgs](#interface-revealcounterpartykeylinkageargs) | [ValidSignActionOptions](#interface-validsignactionoptions) |
+| [CreateSignatureArgs](#interface-createsignatureargs) | [RevealCounterpartyKeyLinkageResult](#interface-revealcounterpartykeylinkageresult) | [ValidWalletPayment](#interface-validwalletpayment) |
+| [CreateSignatureResult](#interface-createsignatureresult) | [RevealSpecificKeyLinkageArgs](#interface-revealspecifickeylinkageargs) | [ValidWalletSignerArgs](#interface-validwalletsignerargs) |
+| [DiscoverByAttributesArgs](#interface-discoverbyattributesargs) | [RevealSpecificKeyLinkageResult](#interface-revealspecifickeylinkageresult) | [VerifyHmacArgs](#interface-verifyhmacargs) |
+| [DiscoverByIdentityKeyArgs](#interface-discoverbyidentitykeyargs) | [ReviewActionResult](#interface-reviewactionresult) | [VerifyHmacResult](#interface-verifyhmacresult) |
+| [DiscoverCertificatesResult](#interface-discovercertificatesresult) | [SendWithResult](#interface-sendwithresult) | [VerifySignatureArgs](#interface-verifysignatureargs) |
+| [GetHeaderArgs](#interface-getheaderargs) | [SignActionArgs](#interface-signactionargs) | [VerifySignatureResult](#interface-verifysignatureresult) |
+| [GetHeaderResult](#interface-getheaderresult) | [SignActionOptions](#interface-signactionoptions) | [WalletAction](#interface-walletaction) |
+| [GetHeightResult](#interface-getheightresult) | [SignActionResult](#interface-signactionresult) | [WalletActionInput](#interface-walletactioninput) |
+| [GetNetworkResult](#interface-getnetworkresult) | [SignActionSpend](#interface-signactionspend) | [WalletActionOutput](#interface-walletactionoutput) |
+| [GetPublicKeyArgs](#interface-getpublickeyargs) | [SignableTransaction](#interface-signabletransaction) | [WalletCertificate](#interface-walletcertificate) |
+| [GetPublicKeyResult](#interface-getpublickeyresult) | [ValidAbortActionArgs](#interface-validabortactionargs) | [WalletDecryptArgs](#interface-walletdecryptargs) |
+| [GetVersionResult](#interface-getversionresult) | [ValidAcquireCertificateArgs](#interface-validacquirecertificateargs) | [WalletDecryptResult](#interface-walletdecryptresult) |
+| [IdentityCertificate](#interface-identitycertificate) | [ValidAcquireDirectCertificateArgs](#interface-validacquiredirectcertificateargs) | [WalletEncryptArgs](#interface-walletencryptargs) |
+| [IdentityCertifier](#interface-identitycertifier) | [ValidAcquireIssuanceCertificateArgs](#interface-validacquireissuancecertificateargs) | [WalletEncryptResult](#interface-walletencryptresult) |
+| [InternalizeActionArgs](#interface-internalizeactionargs) | [ValidBasketInsertion](#interface-validbasketinsertion) | [WalletEncryptionArgs](#interface-walletencryptionargs) |
+| [InternalizeActionResult](#interface-internalizeactionresult) | [ValidCreateActionArgs](#interface-validcreateactionargs) | [WalletErrorObject](#interface-walleterrorobject) |
+| [InternalizeOutput](#interface-internalizeoutput) | [ValidCreateActionInput](#interface-validcreateactioninput) | [WalletInterface](#interface-walletinterface) |
+| [KeyDeriverApi](#interface-keyderiverapi) | [ValidCreateActionOptions](#interface-validcreateactionoptions) | [WalletOutput](#interface-walletoutput) |
+| [KeyLinkageResult](#interface-keylinkageresult) | [ValidCreateActionOutput](#interface-validcreateactionoutput) | [WalletPayment](#interface-walletpayment) |
+| [ListActionsArgs](#interface-listactionsargs) | [ValidDiscoverByAttributesArgs](#interface-validdiscoverbyattributesargs) | [WalletWire](#interface-walletwire) |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -693,6 +701,36 @@ See also: [BEEF](./wallet.md#type-beef), [PositiveIntegerOrZero](./wallet.md#typ
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+### Interface: OutPoint
+
+Identifies a unique transaction output by its `txid` and index `vout`
+
+```ts
+export interface OutPoint {
+    txid: string;
+    vout: number;
+}
+```
+
+#### Property txid
+
+Transaction double sha256 hash as big endian hex string
+
+```ts
+txid: string
+```
+
+#### Property vout
+
+zero based output index within the transaction
+
+```ts
+vout: number
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ### Interface: ProveCertificateArgs
 
 ```ts
@@ -954,6 +992,485 @@ export interface SignableTransaction {
 ```
 
 See also: [AtomicBEEF](./wallet.md#type-atomicbeef), [Base64String](./wallet.md#type-base64string)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidAbortActionArgs
+
+```ts
+export interface ValidAbortActionArgs extends ValidWalletSignerArgs {
+    reference: Base64String;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidAcquireCertificateArgs
+
+```ts
+export interface ValidAcquireCertificateArgs extends ValidWalletSignerArgs {
+    acquisitionProtocol: AcquisitionProtocol;
+    type: Base64String;
+    serialNumber?: Base64String;
+    certifier: PubKeyHex;
+    revocationOutpoint?: OutpointString;
+    fields: Record<CertificateFieldNameUnder50Bytes, string>;
+    signature?: HexString;
+    certifierUrl?: string;
+    keyringRevealer?: KeyringRevealer;
+    keyringForSubject?: Record<CertificateFieldNameUnder50Bytes, Base64String>;
+    privileged: boolean;
+    privilegedReason?: DescriptionString5to50Bytes;
+}
+```
+
+See also: [AcquisitionProtocol](./wallet.md#type-acquisitionprotocol), [Base64String](./wallet.md#type-base64string), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [DescriptionString5to50Bytes](./wallet.md#type-descriptionstring5to50bytes), [HexString](./wallet.md#type-hexstring), [KeyringRevealer](./wallet.md#type-keyringrevealer), [OutpointString](./wallet.md#type-outpointstring), [PubKeyHex](./wallet.md#type-pubkeyhex), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidAcquireDirectCertificateArgs
+
+```ts
+export interface ValidAcquireDirectCertificateArgs extends ValidWalletSignerArgs {
+    type: Base64String;
+    serialNumber: Base64String;
+    certifier: PubKeyHex;
+    revocationOutpoint: OutpointString;
+    fields: Record<CertificateFieldNameUnder50Bytes, string>;
+    signature: HexString;
+    subject: PubKeyHex;
+    keyringRevealer: KeyringRevealer;
+    keyringForSubject: Record<CertificateFieldNameUnder50Bytes, Base64String>;
+    privileged: boolean;
+    privilegedReason?: DescriptionString5to50Bytes;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [DescriptionString5to50Bytes](./wallet.md#type-descriptionstring5to50bytes), [HexString](./wallet.md#type-hexstring), [KeyringRevealer](./wallet.md#type-keyringrevealer), [OutpointString](./wallet.md#type-outpointstring), [PubKeyHex](./wallet.md#type-pubkeyhex), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+#### Property subject
+
+validated to an empty string, must be provided by wallet and must
+match expectations of keyringForSubject
+
+```ts
+subject: PubKeyHex
+```
+See also: [PubKeyHex](./wallet.md#type-pubkeyhex)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidAcquireIssuanceCertificateArgs
+
+```ts
+export interface ValidAcquireIssuanceCertificateArgs extends ValidWalletSignerArgs {
+    type: Base64String;
+    certifier: PubKeyHex;
+    certifierUrl: string;
+    fields: Record<CertificateFieldNameUnder50Bytes, string>;
+    subject: PubKeyHex;
+    privileged: boolean;
+    privilegedReason?: DescriptionString5to50Bytes;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [DescriptionString5to50Bytes](./wallet.md#type-descriptionstring5to50bytes), [PubKeyHex](./wallet.md#type-pubkeyhex), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+#### Property subject
+
+validated to an empty string, must be provided by wallet and must
+match expectations of keyringForSubject
+
+```ts
+subject: PubKeyHex
+```
+See also: [PubKeyHex](./wallet.md#type-pubkeyhex)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidBasketInsertion
+
+```ts
+export interface ValidBasketInsertion {
+    basket: BasketStringUnder300Bytes;
+    customInstructions?: string;
+    tags: BasketStringUnder300Bytes[];
+}
+```
+
+See also: [BasketStringUnder300Bytes](./wallet.md#type-basketstringunder300bytes)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidCreateActionArgs
+
+```ts
+export interface ValidCreateActionArgs extends ValidProcessActionArgs {
+    description: DescriptionString5to2000Bytes;
+    inputBEEF?: BEEF;
+    inputs: ValidCreateActionInput[];
+    outputs: ValidCreateActionOutput[];
+    lockTime: number;
+    version: number;
+    labels: string[];
+    options: ValidCreateActionOptions;
+    isSignAction: boolean;
+    randomVals?: number[];
+    includeAllSourceTransactions: boolean;
+}
+```
+
+See also: [BEEF](./wallet.md#type-beef), [DescriptionString5to2000Bytes](./wallet.md#type-descriptionstring5to2000bytes), [ValidCreateActionInput](./wallet.md#interface-validcreateactioninput), [ValidCreateActionOptions](./wallet.md#interface-validcreateactionoptions), [ValidCreateActionOutput](./wallet.md#interface-validcreateactionoutput), [ValidProcessActionArgs](./wallet.md#interface-validprocessactionargs)
+
+#### Property includeAllSourceTransactions
+
+If true, signableTransactions will include sourceTransaction for each input,
+including those that do not require signature and those that were also contained
+in the inputBEEF.
+
+```ts
+includeAllSourceTransactions: boolean
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidCreateActionInput
+
+```ts
+export interface ValidCreateActionInput {
+    outpoint: OutPoint;
+    inputDescription: DescriptionString5to2000Bytes;
+    sequenceNumber: PositiveIntegerOrZero;
+    unlockingScript?: HexString;
+    unlockingScriptLength: PositiveInteger;
+}
+```
+
+See also: [DescriptionString5to2000Bytes](./wallet.md#type-descriptionstring5to2000bytes), [HexString](./wallet.md#type-hexstring), [OutPoint](./wallet.md#interface-outpoint), [PositiveInteger](./wallet.md#type-positiveinteger), [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidCreateActionOptions
+
+```ts
+export interface ValidCreateActionOptions extends ValidProcessActionOptions {
+    signAndProcess: boolean;
+    trustSelf?: TrustSelf;
+    knownTxids: TXIDHexString[];
+    noSendChange: OutPoint[];
+    randomizeOutputs: boolean;
+}
+```
+
+See also: [OutPoint](./wallet.md#interface-outpoint), [TXIDHexString](./wallet.md#type-txidhexstring), [TrustSelf](./wallet.md#type-trustself), [ValidProcessActionOptions](./wallet.md#interface-validprocessactionoptions)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidCreateActionOutput
+
+```ts
+export interface ValidCreateActionOutput {
+    lockingScript: HexString;
+    satoshis: SatoshiValue;
+    outputDescription: DescriptionString5to2000Bytes;
+    basket?: BasketStringUnder300Bytes;
+    customInstructions?: string;
+    tags: BasketStringUnder300Bytes[];
+}
+```
+
+See also: [BasketStringUnder300Bytes](./wallet.md#type-basketstringunder300bytes), [DescriptionString5to2000Bytes](./wallet.md#type-descriptionstring5to2000bytes), [HexString](./wallet.md#type-hexstring), [SatoshiValue](./wallet.md#type-satoshivalue)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidDiscoverByAttributesArgs
+
+```ts
+export interface ValidDiscoverByAttributesArgs extends ValidWalletSignerArgs {
+    attributes: Record<CertificateFieldNameUnder50Bytes, string>;
+    limit: PositiveIntegerDefault10Max10000;
+    offset: PositiveIntegerOrZero;
+    seekPermission: boolean;
+}
+```
+
+See also: [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [PositiveIntegerDefault10Max10000](./wallet.md#type-positiveintegerdefault10max10000), [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidDiscoverByIdentityKeyArgs
+
+```ts
+export interface ValidDiscoverByIdentityKeyArgs extends ValidWalletSignerArgs {
+    identityKey: PubKeyHex;
+    limit: PositiveIntegerDefault10Max10000;
+    offset: PositiveIntegerOrZero;
+    seekPermission: boolean;
+}
+```
+
+See also: [PositiveIntegerDefault10Max10000](./wallet.md#type-positiveintegerdefault10max10000), [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero), [PubKeyHex](./wallet.md#type-pubkeyhex), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidInternalizeActionArgs
+
+```ts
+export interface ValidInternalizeActionArgs extends ValidWalletSignerArgs {
+    tx: AtomicBEEF;
+    outputs: InternalizeOutput[];
+    description: DescriptionString5to2000Bytes;
+    labels: LabelStringUnder300Bytes[];
+    seekPermission: BooleanDefaultTrue;
+}
+```
+
+See also: [AtomicBEEF](./wallet.md#type-atomicbeef), [BooleanDefaultTrue](./wallet.md#type-booleandefaulttrue), [DescriptionString5to2000Bytes](./wallet.md#type-descriptionstring5to2000bytes), [InternalizeOutput](./wallet.md#interface-internalizeoutput), [LabelStringUnder300Bytes](./wallet.md#type-labelstringunder300bytes), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidInternalizeOutput
+
+```ts
+export interface ValidInternalizeOutput {
+    outputIndex: PositiveIntegerOrZero;
+    protocol: "wallet payment" | "basket insertion";
+    paymentRemittance?: ValidWalletPayment;
+    insertionRemittance?: ValidBasketInsertion;
+}
+```
+
+See also: [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero), [ValidBasketInsertion](./wallet.md#interface-validbasketinsertion), [ValidWalletPayment](./wallet.md#interface-validwalletpayment)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidListActionsArgs
+
+```ts
+export interface ValidListActionsArgs extends ValidWalletSignerArgs {
+    labels: LabelStringUnder300Bytes[];
+    labelQueryMode: "any" | "all";
+    includeLabels: BooleanDefaultFalse;
+    includeInputs: BooleanDefaultFalse;
+    includeInputSourceLockingScripts: BooleanDefaultFalse;
+    includeInputUnlockingScripts: BooleanDefaultFalse;
+    includeOutputs: BooleanDefaultFalse;
+    includeOutputLockingScripts: BooleanDefaultFalse;
+    limit: PositiveIntegerDefault10Max10000;
+    offset: PositiveIntegerOrZero;
+    seekPermission: BooleanDefaultTrue;
+}
+```
+
+See also: [BooleanDefaultFalse](./wallet.md#type-booleandefaultfalse), [BooleanDefaultTrue](./wallet.md#type-booleandefaulttrue), [LabelStringUnder300Bytes](./wallet.md#type-labelstringunder300bytes), [PositiveIntegerDefault10Max10000](./wallet.md#type-positiveintegerdefault10max10000), [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidListCertificatesArgs
+
+```ts
+export interface ValidListCertificatesArgs extends ValidWalletSignerArgs {
+    partial?: {
+        type?: Base64String;
+        serialNumber?: Base64String;
+        certifier?: PubKeyHex;
+        subject?: PubKeyHex;
+        revocationOutpoint?: OutpointString;
+        signature?: HexString;
+    };
+    certifiers: PubKeyHex[];
+    types: Base64String[];
+    limit: PositiveIntegerDefault10Max10000;
+    offset: PositiveIntegerOrZero;
+    privileged: BooleanDefaultFalse;
+    privilegedReason?: DescriptionString5to50Bytes;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [BooleanDefaultFalse](./wallet.md#type-booleandefaultfalse), [DescriptionString5to50Bytes](./wallet.md#type-descriptionstring5to50bytes), [HexString](./wallet.md#type-hexstring), [OutpointString](./wallet.md#type-outpointstring), [PositiveIntegerDefault10Max10000](./wallet.md#type-positiveintegerdefault10max10000), [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero), [PubKeyHex](./wallet.md#type-pubkeyhex), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidListOutputsArgs
+
+```ts
+export interface ValidListOutputsArgs extends ValidWalletSignerArgs {
+    basket: BasketStringUnder300Bytes;
+    tags: OutputTagStringUnder300Bytes[];
+    tagQueryMode: "all" | "any";
+    includeLockingScripts: boolean;
+    includeTransactions: boolean;
+    includeCustomInstructions: BooleanDefaultFalse;
+    includeTags: BooleanDefaultFalse;
+    includeLabels: BooleanDefaultFalse;
+    limit: PositiveIntegerDefault10Max10000;
+    offset: number;
+    seekPermission: BooleanDefaultTrue;
+    knownTxids: string[];
+}
+```
+
+See also: [BasketStringUnder300Bytes](./wallet.md#type-basketstringunder300bytes), [BooleanDefaultFalse](./wallet.md#type-booleandefaultfalse), [BooleanDefaultTrue](./wallet.md#type-booleandefaulttrue), [OutputTagStringUnder300Bytes](./wallet.md#type-outputtagstringunder300bytes), [PositiveIntegerDefault10Max10000](./wallet.md#type-positiveintegerdefault10max10000), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidProcessActionArgs
+
+```ts
+export interface ValidProcessActionArgs extends ValidWalletSignerArgs {
+    options: ValidProcessActionOptions;
+    isSendWith: boolean;
+    isNewTx: boolean;
+    isRemixChange: boolean;
+    isNoSend: boolean;
+    isDelayed: boolean;
+    isTestWerrReviewActions: boolean;
+}
+```
+
+See also: [ValidProcessActionOptions](./wallet.md#interface-validprocessactionoptions), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidProcessActionOptions
+
+```ts
+export interface ValidProcessActionOptions {
+    acceptDelayedBroadcast: BooleanDefaultTrue;
+    returnTXIDOnly: BooleanDefaultFalse;
+    noSend: BooleanDefaultFalse;
+    sendWith: TXIDHexString[];
+}
+```
+
+See also: [BooleanDefaultFalse](./wallet.md#type-booleandefaultfalse), [BooleanDefaultTrue](./wallet.md#type-booleandefaulttrue), [TXIDHexString](./wallet.md#type-txidhexstring)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidProveCertificateArgs
+
+```ts
+export interface ValidProveCertificateArgs extends ValidWalletSignerArgs {
+    type?: Base64String;
+    serialNumber?: Base64String;
+    certifier?: PubKeyHex;
+    subject?: PubKeyHex;
+    revocationOutpoint?: OutpointString;
+    signature?: HexString;
+    fieldsToReveal: CertificateFieldNameUnder50Bytes[];
+    verifier: PubKeyHex;
+    privileged: boolean;
+    privilegedReason?: DescriptionString5to50Bytes;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [CertificateFieldNameUnder50Bytes](./wallet.md#type-certificatefieldnameunder50bytes), [DescriptionString5to50Bytes](./wallet.md#type-descriptionstring5to50bytes), [HexString](./wallet.md#type-hexstring), [OutpointString](./wallet.md#type-outpointstring), [PubKeyHex](./wallet.md#type-pubkeyhex), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidRelinquishCertificateArgs
+
+```ts
+export interface ValidRelinquishCertificateArgs extends ValidWalletSignerArgs {
+    type: Base64String;
+    serialNumber: Base64String;
+    certifier: PubKeyHex;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [PubKeyHex](./wallet.md#type-pubkeyhex), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidRelinquishOutputArgs
+
+```ts
+export interface ValidRelinquishOutputArgs extends ValidWalletSignerArgs {
+    basket: BasketStringUnder300Bytes;
+    output: OutpointString;
+}
+```
+
+See also: [BasketStringUnder300Bytes](./wallet.md#type-basketstringunder300bytes), [OutpointString](./wallet.md#type-outpointstring), [ValidWalletSignerArgs](./wallet.md#interface-validwalletsignerargs)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidSignActionArgs
+
+```ts
+export interface ValidSignActionArgs extends ValidProcessActionArgs {
+    spends: Record<PositiveIntegerOrZero, SignActionSpend>;
+    reference: Base64String;
+    options: ValidSignActionOptions;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [PositiveIntegerOrZero](./wallet.md#type-positiveintegerorzero), [SignActionSpend](./wallet.md#interface-signactionspend), [ValidProcessActionArgs](./wallet.md#interface-validprocessactionargs), [ValidSignActionOptions](./wallet.md#interface-validsignactionoptions)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidSignActionOptions
+
+```ts
+export interface ValidSignActionOptions extends ValidProcessActionOptions {
+    acceptDelayedBroadcast: boolean;
+    returnTXIDOnly: boolean;
+    noSend: boolean;
+    sendWith: TXIDHexString[];
+}
+```
+
+See also: [TXIDHexString](./wallet.md#type-txidhexstring), [ValidProcessActionOptions](./wallet.md#interface-validprocessactionoptions)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidWalletPayment
+
+```ts
+export interface ValidWalletPayment {
+    derivationPrefix: Base64String;
+    derivationSuffix: Base64String;
+    senderIdentityKey: PubKeyHex;
+}
+```
+
+See also: [Base64String](./wallet.md#type-base64string), [PubKeyHex](./wallet.md#type-pubkeyhex)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: ValidWalletSignerArgs
+
+```ts
+export interface ValidWalletSignerArgs {
+}
+```
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -1530,13 +2047,14 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | |
 | --- | --- |
-| [CachedKeyDeriver](#class-cachedkeyderiver) | [WalletClient](#class-walletclient) |
-| [HTTPWalletJSON](#class-httpwalletjson) | [WalletError](#class-walleterror) |
-| [HTTPWalletWire](#class-httpwalletwire) | [WalletWireProcessor](#class-walletwireprocessor) |
-| [KeyDeriver](#class-keyderiver) | [WalletWireTransceiver](#class-walletwiretransceiver) |
-| [ProtoWallet](#class-protowallet) | [WindowCWISubstrate](#class-windowcwisubstrate) |
-| [ReactNativeWebView](#class-reactnativewebview) | [XDMSubstrate](#class-xdmsubstrate) |
-| [WERR_REVIEW_ACTIONS](#class-werr_review_actions) |  |
+| [CachedKeyDeriver](#class-cachedkeyderiver) | [WERR_REVIEW_ACTIONS](#class-werr_review_actions) |
+| [HTTPWalletJSON](#class-httpwalletjson) | [WalletClient](#class-walletclient) |
+| [HTTPWalletWire](#class-httpwalletwire) | [WalletError](#class-walleterror) |
+| [KeyDeriver](#class-keyderiver) | [WalletWireProcessor](#class-walletwireprocessor) |
+| [ProtoWallet](#class-protowallet) | [WalletWireTransceiver](#class-walletwiretransceiver) |
+| [ReactNativeWebView](#class-reactnativewebview) | [WindowCWISubstrate](#class-windowcwisubstrate) |
+| [WERR_INSUFFICIENT_FUNDS](#class-werr_insufficient_funds) | [XDMSubstrate](#class-xdmsubstrate) |
+| [WERR_INVALID_PARAMETER](#class-werr_invalid_parameter) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -2591,6 +3109,54 @@ See also: [BEEF](./wallet.md#type-beef), [Base64String](./wallet.md#type-base64s
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+### Class: WERR_INSUFFICIENT_FUNDS
+
+Insufficient funds in the available inputs to cover the cost of the required outputs
+and the transaction fee (${moreSatoshisNeeded} more satoshis are needed,
+for a total of ${totalSatoshisNeeded}), plus whatever would be required in order
+to pay the fee to unlock and spend the outputs used to provide the additional satoshis.
+
+```ts
+export class WERR_INSUFFICIENT_FUNDS extends Error {
+    code: number;
+    isError: boolean = true;
+    constructor(public totalSatoshisNeeded: number, public moreSatoshisNeeded: number) 
+}
+```
+
+#### Constructor
+
+```ts
+constructor(public totalSatoshisNeeded: number, public moreSatoshisNeeded: number) 
+```
+
+Argument Details
+
++ **totalSatoshisNeeded**
+  + Total satoshis required to fund transactions after net of required inputs and outputs.
++ **moreSatoshisNeeded**
+  + Shortfall on total satoshis required to fund transactions after net of required inputs and outputs.
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Class: WERR_INVALID_PARAMETER
+
+The ${parameter} parameter is invalid.
+
+This is an example of an error object with a custom property `parameter` and templated `message`.
+
+```ts
+export class WERR_INVALID_PARAMETER extends Error {
+    code: number;
+    isError: boolean = true;
+    constructor(public parameter: string, mustBe?: string) 
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ### Class: WERR_REVIEW_ACTIONS
 
 When a `createAction` or `signAction` is completed in undelayed mode (`acceptDelayedBroadcast`: false),
@@ -2842,8 +3408,25 @@ export class WalletError extends Error {
     code: number;
     isError: boolean = true;
     constructor(message: string, code = 1, stack?: string) 
+    static unknownToJson(error: any): string 
 }
 ```
+
+#### Method unknownToJson
+
+Safely serializes a WalletError (including special cases), Error or unknown error to JSON.
+
+Safely means avoiding deep, large, circular issues.
+
+Example deserialization can be found in HTTPWalletJSON.ts of bsv ts-sdk.
+
+```ts
+static unknownToJson(error: any): string 
+```
+
+Returns
+
+stringified JSON representation of the error such that it can be desirialized to a WalletError.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -3977,6 +4560,56 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ## Functions
 
+| | | |
+| --- | --- | --- |
+| [isHexString](#function-ishexstring) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) | [validateOutpointString](#function-validateoutpointstring) |
+| [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
+| [toOriginHeader](#function-tooriginheader) | [validateInteger](#function-validateinteger) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
+| [validateAbortActionArgs](#function-validateabortactionargs) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
+| [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) | [validateInternalizeOutput](#function-validateinternalizeoutput) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
+| [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) | [validateListActionsArgs](#function-validatelistactionsargs) | [validateSatoshis](#function-validatesatoshis) |
+| [validateBasketInsertion](#function-validatebasketinsertion) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) | [validateSignActionArgs](#function-validatesignactionargs) |
+| [validateCreateActionArgs](#function-validatecreateactionargs) | [validateListOutputsArgs](#function-validatelistoutputsargs) | [validateSignActionOptions](#function-validatesignactionoptions) |
+| [validateCreateActionInput](#function-validatecreateactioninput) | [validateOptionalInteger](#function-validateoptionalinteger) | [validateStringLength](#function-validatestringlength) |
+| [validateCreateActionOptions](#function-validatecreateactionoptions) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) | [validateWalletPayment](#function-validatewalletpayment) |
+| [validateCreateActionOutput](#function-validatecreateactionoutput) | [validateOriginator](#function-validateoriginator) |  |
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+
+### Function: isHexString
+
+Check whether a string is a valid hex string (even length and hex characters).
+
+```ts
+export function isHexString(s: string): boolean 
+```
+
+Returns
+
+true when s is a valid hex string
+
+Argument Details
+
++ **s**
+  + input string
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: parseWalletOutpoint
+
+```ts
+export function parseWalletOutpoint(outpoint: string): {
+    txid: string;
+    vout: number;
+} 
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ### Function: toOriginHeader
 
 ```ts
@@ -3986,25 +4619,748 @@ export function toOriginHeader(originator: string, fallbackScheme = "http"): str
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
 ---
+### Function: validateAbortActionArgs
+
+Validate AbortActionArgs (ensures reference is a valid base64 string).
+
+```ts
+export function validateAbortActionArgs(args: AbortActionArgs): ValidAbortActionArgs 
+```
+
+See also: [AbortActionArgs](./wallet.md#interface-abortactionargs), [ValidAbortActionArgs](./wallet.md#interface-validabortactionargs)
+
+Returns
+
+ValidAbortActionArgs
+
+Argument Details
+
++ **args**
+  + AbortActionArgs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateAcquireDirectCertificateArgs
+
+Validate direct-acquisition-specific acquire certificate args.
+
+```ts
+export function validateAcquireDirectCertificateArgs(args: AcquireCertificateArgs): ValidAcquireDirectCertificateArgs 
+```
+
+See also: [AcquireCertificateArgs](./wallet.md#interface-acquirecertificateargs), [ValidAcquireDirectCertificateArgs](./wallet.md#interface-validacquiredirectcertificateargs)
+
+Returns
+
+ValidAcquireDirectCertificateArgs
+
+Argument Details
+
++ **args**
+  + AcquireCertificateArgs with acquisitionProtocol === 'direct'
+
+Throws
+
+when args contain fields invalid for direct acquisition
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateAcquireIssuanceCertificateArgs
+
+Validate issuance-specific acquire certificate args.
+
+```ts
+export function validateAcquireIssuanceCertificateArgs(args: AcquireCertificateArgs): ValidAcquireIssuanceCertificateArgs 
+```
+
+See also: [AcquireCertificateArgs](./wallet.md#interface-acquirecertificateargs), [ValidAcquireIssuanceCertificateArgs](./wallet.md#interface-validacquireissuancecertificateargs)
+
+Returns
+
+ValidAcquireIssuanceCertificateArgs
+
+Argument Details
+
++ **args**
+  + AcquireCertificateArgs with acquisitionProtocol === 'issuance'
+
+Throws
+
+when args contain fields invalid for issuance
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateBasketInsertion
+
+Validate a BasketInsertion structure (basket, custom instructions, tags).
+
+```ts
+export function validateBasketInsertion(args?: BasketInsertion): ValidBasketInsertion | undefined 
+```
+
+See also: [BasketInsertion](./wallet.md#interface-basketinsertion), [ValidBasketInsertion](./wallet.md#interface-validbasketinsertion)
+
+Returns
+
+ValidBasketInsertion or undefined
+
+Argument Details
+
++ **args**
+  + BasketInsertion or undefined
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateCreateActionArgs
+
+Validate the arguments for creating a new action.
+
+```ts
+export function validateCreateActionArgs(args: CreateActionArgs): ValidCreateActionArgs 
+```
+
+See also: [CreateActionArgs](./wallet.md#interface-createactionargs), [ValidCreateActionArgs](./wallet.md#interface-validcreateactionargs)
+
+Returns
+
+validated arguments
+
+Throws
+
+primarily WERR_INVALID_PARAMETER if args are invalid.
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateCreateActionInput
+
+Validate a CreateActionInput structure.
+
+Ensures either unlockingScript or unlockingScriptLength is provided and consistent,
+validates outpoint, description length, and sequence number.
+
+```ts
+export function validateCreateActionInput(i: CreateActionInput): ValidCreateActionInput 
+```
+
+See also: [CreateActionInput](./wallet.md#interface-createactioninput), [ValidCreateActionInput](./wallet.md#interface-validcreateactioninput)
+
+Returns
+
+ValidCreateActionInput
+
+Argument Details
+
++ **i**
+  + CreateActionInput to validate
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateCreateActionOptions
+
+Normalize and validate CreateActionOptions, applying defaults for booleans/numbers/arrays.
+
+```ts
+export function validateCreateActionOptions(options?: CreateActionOptions): ValidCreateActionOptions 
+```
+
+See also: [CreateActionOptions](./wallet.md#interface-createactionoptions), [ValidCreateActionOptions](./wallet.md#interface-validcreateactionoptions)
+
+Returns
+
+ValidCreateActionOptions with defaults applied
+
+Argument Details
+
++ **options**
+  + CreateActionOptions or undefined
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateCreateActionOutput
+
+Validate CreateActionOutput fields: locking script, satoshis, description, basket, tags.
+
+```ts
+export function validateCreateActionOutput(o: CreateActionOutput): ValidCreateActionOutput 
+```
+
+See also: [CreateActionOutput](./wallet.md#interface-createactionoutput), [ValidCreateActionOutput](./wallet.md#interface-validcreateactionoutput)
+
+Returns
+
+ValidCreateActionOutput
+
+Argument Details
+
++ **o**
+  + CreateActionOutput to validate
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateDiscoverByAttributesArgs
+
+Validate DiscoverByAttributesArgs: attributes, limit, offset, and permission flag.
+
+```ts
+export function validateDiscoverByAttributesArgs(args: DiscoverByAttributesArgs): ValidDiscoverByAttributesArgs 
+```
+
+See also: [DiscoverByAttributesArgs](./wallet.md#interface-discoverbyattributesargs), [ValidDiscoverByAttributesArgs](./wallet.md#interface-validdiscoverbyattributesargs)
+
+Returns
+
+ValidDiscoverByAttributesArgs
+
+Argument Details
+
++ **args**
+  + DiscoverByAttributesArgs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateDiscoverByIdentityKeyArgs
+
+Validate DiscoverByIdentityKeyArgs, enforcing identity key length and defaults.
+
+```ts
+export function validateDiscoverByIdentityKeyArgs(args: DiscoverByIdentityKeyArgs): ValidDiscoverByIdentityKeyArgs 
+```
+
+See also: [DiscoverByIdentityKeyArgs](./wallet.md#interface-discoverbyidentitykeyargs), [ValidDiscoverByIdentityKeyArgs](./wallet.md#interface-validdiscoverbyidentitykeyargs)
+
+Returns
+
+ValidDiscoverByIdentityKeyArgs
+
+Argument Details
+
++ **args**
+  + DiscoverByIdentityKeyArgs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateInteger
+
+Validate an integer, applying an optional default.
+
+```ts
+export function validateInteger(v: number | undefined, name: string, defaultValue?: number, min?: number, max?: number): number 
+```
+
+Returns
+
+validated integer
+
+Argument Details
+
++ **v**
+  + value to validate (may be undefined)
++ **name**
+  + parameter name used in error messages
++ **defaultValue**
+  + value to return when v is undefined
++ **min**
+  + optional minimum allowed value
++ **max**
+  + optional maximum allowed value
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateInternalizeActionArgs
+
+Validate InternalizeActionArgs: tx, outputs, description, labels, permission flag.
+
+```ts
+export function validateInternalizeActionArgs(args: InternalizeActionArgs): ValidInternalizeActionArgs 
+```
+
+See also: [InternalizeActionArgs](./wallet.md#interface-internalizeactionargs), [ValidInternalizeActionArgs](./wallet.md#interface-validinternalizeactionargs)
+
+Returns
+
+ValidInternalizeActionArgs
+
+Argument Details
+
++ **args**
+  + InternalizeActionArgs to validate
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateInternalizeOutput
+
+Validate an InternalizeOutput entry.
+
+```ts
+export function validateInternalizeOutput(args: InternalizeOutput): ValidInternalizeOutput 
+```
+
+See also: [InternalizeOutput](./wallet.md#interface-internalizeoutput), [ValidInternalizeOutput](./wallet.md#interface-validinternalizeoutput)
+
+Returns
+
+ValidInternalizeOutput
+
+Argument Details
+
++ **args**
+  + InternalizeOutput to validate
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateListActionsArgs
+
+```ts
+export function validateListActionsArgs(args: ListActionsArgs): ValidListActionsArgs 
+```
+
+See also: [ListActionsArgs](./wallet.md#interface-listactionsargs), [ValidListActionsArgs](./wallet.md#interface-validlistactionsargs)
+
+Argument Details
+
++ **args.labels**
+  + An array of labels used to filter actions.
++ **args.labelQueryMode**
+  + Optional. Specifies how to match labels (default is any which matches any of the labels).
++ **args.includeLabels**
+  + Optional. Whether to include transaction labels in the result set.
++ **args.includeInputs**
+  + Optional. Whether to include input details in the result set.
++ **args.includeInputSourceLockingScripts**
+  + Optional. Whether to include input source locking scripts in the result set.
++ **args.includeInputUnlockingScripts**
+  + Optional. Whether to include input unlocking scripts in the result set.
++ **args.includeOutputs**
+  + Optional. Whether to include output details in the result set.
++ **args.includeOutputLockingScripts**
+  + Optional. Whether to include output locking scripts in the result set.
++ **args.limit**
+  + Optional. The maximum number of transactions to retrieve.
++ **args.offset**
+  + Optional. Number of transactions to skip before starting to return the results.
++ **args.seekPermission**
+  + — Optional. Whether to seek permission from the user for this operation if required. Default true, will return an error rather than proceed if set to false.
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateListCertificatesArgs
+
+Validate ListCertificatesArgs: certifiers, types, paging, and optional privileged reason.
+
+```ts
+export function validateListCertificatesArgs(args: ListCertificatesArgs): ValidListCertificatesArgs 
+```
+
+See also: [ListCertificatesArgs](./wallet.md#interface-listcertificatesargs), [ValidListCertificatesArgs](./wallet.md#interface-validlistcertificatesargs)
+
+Returns
+
+ValidListCertificatesArgs
+
+Argument Details
+
++ **args**
+  + ListCertificatesArgs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateListOutputsArgs
+
+```ts
+export function validateListOutputsArgs(args: ListOutputsArgs): ValidListOutputsArgs 
+```
+
+See also: [ListOutputsArgs](./wallet.md#interface-listoutputsargs), [ValidListOutputsArgs](./wallet.md#interface-validlistoutputsargs)
+
+Argument Details
+
++ **args.basket**
+  + Required. The associated basket name whose outputs should be listed.
++ **args.tags**
+  + Optional. Filter outputs based on these tags.
++ **args.tagQueryMode**
+  + Optional. Filter mode, defining whether all or any of the tags must match. By default, any tag can match.
++ **args.include**
+  + Optional. Whether to include locking scripts (with each output) or entire transactions (as aggregated BEEF, at the top level) in the result. By default, unless specified, neither are returned.
++ **args.includeEntireTransactions**
+  + Optional. Whether to include the entire transaction(s) in the result.
++ **args.includeCustomInstructions**
+  + Optional. Whether custom instructions should be returned in the result.
++ **args.includeTags**
+  + Optional. Whether the tags associated with the output should be returned.
++ **args.includeLabels**
+  + Optional. Whether the labels associated with the transaction containing the output should be returned.
++ **args.limit**
+  + Optional limit on the number of outputs to return.
++ **args.offset**
+  + If positive or zero: Number of outputs to skip before starting to return results, oldest first.
+If negative: Outputs are returned newest first and offset of -1 is the newest output.
+When using negative offsets, caution is required as new outputs may be added between calls,
+potentially causing outputs to be duplicated across calls.
++ **args.seekPermission**
+  + — Optional. Whether to seek permission from the user for this operation if required. Default true, will return an error rather than proceed if set to false.
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateOptionalInteger
+
+Validate an optional integer. Returns undefined or the validated integer.
+
+```ts
+export function validateOptionalInteger(v: number | undefined, name: string, min?: number, max?: number): number | undefined 
+```
+
+Returns
+
+validated integer or undefined
+
+Argument Details
+
++ **v**
+  + value to validate (may be undefined)
++ **name**
+  + parameter name used in error messages
++ **min**
+  + optional minimum value
++ **max**
+  + optional maximum value
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateOptionalOutpointString
+
+Validate an optional outpoint string (txid.vout).
+
+```ts
+export function validateOptionalOutpointString(outpoint: string | undefined, name: string): string | undefined 
+```
+
+Returns
+
+validated outpoint string or undefined
+
+Argument Details
+
++ **outpoint**
+  + outpoint string or undefined
++ **name**
+  + parameter name used in error messages
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateOriginator
+
+Validate originator string (trim/lowercase and part length checks).
+
+```ts
+export function validateOriginator(s?: string): string | undefined 
+```
+
+Returns
+
+normalized originator or undefined
+
+Argument Details
+
++ **s**
+  + originator string or undefined
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateOutpointString
+
+Validate an outpoint string of the form txid.vout.
+
+```ts
+export function validateOutpointString(outpoint: string, name: string): string 
+```
+
+Returns
+
+normalized outpoint string (validated txid and vout)
+
+Argument Details
+
++ **outpoint**
+  + outpoint string
++ **name**
+  + parameter name used in error messages
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validatePositiveIntegerOrZero
+
+Validate a non-negative integer (zero allowed).
+
+```ts
+export function validatePositiveIntegerOrZero(v: number, name: string): number 
+```
+
+Returns
+
+validated integer
+
+Argument Details
+
++ **v**
+  + value to validate
++ **name**
+  + parameter name used in error messages
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateProveCertificateArgs
+
+Validate ProveCertificateArgs including optional certificate fields and reveal list.
+
+```ts
+export function validateProveCertificateArgs(args: ProveCertificateArgs): ValidProveCertificateArgs 
+```
+
+See also: [ProveCertificateArgs](./wallet.md#interface-provecertificateargs), [ValidProveCertificateArgs](./wallet.md#interface-validprovecertificateargs)
+
+Returns
+
+ValidProveCertificateArgs
+
+Argument Details
+
++ **args**
+  + ProveCertificateArgs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateRelinquishCertificateArgs
+
+Validate RelinquishCertificateArgs (type, serialNumber, certifier).
+
+```ts
+export function validateRelinquishCertificateArgs(args: RelinquishCertificateArgs): ValidRelinquishCertificateArgs 
+```
+
+See also: [RelinquishCertificateArgs](./wallet.md#interface-relinquishcertificateargs), [ValidRelinquishCertificateArgs](./wallet.md#interface-validrelinquishcertificateargs)
+
+Returns
+
+ValidRelinquishCertificateArgs
+
+Argument Details
+
++ **args**
+  + RelinquishCertificateArgs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateRelinquishOutputArgs
+
+Validate RelinquishOutputArgs (basket and output).
+
+```ts
+export function validateRelinquishOutputArgs(args: RelinquishOutputArgs): ValidRelinquishOutputArgs 
+```
+
+See also: [RelinquishOutputArgs](./wallet.md#interface-relinquishoutputargs), [ValidRelinquishOutputArgs](./wallet.md#interface-validrelinquishoutputargs)
+
+Returns
+
+ValidRelinquishOutputArgs
+
+Argument Details
+
++ **args**
+  + RelinquishOutputArgs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateSatoshis
+
+Validate a satoshi amount.
+
+```ts
+export function validateSatoshis(v: number | undefined, name: string, min?: number): number 
+```
+
+Returns
+
+validated satoshi number
+
+Argument Details
+
++ **v**
+  + value to validate (integer number of satoshis)
++ **name**
+  + parameter name used in error messages
++ **min**
+  + optional minimum allowed satoshi value
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateSignActionArgs
+
+Validate SignActionArgs and apply defaults/flags.
+
+```ts
+export function validateSignActionArgs(args: SignActionArgs): ValidSignActionArgs 
+```
+
+See also: [SignActionArgs](./wallet.md#interface-signactionargs), [ValidSignActionArgs](./wallet.md#interface-validsignactionargs)
+
+Returns
+
+ValidSignActionArgs
+
+Argument Details
+
++ **args**
+  + SignActionArgs to validate
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateSignActionOptions
+
+Set all default true/false booleans to true or false if undefined.
+Set all possibly undefined numbers to their default values.
+Set all possibly undefined arrays to empty arrays.
+Convert string outpoints to `{ txid: string, vout: number }`
+
+```ts
+export function validateSignActionOptions(options?: SignActionOptions): ValidSignActionOptions 
+```
+
+See also: [SignActionOptions](./wallet.md#interface-signactionoptions), [ValidSignActionOptions](./wallet.md#interface-validsignactionoptions)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateStringLength
+
+Validate string length in bytes for UTF-8 encoded string.
+
+```ts
+export function validateStringLength(s: string, name: string, min?: number, max?: number): string 
+```
+
+Returns
+
+the original string when valid
+
+Argument Details
+
++ **s**
+  + string to validate
++ **name**
+  + parameter name used in error messages
++ **min**
+  + optional minimum byte length
++ **max**
+  + optional maximum byte length
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateWalletPayment
+
+Validate wallet payment remittance structure.
+
+```ts
+export function validateWalletPayment(args?: WalletPayment): ValidWalletPayment | undefined 
+```
+
+See also: [ValidWalletPayment](./wallet.md#interface-validwalletpayment), [WalletPayment](./wallet.md#interface-walletpayment)
+
+Returns
+
+ValidWalletPayment or undefined
+
+Argument Details
+
++ **args**
+  + WalletPayment or undefined
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ## Types
 
 | | | |
 | --- | --- | --- |
-| [AcquireCertificateResult](#type-acquirecertificateresult) | [EntityNameStringMax100Bytes](#type-entitynamestringmax100bytes) | [ProtocolString5To400Bytes](#type-protocolstring5to400bytes) |
-| [AcquisitionProtocol](#type-acquisitionprotocol) | [ErrorCodeString10To40Bytes](#type-errorcodestring10to40bytes) | [PubKeyHex](#type-pubkeyhex) |
-| [ActionStatus](#type-actionstatus) | [ErrorDescriptionString20To200Bytes](#type-errordescriptionstring20to200bytes) | [ReviewActionResultStatus](#type-reviewactionresultstatus) |
-| [AtomicBEEF](#type-atomicbeef) | [HexString](#type-hexstring) | [SatoshiValue](#type-satoshivalue) |
-| [BEEF](#type-beef) | [ISOTimestampString](#type-isotimestampstring) | [SecurityLevel](#type-securitylevel) |
-| [Base64String](#type-base64string) | [KeyIDStringUnder800Bytes](#type-keyidstringunder800bytes) | [SendWithResultStatus](#type-sendwithresultstatus) |
-| [BasketStringUnder300Bytes](#type-basketstringunder300bytes) | [KeyringRevealer](#type-keyringrevealer) | [TXIDHexString](#type-txidhexstring) |
-| [BooleanDefaultFalse](#type-booleandefaultfalse) | [LabelStringUnder300Bytes](#type-labelstringunder300bytes) | [TrustSelf](#type-trustself) |
-| [BooleanDefaultTrue](#type-booleandefaulttrue) | [OriginatorDomainNameStringUnder250Bytes](#type-originatordomainnamestringunder250bytes) | [VersionString7To30Bytes](#type-versionstring7to30bytes) |
-| [Byte](#type-byte) | [OutpointString](#type-outpointstring) | [WalletCounterparty](#type-walletcounterparty) |
-| [CallType](#type-calltype) | [OutputTagStringUnder300Bytes](#type-outputtagstringunder300bytes) | [WalletErrorCode](#type-walleterrorcode) |
-| [CertificateFieldNameUnder50Bytes](#type-certificatefieldnameunder50bytes) | [PositiveInteger](#type-positiveinteger) | [WalletNetwork](#type-walletnetwork) |
-| [Counterparty](#type-counterparty) | [PositiveIntegerDefault10Max10000](#type-positiveintegerdefault10max10000) | [WalletProtocol](#type-walletprotocol) |
+| [AcquireCertificateResult](#type-acquirecertificateresult) | [EntityIconURLStringMax500Bytes](#type-entityiconurlstringmax500bytes) | [PositiveIntegerOrZero](#type-positiveintegerorzero) |
+| [AcquisitionProtocol](#type-acquisitionprotocol) | [EntityNameStringMax100Bytes](#type-entitynamestringmax100bytes) | [ProtocolString5To400Bytes](#type-protocolstring5to400bytes) |
+| [ActionStatus](#type-actionstatus) | [ErrorCodeString10To40Bytes](#type-errorcodestring10to40bytes) | [PubKeyHex](#type-pubkeyhex) |
+| [AtomicBEEF](#type-atomicbeef) | [ErrorDescriptionString20To200Bytes](#type-errordescriptionstring20to200bytes) | [ReviewActionResultStatus](#type-reviewactionresultstatus) |
+| [BEEF](#type-beef) | [HexString](#type-hexstring) | [SatoshiValue](#type-satoshivalue) |
+| [Base64String](#type-base64string) | [ISOTimestampString](#type-isotimestampstring) | [SecurityLevel](#type-securitylevel) |
+| [BasketStringUnder300Bytes](#type-basketstringunder300bytes) | [KeyIDStringUnder800Bytes](#type-keyidstringunder800bytes) | [SendWithResultStatus](#type-sendwithresultstatus) |
+| [BooleanDefaultFalse](#type-booleandefaultfalse) | [KeyringRevealer](#type-keyringrevealer) | [TXIDHexString](#type-txidhexstring) |
+| [BooleanDefaultTrue](#type-booleandefaulttrue) | [LabelStringUnder300Bytes](#type-labelstringunder300bytes) | [TrustSelf](#type-trustself) |
+| [Byte](#type-byte) | [OriginatorDomainNameStringUnder250Bytes](#type-originatordomainnamestringunder250bytes) | [VersionString7To30Bytes](#type-versionstring7to30bytes) |
+| [CallType](#type-calltype) | [OutpointString](#type-outpointstring) | [WalletCounterparty](#type-walletcounterparty) |
+| [CertificateFieldNameUnder50Bytes](#type-certificatefieldnameunder50bytes) | [OutputTagStringUnder300Bytes](#type-outputtagstringunder300bytes) | [WalletErrorCode](#type-walleterrorcode) |
+| [Counterparty](#type-counterparty) | [PositiveInteger](#type-positiveinteger) | [WalletNetwork](#type-walletnetwork) |
+| [DescriptionString5to2000Bytes](#type-descriptionstring5to2000bytes) | [PositiveIntegerDefault10Max10000](#type-positiveintegerdefault10max10000) | [WalletProtocol](#type-walletprotocol) |
 | [DescriptionString5to50Bytes](#type-descriptionstring5to50bytes) | [PositiveIntegerMax10](#type-positiveintegermax10) |  |
-| [EntityIconURLStringMax500Bytes](#type-entityiconurlstringmax500bytes) | [PositiveIntegerOrZero](#type-positiveintegerorzero) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -4131,6 +5487,17 @@ export type Counterparty = PublicKey | PubKeyHex | "self" | "anyone"
 ```
 
 See also: [PubKeyHex](./wallet.md#type-pubkeyhex), [PublicKey](./primitives.md#class-publickey)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Type: DescriptionString5to2000Bytes
+
+DescriptionString5to2000Bytes alias type (documented).
+
+```ts
+export type DescriptionString5to2000Bytes = string
+```
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -4474,7 +5841,9 @@ export enum walletErrors {
     unsupportedAction = 2,
     invalidHmac = 3,
     invalidSignature = 4,
-    reviewActions = 5
+    reviewActions = 5,
+    invalidParameter = 6,
+    insufficientFunds = 7
 }
 ```
 
@@ -4483,3 +5852,12 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ## Variables
 
+### Variable: specOpThrowReviewActions
+
+```ts
+specOpThrowReviewActions = "a496e747fc3ad5fabdd4ae8f91184e71f87539bd3d962aa2548942faaaf0047a"
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---

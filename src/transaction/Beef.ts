@@ -869,3 +869,5 @@ export class Beef {
     }
   }
 }
+
+export default Beef

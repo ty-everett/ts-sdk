@@ -6,5 +6,8 @@ export { default as WalletClient } from './WalletClient.js'
 // Is this an error? should it be 'walletErrors', the enum not the class?
 export { default as WalletErrors } from './WalletError.js'
 export { default as WERR_REVIEW_ACTIONS } from './WERR_REVIEW_ACTIONS.js'
+export { default as WERR_INVALID_PARAMETER } from './WERR_INVALID_PARAMETER.js'
+export { default as WERR_INSUFFICIENT_FUNDS } from './WERR_INSUFFICIENT_FUNDS.js'
 export * from './WalletError.js'
+export * as Validation from './validationHelpers.js'
 export * from './substrates/index.js'
