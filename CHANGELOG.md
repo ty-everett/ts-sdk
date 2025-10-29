@@ -174,7 +174,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - WalletClient argument validation methods to throw WERR_INVALID_PARAMETER errors.
-- validationHelpers functions exporded under Validation.
+- validationHelpers functions exported under Validation.
 - Support for WERR_INVALID_PARAMETER and WERR_INSUFFICIENT_FUNDS errors through HTTPWalletJSON
 
 ---
