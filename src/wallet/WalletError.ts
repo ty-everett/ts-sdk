@@ -22,12 +22,11 @@ export class WalletError extends Error {
    * Example deserialization can be found in HTTPWalletJSON.ts of bsv ts-sdk.
    *
    * @param error
-   * @returns stringified JSON representation of the error such that it can be desirialized to a WalletError.
+   * @returns stringified JSON representation of the error such that it can be deserialized to a WalletError.
    */
   static unknownToJson (error: any): string {
-    let json: string | undefined
     let e: any | undefined
-    if (typeof error === 'object' && error?.constructor.name.startsWith('WERR_')) {
+    if (typeof error.constructor.name === 'string' && String(error.constructor.name).startsWith('WERR_')) {
       e = {
         name: error.constructor.name,
         message: error.message,
@@ -61,7 +60,7 @@ export class WalletError extends Error {
         isError: true
       }
     }
-    json = JSON.stringify(e)
+    const json = JSON.stringify(e)
     return json
   }
 }

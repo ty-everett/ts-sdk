@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import {
   AbortActionArgs,
   AcquireCertificateArgs,
@@ -355,7 +356,7 @@ export function validateCreateActionInput (i: CreateActionInput): ValidCreateAct
   if (i.unlockingScript === undefined && i.unlockingScriptLength === undefined) { throw new WERR_INVALID_PARAMETER('unlockingScript, unlockingScriptLength', 'at least one valid value.') }
   const unlockingScript = validateOptionalHexString(i.unlockingScript, 'unlockingScript')
   const unlockingScriptLength = i.unlockingScriptLength ?? (unlockingScript != null ? unlockingScript.length / 2 : 0)
-  if (!!unlockingScript && unlockingScriptLength !== unlockingScript.length / 2) { throw new WERR_INVALID_PARAMETER('unlockingScriptLength', 'length unlockingScript if both valid.') }
+  if (unlockingScript && unlockingScriptLength !== unlockingScript.length / 2) { throw new WERR_INVALID_PARAMETER('unlockingScriptLength', 'length unlockingScript if both valid.') }
   const vi: ValidCreateActionInput = {
     outpoint: parseWalletOutpoint(i.outpoint),
     inputDescription: validateStringLength(i.inputDescription, 'inputDescription', 5, 2000),
@@ -839,11 +840,6 @@ function validateKeyringRevealer (kr: KeyringRevealer, name: string): KeyringRev
   return validateHexString(kr, name)
 }
 
-function validateOptionalKeyringRevealer (kr: KeyringRevealer | undefined, name: string): KeyringRevealer | undefined {
-  if (kr === undefined) return undefined
-  return validateKeyringRevealer(kr, name)
-}
-
 function validateKeyringForSubject (
   kr: Record<CertificateFieldNameUnder50Bytes, Base64String>,
   name: string
@@ -853,14 +849,6 @@ function validateKeyringForSubject (
     validateBase64String(kr[fn], `${name} field value`)
   }
   return kr
-}
-
-function validateOptionalKeyringForSubject (
-  kr: Record<CertificateFieldNameUnder50Bytes, Base64String> | undefined,
-  name: string
-): Record<CertificateFieldNameUnder50Bytes, Base64String> | undefined {
-  if (kr === undefined) return undefined
-  return validateKeyringForSubject(kr, name)
 }
 
 export interface ValidAcquireDirectCertificateArgs extends ValidWalletSignerArgs {
@@ -1150,7 +1138,7 @@ export function validateListActionsArgs (args: ListActionsArgs): ValidListAction
   else throw new WERR_INVALID_PARAMETER('labelQueryMode', 'undefined, \'any\', or \'all\'')
 
   const vargs: ValidListActionsArgs = {
-    labels: (args.labels || []).map(t => validateLabel(t)),
+    labels: (args.labels != null ? args.labels : []).map(t => validateLabel(t)),
     labelQueryMode,
     includeLabels: defaultFalse(args.includeLabels),
     includeInputs: defaultFalse(args.includeInputs),

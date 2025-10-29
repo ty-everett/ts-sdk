@@ -1,5 +1,3 @@
-import { AtomicBEEF, OutpointString, ReviewActionResult, SendWithResult, TXIDHexString } from './Wallet.interfaces.js'
-
 /**
  * Insufficient funds in the available inputs to cover the cost of the required outputs
  * and the transaction fee (${moreSatoshisNeeded} more satoshis are needed,
