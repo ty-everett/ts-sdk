@@ -265,15 +265,13 @@ function validateOptionalBase64String (
  * @returns validated base64 string
  * @throws WERR_INVALID_PARAMETER when invalid
  */
-function validateBase64String (s: string, name: string, min?: number, max?: number): string {
+export function validateBase64String (s: string, name: string, min?: number, max?: number): string {
   s = s.trim()
   if (s.length === 0) {
     throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
   }
 
   let paddingCount = 0
-  let validCharCount = 0
-
   for (let i = 0; i < s.length; i++) {
     const char = s.charCodeAt(i)
     if (char >= 65 && char <= 90) continue // A-Z
