@@ -1,7 +1,5 @@
 import { CreateActionArgs } from '../Wallet.interfaces'
 import WalletClient from '../WalletClient'
-import WERR_INVALID_PARAMETER from '../WERR_INVALID_PARAMETER'
-
 describe('WalletClient', () => {
   it('0 createAction', async () => {
     const wallet = new WalletClient('auto', '0.WalletClient.test')
