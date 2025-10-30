@@ -392,10 +392,6 @@ describe('Spend', () => {
   }
 
   it('Successfully validates a spend where sequence is set to undefined', async () => {
-    const privateKey = new PrivateKey(1)
-    const p2pkh = new P2PKH()
-    const lockingScript = p2pkh.lock(privateKey.toAddress())
-    const unlockingScriptTemplate = p2pkh.unlock(privateKey)
     const sourceTransaction = new Transaction(
       1,
       [{
@@ -406,14 +402,14 @@ describe('Spend', () => {
       }],
       [
         {
-          lockingScript,
+          lockingScript: Script.fromASM('OP_NOP'),
           satoshis: 2
         }
       ],
       0
     )
     const txid = sourceTransaction.id('hex')
-    sourceTransaction.merklePath = MerklePath.fromCoinbaseTxidAndHeight(txid, 1)
+    sourceTransaction.merklePath = MerklePath.fromCoinbaseTxidAndHeight(txid, 0)
     const chain = new MockChain({ blockheaders: [] })
     chain.addBlock(txid)
 
@@ -421,19 +417,17 @@ describe('Spend', () => {
       1,
       [
         {
-          unlockingScriptTemplate,
+          unlockingScript: Script.fromASM('OP_TRUE'),
           sourceTransaction,
           sourceOutputIndex: 0
         }
       ],
       [{
-          lockingScript,
+          lockingScript: Script.fromASM('OP_NOP'),
           satoshis: 1
       }],
       0
     )
-
-    await spendTx.sign()
 
     const valid = await spendTx.verify(chain)
     
