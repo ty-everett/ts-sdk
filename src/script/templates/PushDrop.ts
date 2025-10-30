@@ -9,11 +9,7 @@ import {
 import { WalletInterface } from '../../wallet/Wallet.interfaces.js'
 import { Transaction } from '../../transaction/index.js'
 import { WalletProtocol } from '../../wallet/Wallet.interfaces.js'
-
-function verifyTruthy<T>(v: T | undefined): T {
-  if (v == null) throw new Error('must have value')
-  return v
-}
+import { verifyNotNull } from '../../primitives/utils.js'
 
 /**
  * For a given piece of data to push onto the stack in script, creates the correct minimally-encoded script chunk,
@@ -71,7 +67,7 @@ export default class PushDrop implements ScriptTemplate {
     fields: number[][]
   } {
     const lockingPublicKey = PublicKey.fromString(
-      Utils.toHex(verifyTruthy(script.chunks[0].data)) // ✅ Ensure not undefined
+      Utils.toHex(verifyNotNull(script.chunks[0].data, 'script.chunks[0].data must have value'))
     )
 
     const fields: number[][] = []
@@ -249,7 +245,7 @@ export default class PushDrop implements ScriptTemplate {
 
         const preimage = TransactionSignature.format({
           sourceTXID,
-          sourceOutputIndex: verifyTruthy(input.sourceOutputIndex),
+          sourceOutputIndex: verifyNotNull(input.sourceOutputIndex, 'input.sourceOutputIndex must have value'),
           sourceSatoshis,
           transactionVersion: tx.version,
           otherInputs,

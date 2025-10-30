@@ -1,6 +1,7 @@
 import Script from '../../script/Script'
 import Spend from '../../script/Spend'
 import Transaction from '../../transaction/Transaction'
+import { verifyNotNull } from '../../primitives/utils'
 
 describe('SpendComplex', () => {
   it('complex unlock script validation', () => {
@@ -19,11 +20,6 @@ describe('SpendComplex', () => {
   })
 })
 
-function verifyTruthy<T> (v: T | undefined): T {
-  if (v == null) throw new Error('must have value')
-  return v
-}
-
 export function validateUnlockScript (
   spendingRawTx: string,
   vin: number,
@@ -34,16 +30,16 @@ export function validateUnlockScript (
   const ls = Script.fromHex(lockingScript)
 
   const spend = new Spend({
-    sourceTXID: verifyTruthy(spendingTx.inputs[vin].sourceTXID),
-    sourceOutputIndex: verifyTruthy(spendingTx.inputs[vin].sourceOutputIndex),
+    sourceTXID: verifyNotNull(spendingTx.inputs[vin].sourceTXID, 'sourceTXID must have value'),
+    sourceOutputIndex: verifyNotNull(spendingTx.inputs[vin].sourceOutputIndex, 'sourceOutputIndex must have value'),
     sourceSatoshis: amount,
     lockingScript: ls,
     transactionVersion: spendingTx.version,
     otherInputs: spendingTx.inputs.filter((v, i) => i !== vin),
     inputIndex: vin,
-    unlockingScript: verifyTruthy(spendingTx.inputs[vin].unlockingScript),
+    unlockingScript: verifyNotNull(spendingTx.inputs[vin].unlockingScript, 'unlockingScript must have value'),
     outputs: spendingTx.outputs,
-    inputSequence: verifyTruthy(spendingTx.inputs[vin].sequence),
+    inputSequence: verifyNotNull(spendingTx.inputs[vin].sequence, 'sequence must have value'),
     lockTime: spendingTx.lockTime
   })
 

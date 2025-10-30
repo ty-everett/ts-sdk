@@ -7,8 +7,30 @@ import RPuzzle from '../../script/templates/RPuzzle'
 import Transaction from '../../transaction/Transaction'
 import LockingScript from '../../script/LockingScript'
 import UnlockingScript from '../../script/UnlockingScript'
-
+import MerklePath from '../../transaction/MerklePath'
+import ChainTracker from '../../transaction/ChainTracker'
 import spendValid from './spend.valid.vectors'
+import Script from '../../script/Script'
+
+export class MockChain implements ChainTracker {
+  mock: { blockheaders: string[] }
+
+  constructor(mock: { blockheaders: string[] }) {
+    this.mock = mock
+  }
+
+  addBlock(merkleRoot: string) {
+    this.mock.blockheaders.push(merkleRoot)
+  }
+
+  async isValidRootForHeight(root: string, height: number): Promise<boolean> {
+    return this.mock.blockheaders[height] === root
+  }
+
+  async currentHeight(): Promise<number> {
+    return this.mock.blockheaders.length
+  }
+}
 
 describe('Spend', () => {
   it('Successfully validates a P2PKH spend', async () => {
@@ -368,4 +390,53 @@ describe('Spend', () => {
       expect(spend.validate()).toBe(true)
     })
   }
+
+  it('Successfully validates a spend where sequence is set to undefined', async () => {
+    const privateKey = new PrivateKey(1)
+    const p2pkh = new P2PKH()
+    const lockingScript = p2pkh.lock(privateKey.toAddress())
+    const unlockingScriptTemplate = p2pkh.unlock(privateKey)
+    const sourceTransaction = new Transaction(
+      1,
+      [{
+        sourceTXID: '0000000000000000000000000000000000000000000000000000000000000000',
+        sourceOutputIndex: 0,
+        unlockingScript: Script.fromASM('OP_TRUE'),
+        sequence: 0xffffffff
+      }],
+      [
+        {
+          lockingScript,
+          satoshis: 2
+        }
+      ],
+      0
+    )
+    const txid = sourceTransaction.id('hex')
+    sourceTransaction.merklePath = MerklePath.fromCoinbaseTxidAndHeight(txid, 1)
+    const chain = new MockChain({ blockheaders: [] })
+    chain.addBlock(txid)
+
+    const spendTx = new Transaction(
+      1,
+      [
+        {
+          unlockingScriptTemplate,
+          sourceTransaction,
+          sourceOutputIndex: 0
+        }
+      ],
+      [{
+          lockingScript,
+          satoshis: 1
+      }],
+      0
+    )
+
+    await spendTx.sign()
+
+    const valid = await spendTx.verify(chain)
+    
+    expect(valid).toBe(true)
+  })
 })
