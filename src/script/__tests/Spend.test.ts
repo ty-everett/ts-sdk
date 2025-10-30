@@ -432,5 +432,13 @@ describe('Spend', () => {
     const valid = await spendTx.verify(chain)
     
     expect(valid).toBe(true)
+
+    const b = spendTx.toBinary()
+    const t = Transaction.fromBinary(b)
+    expect(t.inputs[0].sequence).toBe(0xffffffff)
+
+    const b2 = spendTx.toEF()
+    const t2 = Transaction.fromEF(b2)
+    expect(t2.inputs[0].sequence).toBe(0xffffffff)
   })
 })
