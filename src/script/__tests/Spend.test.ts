@@ -7,8 +7,30 @@ import RPuzzle from '../../script/templates/RPuzzle'
 import Transaction from '../../transaction/Transaction'
 import LockingScript from '../../script/LockingScript'
 import UnlockingScript from '../../script/UnlockingScript'
-
+import MerklePath from '../../transaction/MerklePath'
+import ChainTracker from '../../transaction/ChainTracker'
 import spendValid from './spend.valid.vectors'
+import Script from '../../script/Script'
+
+export class MockChain implements ChainTracker {
+  mock: { blockheaders: string[] }
+
+  constructor(mock: { blockheaders: string[] }) {
+    this.mock = mock
+  }
+
+  addBlock(merkleRoot: string) {
+    this.mock.blockheaders.push(merkleRoot)
+  }
+
+  async isValidRootForHeight(root: string, height: number): Promise<boolean> {
+    return this.mock.blockheaders[height] === root
+  }
+
+  async currentHeight(): Promise<number> {
+    return this.mock.blockheaders.length
+  }
+}
 
 describe('Spend', () => {
   it('Successfully validates a P2PKH spend', async () => {
@@ -368,4 +390,55 @@ describe('Spend', () => {
       expect(spend.validate()).toBe(true)
     })
   }
+
+  it('Successfully validates a spend where sequence is set to undefined', async () => {
+    const sourceTransaction = new Transaction(
+      1,
+      [{
+        sourceTXID: '0000000000000000000000000000000000000000000000000000000000000000',
+        sourceOutputIndex: 0,
+        unlockingScript: Script.fromASM('OP_TRUE'),
+        sequence: 0xffffffff
+      }],
+      [
+        {
+          lockingScript: Script.fromASM('OP_NOP'),
+          satoshis: 2
+        }
+      ],
+      0
+    )
+    const txid = sourceTransaction.id('hex')
+    sourceTransaction.merklePath = MerklePath.fromCoinbaseTxidAndHeight(txid, 0)
+    const chain = new MockChain({ blockheaders: [] })
+    chain.addBlock(txid)
+
+    const spendTx = new Transaction(
+      1,
+      [
+        {
+          unlockingScript: Script.fromASM('OP_TRUE'),
+          sourceTransaction,
+          sourceOutputIndex: 0
+        }
+      ],
+      [{
+          lockingScript: Script.fromASM('OP_NOP'),
+          satoshis: 1
+      }],
+      0
+    )
+
+    const valid = await spendTx.verify(chain)
+    
+    expect(valid).toBe(true)
+
+    const b = spendTx.toBinary()
+    const t = Transaction.fromBinary(b)
+    expect(t.inputs[0].sequence).toBe(0xffffffff)
+
+    const b2 = spendTx.toEF()
+    const t2 = Transaction.fromEF(b2)
+    expect(t2.inputs[0].sequence).toBe(0xffffffff)
+  })
 })

@@ -618,7 +618,7 @@ export default class Transaction {
       const scriptBin = i.unlockingScript.toBinary()
       writer.writeVarIntNum(scriptBin.length)
       writer.write(scriptBin)
-      writer.writeUInt32LE(i.sequence ?? 0)
+      writer.writeUInt32LE(i.sequence ?? 0xffffffff) // default to max sequence
     }
     writer.writeVarIntNum(this.outputs.length)
     for (const o of this.outputs) {
@@ -659,7 +659,7 @@ export default class Transaction {
       const scriptBin = i.unlockingScript.toBinary()
       writer.writeVarIntNum(scriptBin.length)
       writer.write(scriptBin)
-      writer.writeUInt32LE(i.sequence ?? 0)
+      writer.writeUInt32LE(i.sequence ?? 0xffffffff) // default to max sequence
       writer.writeUInt64LE(
         i.sourceTransaction.outputs[i.sourceOutputIndex].satoshis ?? 0
       )
@@ -866,7 +866,7 @@ export default class Transaction {
           transactionVersion: tx.version,
           otherInputs,
           unlockingScript: input.unlockingScript,
-          inputSequence: input.sequence ?? 0,
+          inputSequence: input.sequence ?? 0xffffffff, // default to max sequence
           inputIndex: i,
           outputs: tx.outputs,
           lockTime: tx.lockTime,

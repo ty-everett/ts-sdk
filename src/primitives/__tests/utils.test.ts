@@ -7,7 +7,8 @@ import {
   fromBase58,
   toBase58,
   fromBase58Check,
-  toBase58Check
+  toBase58Check,
+  verifyNotNull
 } from '../../primitives/utils'
 
 describe('utils', () => {
@@ -205,5 +206,30 @@ describe('utils', () => {
     const input = "\uD800"
     const expected = [0xEF, 0xBF, 0xBD]
     expect(toArray(input)).toEqual(expected)
+  })
+})
+
+describe('verifyNotNull', () => {
+  it('should return the value if it is not null or undefined', () => {
+    expect(verifyNotNull(42)).toBe(42)
+    expect(verifyNotNull('hello')).toBe('hello')
+    expect(verifyNotNull({})).toEqual({})
+    expect(verifyNotNull([])).toEqual([])
+  })
+
+  it('should throw an error with default message if value is null', () => {
+    expect(() => verifyNotNull(null)).toThrow('Expected a valid value, but got undefined or null.')
+  })
+
+  it('should throw an error with default message if value is undefined', () => {
+    expect(() => verifyNotNull(undefined)).toThrow('Expected a valid value, but got undefined or null.')
+  })
+
+  it('should throw an error with custom message if value is null', () => {
+    expect(() => verifyNotNull(null, 'Custom error')).toThrow('Custom error')
+  })
+
+  it('should throw an error with custom message if value is undefined', () => {
+    expect(() => verifyNotNull(undefined, 'Another custom error')).toThrow('Another custom error')
   })
 })

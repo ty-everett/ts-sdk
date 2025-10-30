@@ -1,6 +1,6 @@
 import OP from '../OP.js'
 import ScriptTemplate from '../ScriptTemplate.js'
-import { fromBase58Check } from '../../primitives/utils.js'
+import { fromBase58Check, verifyNotNull } from '../../primitives/utils.js'
 import LockingScript from '../LockingScript.js'
 import UnlockingScript from '../UnlockingScript.js'
 import Transaction from '../../transaction/Transaction.js'
@@ -8,11 +8,6 @@ import PrivateKey from '../../primitives/PrivateKey.js'
 import TransactionSignature from '../../primitives/TransactionSignature.js'
 import { sha256 } from '../../primitives/Hash.js'
 import Script from '../Script.js'
-
-function verifyTruthy<T>(v: T | undefined): T {
-  if (v == null) throw new Error('must have value')
-  return v
-}
 
 /**
  * P2PKH (Pay To Public Key Hash) class implementing ScriptTemplate.
@@ -125,13 +120,13 @@ export default class P2PKH implements ScriptTemplate {
 
         const preimage = TransactionSignature.format({
           sourceTXID,
-          sourceOutputIndex: verifyTruthy(input.sourceOutputIndex),
+          sourceOutputIndex: verifyNotNull(input.sourceOutputIndex, 'input.sourceOutputIndex must have value'),
           sourceSatoshis,
           transactionVersion: tx.version,
           otherInputs,
           inputIndex,
           outputs: tx.outputs,
-          inputSequence: verifyTruthy(input.sequence),
+          inputSequence: verifyNotNull(input.sequence, 'input.sequence must have value'),
           subscript: lockingScript,
           lockTime: tx.lockTime,
           scope: signatureScope

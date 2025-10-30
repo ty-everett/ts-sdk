@@ -819,3 +819,20 @@ export const minimallyEncode = (buf: number[]): number[] => {
 
 const OverflowInt64 = new BigNumber(2).pow(new BigNumber(63))
 const OverflowUint64 = new BigNumber(2).pow(new BigNumber(64))
+
+/**
+ * Verifies that a value is not null or undefined, throwing an error if it is.
+ *
+ * @template T - The type of the value being verified
+ * @param {T | undefined | null} value - The value to verify
+ * @param {string} errorMessage - The error message to throw if the value is null or undefined
+ * @returns {T} - The verified value
+ * @throws {Error} - If the value is null or undefined
+ *
+ * @example
+ * const myValue = verifyNotNull(someValue, 'someValue must be defined')
+ */
+export function verifyNotNull<T> (value: T | undefined | null, errorMessage: string = 'Expected a valid value, but got undefined or null.'): T {
+  if (value == null) throw new Error(errorMessage)
+  return value
+}

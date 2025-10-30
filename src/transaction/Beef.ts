@@ -2,13 +2,8 @@ import MerklePath from './MerklePath.js'
 import Transaction from './Transaction.js'
 import ChainTracker from './ChainTracker.js'
 import BeefTx from './BeefTx.js'
-import { Reader, Writer, toHex, toArray } from '../primitives/utils.js'
+import { Reader, Writer, toHex, toArray, verifyNotNull } from '../primitives/utils.js'
 import { hash256 } from '../primitives/Hash.js'
-
-function verifyTruthy<T> (v: T | undefined): T {
-  if (v == null) throw new Error('Expected a valid value, but got undefined.')
-  return v
-}
 
 export const BEEF_V1 = 4022206465 // 0100BEEF in LE order
 export const BEEF_V2 = 4022206466 // 0200BEEF in LE order
@@ -156,7 +151,7 @@ export class Beef {
 
     for (const i of beefTx.tx.inputs) {
       if (i.sourceTransaction == null) {
-        const itx = this.findTxid(verifyTruthy(i.sourceTXID)) // Ensure sourceTXID is valid
+        const itx = this.findTxid(verifyNotNull(i.sourceTXID, 'sourceTXID must be valid'))
         if (itx != null) {
           i.sourceTransaction = itx.tx
         }
@@ -185,7 +180,7 @@ export class Beef {
       } else {
         for (const i of tx.inputs) {
           if (i.sourceTransaction == null) {
-            const itx = beef.findTxid(verifyTruthy(i.sourceTXID)) // Ensure sourceTXID is valid
+            const itx = beef.findTxid(verifyNotNull(i.sourceTXID, 'sourceTXID must be valid'))
             if (itx != null) {
               i.sourceTransaction = itx.tx
             }

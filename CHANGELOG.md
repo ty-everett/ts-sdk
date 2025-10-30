@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.11 - 2025-10-30](#1811---2025-10-30)
+- [1.8.10 - 2025-10-28](#1810---2025-10-28)
 - [1.8.9 - 2025-10-27](#189---2025-10-27)
 - [1.8.8 - 2025-10-22](#188---2025-10-22)
 - [1.8.7 - 2025-10-22](#187---2025-10-22)
@@ -166,6 +168,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.8.11] - 2025-10-30
+
+### Fixed
+
+- **Transaction**: Default sequence value changed from 0 to 0xffffffff (max sequence) for transaction inputs in serialization and script validation. This aligns with the default set within the preimage calculation. This change ensures that the transaction is marked as final by default, which is the expected behavior for most transactions. addInput had this build in already, this extends that to the constructor approach.
 
 ---
 

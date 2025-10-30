@@ -3426,7 +3426,7 @@ static unknownToJson(error: any): string
 
 Returns
 
-stringified JSON representation of the error such that it can be desirialized to a WalletError.
+stringified JSON representation of the error such that it can be deserialized to a WalletError.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -4562,17 +4562,17 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [isHexString](#function-ishexstring) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) | [validateOutpointString](#function-validateoutpointstring) |
-| [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
-| [toOriginHeader](#function-tooriginheader) | [validateInteger](#function-validateinteger) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
-| [validateAbortActionArgs](#function-validateabortactionargs) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
-| [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) | [validateInternalizeOutput](#function-validateinternalizeoutput) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
-| [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) | [validateListActionsArgs](#function-validatelistactionsargs) | [validateSatoshis](#function-validatesatoshis) |
+| [isHexString](#function-ishexstring) | [validateCreateActionOutput](#function-validatecreateactionoutput) | [validateOriginator](#function-validateoriginator) |
+| [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) | [validateOutpointString](#function-validateoutpointstring) |
+| [toOriginHeader](#function-tooriginheader) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
+| [validateAbortActionArgs](#function-validateabortactionargs) | [validateInteger](#function-validateinteger) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
+| [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
+| [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) | [validateInternalizeOutput](#function-validateinternalizeoutput) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
+| [validateBase64String](#function-validatebase64string) | [validateListActionsArgs](#function-validatelistactionsargs) | [validateSatoshis](#function-validatesatoshis) |
 | [validateBasketInsertion](#function-validatebasketinsertion) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) | [validateSignActionArgs](#function-validatesignactionargs) |
 | [validateCreateActionArgs](#function-validatecreateactionargs) | [validateListOutputsArgs](#function-validatelistoutputsargs) | [validateSignActionOptions](#function-validatesignactionoptions) |
 | [validateCreateActionInput](#function-validatecreateactioninput) | [validateOptionalInteger](#function-validateoptionalinteger) | [validateStringLength](#function-validatestringlength) |
 | [validateCreateActionOptions](#function-validatecreateactionoptions) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) | [validateWalletPayment](#function-validatewalletpayment) |
-| [validateCreateActionOutput](#function-validatecreateactionoutput) | [validateOriginator](#function-validateoriginator) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -4689,6 +4689,36 @@ Argument Details
 Throws
 
 when args contain fields invalid for issuance
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: validateBase64String
+
+Validate a Base64 string (structure and decoded size).
+
+```ts
+export function validateBase64String(s: string, name: string, min?: number, max?: number): string 
+```
+
+Returns
+
+validated base64 string
+
+Argument Details
+
++ **s**
+  + base64 string
++ **name**
+  + parameter name used in error messages
++ **min**
+  + optional minimum decoded byte length
++ **max**
+  + optional maximum decoded byte length
+
+Throws
+
+WERR_INVALID_PARAMETER when invalid
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
