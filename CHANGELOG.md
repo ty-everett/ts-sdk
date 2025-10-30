@@ -5,8 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
-- [1.8.12 - 2025-10-30](#1812---2025-10-30)
-- [1.8.11 - 2025-10-29](#1811---2025-10-29)
+- [1.8.11 - 2025-10-30](#1811---2025-10-30)
 - [1.8.10 - 2025-10-28](#1810---2025-10-28)
 - [1.8.9 - 2025-10-27](#189---2025-10-27)
 - [1.8.8 - 2025-10-22](#188---2025-10-22)
@@ -172,7 +171,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
-### [1.8.11] - 2025-10-29
+### [1.8.11] - 2025-10-30
 
 ### Fixed
 
