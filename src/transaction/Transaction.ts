@@ -866,7 +866,7 @@ export default class Transaction {
           transactionVersion: tx.version,
           otherInputs,
           unlockingScript: input.unlockingScript,
-          inputSequence: input.sequence ?? 0,
+          inputSequence: input.sequence ?? 0xffffffff, // default to max sequence
           inputIndex: i,
           outputs: tx.outputs,
           lockTime: tx.lockTime,
