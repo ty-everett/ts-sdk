@@ -171,6 +171,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.8.12] - 2025-11-06
+
+### Fixed
+
+- **WalletError**: unknownToJson now using isError and name rather than constructor.name
+
+---
+
 ### [1.8.11] - 2025-10-30
 
 ### Fixed
