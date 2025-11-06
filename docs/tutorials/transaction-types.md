@@ -17,7 +17,7 @@ In the previous tutorial, you created a simple transaction that sent BSV to a si
 ## Prerequisites
 
 - Complete the [Your First BSV Transaction](./first-transaction.md) tutorial
-- Have a BRC-100 compliant wallet (such as [MetaNet Desktop Wallet](https://metanet.bsvb.tech/)) installed and configured
+- Have a BRC-100 compliant wallet (such as [MetaNet Desktop Wallet](https://desktop.bsvb.tech/)) installed and configured
 - Some BSV in your wallet
 
 ## Transaction with Multiple Outputs

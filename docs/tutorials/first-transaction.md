@@ -18,7 +18,7 @@ In this tutorial, you'll learn how to create your first Bitcoin SV transactions 
 
 ## Precondition
 
-Install a BRC-100 compliant wallet such as the [MetaNet Desktop Wallet](https://metanet.bsvb.tech/). When you install it, you'll receive a small amount of funds to play with.
+Install a BRC-100 compliant wallet such as the [MetaNet Desktop Wallet](https://desktop.bsvb.tech/). When you install it, you'll receive a small amount of funds to play with.
 
 ## Step 1: Setting Up Your Environment
 
