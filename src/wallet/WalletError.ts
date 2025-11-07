@@ -26,9 +26,9 @@ export class WalletError extends Error {
    */
   static unknownToJson (error: any): string {
     let e: any | undefined
-    if (typeof error.constructor.name === 'string' && String(error.constructor.name).startsWith('WERR_')) {
+    if (error.isError === true && String(error.name).startsWith('WERR_')) {
       e = {
-        name: error.constructor.name,
+        name: error.name,
         message: error.message,
         isError: true
       }

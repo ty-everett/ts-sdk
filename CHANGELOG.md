@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.13 - 2025-11-06](#1813---2025-11-06)
 - [1.8.12 - 2025-11-06](#1812---2025-11-06)
 - [1.8.11 - 2025-10-30](#1811---2025-10-30)
 - [1.8.10 - 2025-10-28](#1810---2025-10-28)
@@ -172,11 +173,21 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
-### [1.8.12] - 2025-11-06
+### [1.8.13] - 2025-11-06
 
 ### Added
 
 - LookupResolver: Support for custom overlay ranking to allow for expedited lookups and reputation tracking.
+
+---
+
+### [1.8.12] - 2025-11-06
+
+### Fixed
+
+- **WalletError**: unknownToJson now using isError and name rather than constructor.name
+
+---
 
 ### [1.8.11] - 2025-10-30
 
