@@ -11,6 +11,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [LookupResolverConfig](#interface-lookupresolverconfig) |
 | [OverlayBroadcastFacilitator](#interface-overlaybroadcastfacilitator) |
 | [OverlayLookupFacilitator](#interface-overlaylookupfacilitator) |
+| [RankedHost](#interface-rankedhost) |
 | [SHIPBroadcasterConfig](#interface-shipbroadcasterconfig) |
 | [TaggedBEEF](#interface-taggedbeef) |
 
@@ -101,6 +102,10 @@ export interface LookupResolverConfig {
     hostOverrides?: Record<string, string[]>;
     additionalHosts?: Record<string, string[]>;
     cache?: CacheOptions;
+    reputationStorage?: "localStorage" | {
+        get: (key: string) => string | null | undefined;
+        set: (key: string, value: string) => void;
+    };
 }
 ```
 
@@ -150,6 +155,17 @@ The network preset to use, unless other options override it.
 networkPreset?: "mainnet" | "testnet" | "local"
 ```
 
+#### Property reputationStorage
+
+Optional storage for host reputation data.
+
+```ts
+reputationStorage?: "localStorage" | {
+    get: (key: string) => string | null | undefined;
+    set: (key: string, value: string) => void;
+}
+```
+
 #### Property slapTrackers
 
 The list of SLAP trackers queried to resolve Overlay Services hosts for a given lookup service.
@@ -196,6 +212,17 @@ Returns a lookup answer for a lookup question
 lookup: (url: string, question: LookupQuestion, timeout?: number) => Promise<LookupAnswer>
 ```
 See also: [LookupAnswer](./overlay-tools.md#type-lookupanswer), [LookupQuestion](./overlay-tools.md#interface-lookupquestion)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: RankedHost
+
+```ts
+export interface RankedHost extends HostReputationEntry {
+    score: number;
+}
+```
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -294,6 +321,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | --- |
 | [HTTPSOverlayBroadcastFacilitator](#class-httpsoverlaybroadcastfacilitator) |
 | [HTTPSOverlayLookupFacilitator](#class-httpsoverlaylookupfacilitator) |
+| [HostReputationTracker](#class-hostreputationtracker) |
 | [LookupResolver](#class-lookupresolver) |
 | [OverlayAdminTokenTemplate](#class-overlayadmintokentemplate) |
 | [TopicBroadcaster](#class-topicbroadcaster) |
@@ -330,6 +358,24 @@ export class HTTPSOverlayLookupFacilitator implements OverlayLookupFacilitator {
 ```
 
 See also: [LookupAnswer](./overlay-tools.md#type-lookupanswer), [LookupQuestion](./overlay-tools.md#interface-lookupquestion), [OverlayLookupFacilitator](./overlay-tools.md#interface-overlaylookupfacilitator)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Class: HostReputationTracker
+
+```ts
+export class HostReputationTracker {
+    constructor(store?: KeyValueStore) 
+    reset(): void 
+    recordSuccess(host: string, latencyMs: number): void 
+    recordFailure(host: string, reason?: unknown): void 
+    rankHosts(hosts: string[], now: number = Date.now()): RankedHost[] 
+    snapshot(host: string): HostReputationEntry | undefined 
+}
+```
+
+See also: [RankedHost](./overlay-tools.md#interface-rankedhost)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -569,6 +615,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | --- |
 | [DEFAULT_SLAP_TRACKERS](#variable-default_slap_trackers) |
 | [DEFAULT_TESTNET_SLAP_TRACKERS](#variable-default_testnet_slap_trackers) |
+| [getOverlayHostReputationTracker](#variable-getoverlayhostreputationtracker) |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -595,6 +642,17 @@ DEFAULT_TESTNET_SLAP_TRACKERS: string[] = [
     "https://testnet-users.bapp.dev"
 ]
 ```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Variable: getOverlayHostReputationTracker
+
+```ts
+getOverlayHostReputationTracker = (): HostReputationTracker => globalTracker
+```
+
+See also: [HostReputationTracker](./overlay-tools.md#class-hostreputationtracker)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

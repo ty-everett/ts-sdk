@@ -4764,6 +4764,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [red](#function-red) |
 | [toArray](#function-toarray) |
 | [toBase64](#function-tobase64) |
+| [verifyNotNull](#function-verifynotnull) |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
@@ -4886,6 +4887,38 @@ Argument Details
 
 + **byteArray**
   + An array of numbers where each number is a byte (0-255).
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Function: verifyNotNull
+
+Verifies that a value is not null or undefined, throwing an error if it is.
+
+Example
+
+```ts
+const myValue = verifyNotNull(someValue, 'someValue must be defined')
+```
+
+```ts
+export function verifyNotNull<T>(value: T | undefined | null, errorMessage: string = "Expected a valid value, but got undefined or null."): T 
+```
+
+Returns
+
+- The verified value
+
+Argument Details
+
++ **value**
+  + The value to verify
++ **errorMessage**
+  + The error message to throw if the value is null or undefined
+
+Throws
+
+- If the value is null or undefined
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
