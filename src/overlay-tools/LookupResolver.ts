@@ -1,7 +1,7 @@
 import { Transaction } from '../transaction/index.js'
 import OverlayAdminTokenTemplate from './OverlayAdminTokenTemplate.js'
 import * as Utils from '../primitives/utils.js'
-import { getOverlayHostReputationTracker } from './HostReputationTracker.js'
+import { getOverlayHostReputationTracker, HostReputationTracker } from './HostReputationTracker.js'
 
 const defaultFetch: typeof fetch =
   typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
@@ -93,6 +93,8 @@ export interface LookupResolverConfig {
   additionalHosts?: Record<string, string[]>
   /** Optional cache tuning. */
   cache?: CacheOptions
+  /** Optional storage for host reputation data. */
+  reputationStorage?: 'localStorage' | { get: (key: string) => string | null | undefined, set: (key: string, value: string) => void }
 }
 
 /** Facilitates lookups to URLs that return answers. */
@@ -205,7 +207,7 @@ export default class LookupResolver {
   private readonly hostOverrides: Record<string, string[]>
   private readonly additionalHosts: Record<string, string[]>
   private readonly networkPreset: 'mainnet' | 'testnet' | 'local'
-  private readonly hostReputation = getOverlayHostReputationTracker()
+  private readonly hostReputation: HostReputationTracker
 
   // ---- Caches / memoization ----
   private readonly hostsCache: Map<string, { hosts: string[], expiresAt: number }>
@@ -224,6 +226,15 @@ export default class LookupResolver {
     this.assertValidOverrideServices(hostOverrides)
     this.hostOverrides = hostOverrides
     this.additionalHosts = config.additionalHosts ?? {}
+
+    const rs = config.reputationStorage
+    if (rs === 'localStorage') {
+      this.hostReputation = new HostReputationTracker()
+    } else if (typeof rs === 'object' && rs !== null && typeof rs.get === 'function' && typeof rs.set === 'function') {
+      this.hostReputation = new HostReputationTracker(rs)
+    } else {
+      this.hostReputation = getOverlayHostReputationTracker()
+    }
 
     // cache tuning
     this.hostsTtlMs = config.cache?.hostsTtlMs ?? 5 * 60 * 1000 // 5 min

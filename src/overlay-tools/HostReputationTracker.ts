@@ -21,12 +21,21 @@ const MAX_BACKOFF_MS = 60_000
 const FAILURE_PENALTY_MS = 400
 const SUCCESS_BONUS_MS = 30
 const FAILURE_BACKOFF_GRACE = 2
+const STORAGE_KEY = 'bsvsdk_overlay_host_reputation_v1'
+
+interface KeyValueStore {
+  get: (key: string) => string | null | undefined
+  set: (key: string, value: string) => void
+}
 
 export class HostReputationTracker {
   private readonly stats: Map<string, HostReputationEntry>
+  private readonly store: KeyValueStore | undefined
 
-  constructor () {
+  constructor (store?: KeyValueStore) {
     this.stats = new Map()
+    this.store = store ?? this.getLocalStorageAdapter()
+    this.loadFromStorage()
   }
 
   reset (): void {
@@ -50,6 +59,7 @@ export class HostReputationTracker {
     entry.backoffUntil = 0
     entry.lastUpdatedAt = now
     entry.lastError = undefined
+    this.saveToStorage()
   }
 
   recordFailure (host: string, reason?: unknown): void {
@@ -57,6 +67,21 @@ export class HostReputationTracker {
     const now = Date.now()
     entry.totalFailures += 1
     entry.consecutiveFailures += 1
+    const msg =
+      typeof reason === 'string'
+        ? reason
+        : reason instanceof Error
+          ? reason.message
+          : undefined
+    const immediate =
+      typeof msg === 'string' &&
+      (msg.includes('ERR_NAME_NOT_RESOLVED') ||
+        msg.includes('ENOTFOUND') ||
+        msg.includes('getaddrinfo') ||
+        msg.includes('Failed to fetch'))
+    if (immediate && entry.consecutiveFailures < FAILURE_BACKOFF_GRACE + 1) {
+      entry.consecutiveFailures = FAILURE_BACKOFF_GRACE + 1
+    }
     const penaltyLevel = Math.max(entry.consecutiveFailures - FAILURE_BACKOFF_GRACE, 0)
     if (penaltyLevel === 0) {
       entry.backoffUntil = 0
@@ -74,6 +99,7 @@ export class HostReputationTracker {
         : reason instanceof Error
           ? reason.message
           : undefined
+    this.saveToStorage()
   }
 
   rankHosts (hosts: string[], now: number = Date.now()): RankedHost[] {
@@ -92,7 +118,7 @@ export class HostReputationTracker {
         originalOrder: seen.get(host) ?? 0
       }
     })
-
+    
     ranked.sort((a, b) => {
       const aInBackoff = a.backoffUntil > now
       const bInBackoff = b.backoffUntil > now
@@ -108,6 +134,70 @@ export class HostReputationTracker {
   snapshot (host: string): HostReputationEntry | undefined {
     const entry = this.stats.get(host)
     return entry != null ? { ...entry } : undefined
+  }
+
+  private getStorage (): any {
+    try {
+      const g: any = typeof globalThis === 'object' ? globalThis : undefined
+      if (g == null || g.localStorage == null) return undefined
+      return g.localStorage
+    } catch {
+      return undefined
+    }
+  }
+
+  private getLocalStorageAdapter (): KeyValueStore | undefined {
+    const s = this.getStorage()
+    if (s == null) return undefined
+    return {
+      get: (key: string) => {
+        try { return s.getItem(key) } catch { return null }
+      },
+      set: (key: string, value: string) => {
+        try { s.setItem(key, value) } catch { }
+      }
+    }
+  }
+
+  private loadFromStorage (): void {
+    const s = this.store
+    if (s == null) return
+    try {
+      const raw = s.get(STORAGE_KEY)
+      if (typeof raw !== 'string' || raw.length === 0) return
+      const data = JSON.parse(raw)
+      if (typeof data !== 'object' || data === null) return
+      this.stats.clear()
+      for (const k of Object.keys(data)) {
+        const v: any = (data as any)[k]
+        if (v != null && typeof v === 'object') {
+          const entry: HostReputationEntry = {
+            host: String(v.host ?? k),
+            totalSuccesses: Number(v.totalSuccesses ?? 0),
+            totalFailures: Number(v.totalFailures ?? 0),
+            consecutiveFailures: Number(v.consecutiveFailures ?? 0),
+            avgLatencyMs: v.avgLatencyMs == null ? null : Number(v.avgLatencyMs),
+            lastLatencyMs: v.lastLatencyMs == null ? null : Number(v.lastLatencyMs),
+            backoffUntil: Number(v.backoffUntil ?? 0),
+            lastUpdatedAt: Number(v.lastUpdatedAt ?? 0),
+            lastError: typeof v.lastError === 'string' ? v.lastError : undefined
+          }
+          this.stats.set(entry.host, entry)
+        }
+      }
+    } catch {}
+  }
+
+  private saveToStorage (): void {
+    const s = this.store
+    if (s == null) return
+    try {
+      const obj: Record<string, any> = {}
+      for (const [host, entry] of this.stats.entries()) {
+        obj[host] = entry
+      }
+      s.set(STORAGE_KEY, JSON.stringify(obj))
+    } catch {}
   }
 
   private computeScore (entry: HostReputationEntry, now: number): number {
