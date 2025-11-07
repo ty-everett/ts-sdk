@@ -25,6 +25,8 @@ export interface KVStoreConfig {
   networkPreset?: 'mainnet' | 'testnet' | 'local'
   /** Whether to accept delayed broadcast */
   acceptDelayedBroadcast?: boolean
+  /** Whether to let overlay handle broadcasting (prevents UTXO spending on rejection) */
+  overlayBroadcast?: boolean
   /** Description for token set */
   tokenSetDescription?: string
   /** Description for token update */

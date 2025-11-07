@@ -1,5 +1,6 @@
 export * from './LookupResolver.js'
 export * from './SHIPBroadcaster.js'
+export * from './withDoubleSpendRetry.js'
 export { default as OverlayAdminTokenTemplate } from './OverlayAdminTokenTemplate.js'
 export { default as LookupResolver } from './LookupResolver.js'
 

@@ -18,7 +18,17 @@ jest.mock('../../overlay-tools/Historian.js')
 jest.mock('../kvStoreInterpreter.js')
 jest.mock('../../script/index.js')
 jest.mock('../../primitives/utils.js')
-jest.mock('../../overlay-tools/index.js')
+jest.mock('../../overlay-tools/index.js', () => {
+  const actual = jest.requireActual('../../overlay-tools/index.js')
+  return {
+    ...actual,
+    // Keep withDoubleSpendRetry as the real implementation
+    withDoubleSpendRetry: actual.withDoubleSpendRetry,
+    // Mock the classes
+    TopicBroadcaster: jest.fn(),
+    LookupResolver: jest.fn()
+  }
+})
 jest.mock('../../wallet/ProtoWallet.js')
 jest.mock('../../wallet/WalletClient.js')
 
