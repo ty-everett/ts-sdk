@@ -482,7 +482,7 @@ export default class LookupResolver {
         typeof answer === 'object' &&
         answer !== null &&
         answer.type === 'output-list' &&
-        Array.isArray((answer as LookupAnswer).outputs)
+        Array.isArray((answer).outputs)
 
       if (isValid) {
         this.hostReputation.recordSuccess(host, latency)

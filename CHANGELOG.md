@@ -1,10 +1,11 @@
 # CHANGELOG for `@bsv/sdk`
 
-All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec2.0.0.html).
 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.8.12 - 2025-11-06](#1812---2025-11-06)
 - [1.8.11 - 2025-10-30](#1811---2025-10-30)
 - [1.8.10 - 2025-10-28](#1810---2025-10-28)
 - [1.8.9 - 2025-10-27](#189---2025-10-27)
@@ -170,6 +171,12 @@ All notable changes to this project will be documented in this file. The format 
 ### Security
 
 ---
+
+### [1.8.12] - 2025-11-06
+
+### Added
+
+- LookupResolver: Support for custom overlay ranking to allow for expedited lookups and reputation tracking.
 
 ### [1.8.11] - 2025-10-30
 

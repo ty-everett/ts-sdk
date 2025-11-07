@@ -118,7 +118,7 @@ export class HostReputationTracker {
         originalOrder: seen.get(host) ?? 0
       }
     })
-    
+
     ranked.sort((a, b) => {
       const aInBackoff = a.backoffUntil > now
       const bInBackoff = b.backoffUntil > now
@@ -169,7 +169,7 @@ export class HostReputationTracker {
       if (typeof data !== 'object' || data === null) return
       this.stats.clear()
       for (const k of Object.keys(data)) {
-        const v: any = (data as any)[k]
+        const v: any = (data)[k]
         if (v != null && typeof v === 'object') {
           const entry: HostReputationEntry = {
             host: String(v.host ?? k),
