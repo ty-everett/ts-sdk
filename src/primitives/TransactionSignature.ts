@@ -13,6 +13,23 @@ export interface SignatureHashCache {
   hashOutputsSingle?: Map<number, number[]>
 }
 
+type TransactionSignatureFormatParams = {
+  sourceTXID: string
+  sourceOutputIndex: number
+  sourceSatoshis: number
+  transactionVersion: number
+  otherInputs: TransactionInput[]
+  outputs: TransactionOutput[]
+  inputIndex: number
+  subscript: Script
+  inputSequence: number
+  lockTime: number
+  scope: number
+  cache?: SignatureHashCache
+}
+
+const EMPTY_SCRIPT = new Uint8Array(0)
+
 export default class TransactionSignature extends Signature {
   public static readonly SIGHASH_ALL = 0x00000001
   public static readonly SIGHASH_NONE = 0x00000002
@@ -22,20 +39,11 @@ export default class TransactionSignature extends Signature {
 
   scope: number
 
-  static format (params: {
-    sourceTXID: string
-    sourceOutputIndex: number
-    sourceSatoshis: number
-    transactionVersion: number
-    otherInputs: TransactionInput[]
-    outputs: TransactionOutput[]
-    inputIndex: number
-    subscript: Script
-    inputSequence: number
-    lockTime: number
-    scope: number
-    cache?: SignatureHashCache
-  }): number[] {
+  static format (params: TransactionSignatureFormatParams): number[] {
+    return Array.from(this.formatBytes(params))
+  }
+
+  static formatBytes (params: TransactionSignatureFormatParams): Uint8Array {
     const cache = params.cache
     const currentInput = {
       sourceTXID: params.sourceTXID,
@@ -60,9 +68,7 @@ export default class TransactionSignature extends Signature {
         writer.writeUInt32LE(input.sourceOutputIndex)
       }
 
-      const buf = writer.toArray()
-      const ret = Hash.hash256(buf)
-      return ret
+      return Hash.hash256(writer.toUint8Array())
     }
 
     const getSequenceHash = (): number[] => {
@@ -73,9 +79,7 @@ export default class TransactionSignature extends Signature {
         writer.writeUInt32LE(sequence)
       }
 
-      const buf = writer.toArray()
-      const ret = Hash.hash256(buf)
-      return ret
+      return Hash.hash256(writer.toUint8Array())
     }
 
     function getOutputsHash (outputIndex?: number): number[] {
@@ -86,7 +90,7 @@ export default class TransactionSignature extends Signature {
           const satoshis = output.satoshis ?? 0 // Default to 0 if undefined
           writer.writeUInt64LE(satoshis)
 
-          const script = output.lockingScript?.toBinary() ?? []
+          const script = output.lockingScript?.toUint8Array() ?? EMPTY_SCRIPT
           writer.writeVarIntNum(script.length)
           writer.write(script)
         }
@@ -100,14 +104,12 @@ export default class TransactionSignature extends Signature {
         const satoshis = output.satoshis ?? 0 // Default to 0 if undefined
         writer.writeUInt64LE(satoshis)
 
-        const script = output.lockingScript?.toBinary() ?? []
+        const script = output.lockingScript?.toUint8Array() ?? EMPTY_SCRIPT
         writer.writeVarIntNum(script.length)
         writer.write(script)
       }
 
-      const buf = writer.toArray()
-      const ret = Hash.hash256(buf)
-      return ret
+      return Hash.hash256(writer.toUint8Array())
     }
 
     let hashPrevouts = new Array(32).fill(0)
@@ -177,7 +179,7 @@ export default class TransactionSignature extends Signature {
     writer.writeUInt32LE(params.sourceOutputIndex)
 
     // scriptCode of the input (serialized as scripts inside CTxOuts)
-    const subscriptBin = params.subscript.toBinary()
+    const subscriptBin = params.subscript.toUint8Array()
     writer.writeVarIntNum(subscriptBin.length)
     writer.write(subscriptBin)
 
@@ -197,8 +199,7 @@ export default class TransactionSignature extends Signature {
     // sighashType
     writer.writeUInt32LE(params.scope >>> 0)
 
-    const buf = writer.toArray()
-    return buf
+    return writer.toUint8Array()
   }
 
   // The format used in a tx

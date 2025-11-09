@@ -208,12 +208,14 @@ export default class Script {
    * @returns The script in binary array format.
    */
   toBinary (): number[] {
-    if (this.rawBytesCache != null) {
-      return Array.from(this.rawBytesCache)
+    return Array.from(this.toUint8Array())
+  }
+
+  toUint8Array (): Uint8Array {
+    if (this.rawBytesCache == null) {
+      this.rawBytesCache = this.serializeChunksToBytes()
     }
-    const bytes = this.serializeChunksToBytes()
-    this.rawBytesCache = bytes
-    return Array.from(bytes)
+    return this.rawBytesCache
   }
 
   /**

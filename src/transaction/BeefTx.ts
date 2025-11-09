@@ -133,7 +133,7 @@ export default class BeefTx {
       if (this._rawTx != null) {
         writer.write(this._rawTx)
       } else if (this._tx != null) {
-        writer.write(this._tx.toBinary())
+        writer.write(this._tx.toUint8Array())
       } else {
         throw new Error('a valid serialized Transaction is expected')
       }

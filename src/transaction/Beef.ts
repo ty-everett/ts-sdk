@@ -571,6 +571,10 @@ export class Beef {
     return Array.from(this.getSerializedBytes())
   }
 
+  toUint8Array (): Uint8Array {
+    return this.getSerializedBytes()
+  }
+
   /**
    * Serialize this Beef as AtomicBEEF.
    *

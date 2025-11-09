@@ -356,7 +356,7 @@ export default class Spend {
     pubkey: PublicKey,
     subscript: Script
   ): boolean {
-    const preimage = TransactionSignature.format({
+    const preimage = TransactionSignature.formatBytes({
       sourceTXID: this.sourceTXID,
       sourceOutputIndex: this.sourceOutputIndex,
       sourceSatoshis: this.sourceSatoshis,

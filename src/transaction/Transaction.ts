@@ -633,7 +633,7 @@ export default class Transaction {
       if (i.unlockingScript == null) {
         throw new Error('unlockingScript is undefined')
       }
-      const scriptBin = i.unlockingScript.toBinary()
+      const scriptBin = i.unlockingScript.toUint8Array()
       writer.writeVarIntNum(scriptBin.length)
       writer.write(scriptBin)
       writer.writeUInt32LE(i.sequence ?? 0xffffffff)
@@ -641,7 +641,7 @@ export default class Transaction {
     writer.writeVarIntNum(this.outputs.length)
     for (const o of this.outputs) {
       writer.writeUInt64LE(o.satoshis ?? 0)
-      const scriptBin = o.lockingScript.toBinary()
+      const scriptBin = o.lockingScript.toUint8Array()
       writer.writeVarIntNum(scriptBin.length)
       writer.write(scriptBin)
     }
@@ -668,6 +668,10 @@ export default class Transaction {
    */
   toBinary (): number[] {
     return Array.from(this.getSerializedBytes())
+  }
+
+  toUint8Array (): Uint8Array {
+    return this.getSerializedBytes()
   }
 
   /**
@@ -773,7 +777,7 @@ export default class Transaction {
    */
   hash (enc?: 'hex'): number[] | string {
     if (this.cachedHash == null) {
-      this.cachedHash = hash256(Array.from(this.getSerializedBytes()))
+      this.cachedHash = hash256(this.getSerializedBytes())
     }
     if (enc === 'hex') {
       return toHex(this.cachedHash)

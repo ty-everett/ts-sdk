@@ -418,11 +418,13 @@ export const fromBase58Check = (
   return { prefix, data }
 }
 
+type WriterChunk = ReadonlyArray<number> | Uint8Array
+
 export class Writer {
-  public bufs: number[][]
+  public bufs: WriterChunk[]
   private length: number
 
-  constructor (bufs?: number[][]) {
+  constructor (bufs?: WriterChunk[]) {
     this.bufs = bufs !== undefined ? bufs : []
     this.length = 0
     for (const b of this.bufs) this.length += b.length
@@ -454,7 +456,7 @@ export class Writer {
     return ret
   }
 
-  write (buf: number[]): this {
+  write (buf: WriterChunk): this {
     this.bufs.push(buf)
     this.length += buf.length
     return this
