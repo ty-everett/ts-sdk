@@ -17,6 +17,8 @@ import * as Utils from '../primitives/utils.js'
 import { OriginatorDomainNameStringUnder250Bytes, WalletInterface } from '../wallet/Wallet.interfaces.js'
 
 const AUTH_VERSION = '0.1'
+const BufferCtor =
+  typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined
 
 /**
  * Represents a peer capable of performing mutual authentication.
@@ -63,6 +65,7 @@ export class Peer {
   private lastInteractedWithPeer: string | undefined
 
   private readonly originator?: OriginatorDomainNameStringUnder250Bytes
+  private identityPublicKey?: string
 
   /**
    * Creates a new Peer instance
@@ -136,8 +139,7 @@ export class Peer {
     const generalMessage: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'general',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
-        .publicKey,
+      identityKey: await this.getIdentityPublicKey(),
       nonce: requestNonce,
       yourNonce: peerSession.peerNonce,
       payload: message,
@@ -186,7 +188,7 @@ export class Peer {
     // Prepare the message
     const requestNonce = Utils.toBase64(Random(32))
     const { signature } = await this.wallet.createSignature({
-      data: Utils.toArray(JSON.stringify(certificatesToRequest), 'utf8'),
+      data: Peer.utf8ToBytes(JSON.stringify(certificatesToRequest)),
       protocolID: [2, 'auth message signature'],
       keyID: `${requestNonce} ${peerSession.peerNonce ?? ''}`,
       counterparty: peerSession.peerIdentityKey
@@ -195,8 +197,7 @@ export class Peer {
     const certRequestMessage: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'certificateRequest',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
-        .publicKey,
+      identityKey: await this.getIdentityPublicKey(),
       nonce: requestNonce,
       initialNonce: peerSession.sessionNonce,
       yourNonce: peerSession.peerNonce,
@@ -352,8 +353,7 @@ export class Peer {
     const initialRequest: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'initialRequest',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
-        .publicKey,
+      identityKey: await this.getIdentityPublicKey(),
       initialNonce: sessionNonce,
       requestedCertificates: this.certificatesToRequest
     }
@@ -525,7 +525,7 @@ export class Peer {
 
     // Create signature
     const { signature } = await this.wallet.createSignature({
-      data: Utils.toArray(message.initialNonce + sessionNonce, 'base64'),
+      data: Peer.base64ToBytes(message.initialNonce + sessionNonce),
       protocolID: [2, 'auth message signature'],
       keyID: `${message.initialNonce} ${sessionNonce}`,
       counterparty: message.identityKey
@@ -534,8 +534,7 @@ export class Peer {
     const initialResponseMessage: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'initialResponse',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
-        .publicKey,
+      identityKey: await this.getIdentityPublicKey(),
       initialNonce: sessionNonce,
       yourNonce: message.initialNonce,
       certificates: certificatesToInclude,
@@ -574,9 +573,8 @@ export class Peer {
     }
 
     // Validate message signature
-    const dataToVerify = Utils.toArray(
-      (peerSession.sessionNonce ?? '') + (message.initialNonce ?? ''),
-      'base64'
+    const dataToVerify = Peer.base64ToBytes(
+      (peerSession.sessionNonce ?? '') + (message.initialNonce ?? '')
     )
     const { valid } = await this.wallet.verifySignature({
       data: dataToVerify,
@@ -668,7 +666,7 @@ export class Peer {
     }
 
     const { valid } = await this.wallet.verifySignature({
-      data: Utils.toArray(JSON.stringify(message.requestedCertificates), 'utf8'),
+      data: Peer.utf8ToBytes(JSON.stringify(message.requestedCertificates)),
       signature: message.signature as number[],
       protocolID: [2, 'auth message signature'],
       keyID: `${message.nonce ?? ''} ${peerSession.sessionNonce ?? ''}`,
@@ -721,7 +719,7 @@ export class Peer {
     const peerSession = await this.getAuthenticatedSession(verifierIdentityKey)
     const requestNonce = Utils.toBase64(Random(32))
     const { signature } = await this.wallet.createSignature({
-      data: Utils.toArray(JSON.stringify(certificates), 'utf8'),
+      data: Peer.utf8ToBytes(JSON.stringify(certificates)),
       protocolID: [2, 'auth message signature'],
       keyID: `${requestNonce} ${peerSession.peerNonce ?? ''}`,
       counterparty: peerSession.peerIdentityKey
@@ -730,8 +728,7 @@ export class Peer {
     const certificateResponse: AuthMessage = {
       version: AUTH_VERSION,
       messageType: 'certificateResponse',
-      identityKey: (await this.wallet.getPublicKey({ identityKey: true }, this.originator))
-        .publicKey,
+      identityKey: await this.getIdentityPublicKey(),
       nonce: requestNonce,
       initialNonce: peerSession.sessionNonce,
       yourNonce: peerSession.peerNonce,
@@ -772,7 +769,7 @@ export class Peer {
 
     // Validate message signature
     const { valid } = await this.wallet.verifySignature({
-      data: Utils.toArray(JSON.stringify(message.certificates), 'utf8'),
+      data: Peer.utf8ToBytes(JSON.stringify(message.certificates)),
       signature: message.signature as number[],
       protocolID: [2, 'auth message signature'],
       keyID: `${message.nonce ?? ''} ${peerSession.sessionNonce ?? ''}`,
@@ -845,5 +842,34 @@ export class Peer {
     this.onGeneralMessageReceivedCallbacks.forEach(cb => {
       cb(message.identityKey, message.payload ?? [])
     })
+  }
+
+  private async getIdentityPublicKey (): Promise<string> {
+    if (this.identityPublicKey != null) {
+      return this.identityPublicKey
+    }
+    const { publicKey } = await this.wallet.getPublicKey(
+      { identityKey: true },
+      this.originator
+    )
+    this.identityPublicKey = publicKey
+    return publicKey
+  }
+
+  private static utf8ToBytes (data: string): number[] {
+    if (BufferCtor != null) {
+      return Array.from(BufferCtor.from(data, 'utf8'))
+    }
+    if (typeof TextEncoder !== 'undefined') {
+      return Array.from(new TextEncoder().encode(data))
+    }
+    return Utils.toArray(data, 'utf8')
+  }
+
+  private static base64ToBytes (data: string): number[] {
+    if (BufferCtor != null) {
+      return Array.from(BufferCtor.from(data, 'base64'))
+    }
+    return Utils.toArray(data, 'base64')
   }
 }

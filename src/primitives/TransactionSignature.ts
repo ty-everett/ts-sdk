@@ -6,6 +6,13 @@ import Script from '../script/Script.js'
 import TransactionInput from '../transaction/TransactionInput.js'
 import TransactionOutput from '../transaction/TransactionOutput.js'
 
+export interface SignatureHashCache {
+  hashPrevouts?: number[]
+  hashSequence?: number[]
+  hashOutputsAll?: number[]
+  hashOutputsSingle?: Map<number, number[]>
+}
+
 export default class TransactionSignature extends Signature {
   public static readonly SIGHASH_ALL = 0x00000001
   public static readonly SIGHASH_NONE = 0x00000002
@@ -27,7 +34,9 @@ export default class TransactionSignature extends Signature {
     inputSequence: number
     lockTime: number
     scope: number
+    cache?: SignatureHashCache
   }): number[] {
+    const cache = params.cache
     const currentInput = {
       sourceTXID: params.sourceTXID,
       sourceOutputIndex: params.sourceOutputIndex,
@@ -106,7 +115,12 @@ export default class TransactionSignature extends Signature {
     let hashOutputs = new Array(32).fill(0)
 
     if ((params.scope & TransactionSignature.SIGHASH_ANYONECANPAY) === 0) {
-      hashPrevouts = getPrevoutHash()
+      if (cache?.hashPrevouts != null) {
+        hashPrevouts = cache.hashPrevouts
+      } else {
+        hashPrevouts = getPrevoutHash()
+        if (cache != null) cache.hashPrevouts = hashPrevouts
+      }
     }
 
     if (
@@ -114,19 +128,39 @@ export default class TransactionSignature extends Signature {
       (params.scope & 31) !== TransactionSignature.SIGHASH_SINGLE &&
       (params.scope & 31) !== TransactionSignature.SIGHASH_NONE
     ) {
-      hashSequence = getSequenceHash()
+      if (cache?.hashSequence != null) {
+        hashSequence = cache.hashSequence
+      } else {
+        hashSequence = getSequenceHash()
+        if (cache != null) cache.hashSequence = hashSequence
+      }
     }
 
     if (
       (params.scope & 31) !== TransactionSignature.SIGHASH_SINGLE &&
       (params.scope & 31) !== TransactionSignature.SIGHASH_NONE
     ) {
-      hashOutputs = getOutputsHash()
+      if (cache?.hashOutputsAll != null) {
+        hashOutputs = cache.hashOutputsAll
+      } else {
+        hashOutputs = getOutputsHash()
+        if (cache != null) cache.hashOutputsAll = hashOutputs
+      }
     } else if (
       (params.scope & 31) === TransactionSignature.SIGHASH_SINGLE &&
       params.inputIndex < params.outputs.length
     ) {
-      hashOutputs = getOutputsHash(params.inputIndex)
+      const key = params.inputIndex
+      const map = cache?.hashOutputsSingle
+      if (map != null && map.has(key)) {
+        hashOutputs = map.get(key) as number[]
+      } else {
+        hashOutputs = getOutputsHash(key)
+        if (cache != null) {
+          if (cache.hashOutputsSingle == null) cache.hashOutputsSingle = new Map()
+          cache.hashOutputsSingle.set(key, hashOutputs)
+        }
+      }
     }
 
     const writer = new Writer()
