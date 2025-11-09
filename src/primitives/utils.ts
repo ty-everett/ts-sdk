@@ -418,7 +418,7 @@ export const fromBase58Check = (
   return { prefix, data }
 }
 
-type WriterChunk = ReadonlyArray<number> | Uint8Array
+type WriterChunk = readonly number[] | Uint8Array
 
 export class Writer {
   public bufs: WriterChunk[]

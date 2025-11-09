@@ -787,11 +787,11 @@ export class SHA256HMAC {
       key instanceof Uint8Array
         ? key
         : Uint8Array.from(
-            toArray(
-              key,
-              typeof key === 'string' ? 'hex' : undefined
-            )
+          toArray(
+            key,
+            typeof key === 'string' ? 'hex' : undefined
           )
+        )
     this.h = new HMAC(sha256Fast, k)
   }
 
@@ -921,11 +921,11 @@ export class SHA512HMAC {
       key instanceof Uint8Array
         ? key
         : Uint8Array.from(
-            toArray(
-              key,
-              typeof key === 'string' ? 'hex' : undefined
-            )
+          toArray(
+            key,
+            typeof key === 'string' ? 'hex' : undefined
           )
+        )
     this.h = new HMAC(sha512Fast, k)
   }
 

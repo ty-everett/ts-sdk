@@ -13,7 +13,7 @@ export interface SignatureHashCache {
   hashOutputsSingle?: Map<number, number[]>
 }
 
-type TransactionSignatureFormatParams = {
+interface TransactionSignatureFormatParams {
   sourceTXID: string
   sourceOutputIndex: number
   sourceSatoshis: number

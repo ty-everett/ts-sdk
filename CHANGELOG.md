@@ -181,6 +181,18 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+### [1.9.0] - 2025-11-09
+
+### Added
+
+- Faster serialization and caching improvements
+- Use node- and browser-specific fast-paths opportunistically
+- Cache signatures in Spend to avoid repeated verifications
+- Cache serialized values and use Uint8Array in more places
+- These changes are not intended to be breaking, but a minor version increment is performed out of an abundance of caution
+
+---
+
 ### [1.8.12] - 2025-11-06
 
 ### Fixed
