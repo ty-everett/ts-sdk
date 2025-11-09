@@ -43,13 +43,22 @@ export default class SymmetricKey extends BigNumber {
   encrypt (msg: number[] | string, enc?: 'hex'): string | number[] {
     const iv = Random(32)
     msg = toArray(msg, enc)
+    const keyBytes = this.toArray('be', 32)
     const { result, authenticationTag } = AESGCM(
       msg,
       [],
       iv,
-      this.toArray('be', 32)
+      keyBytes
     )
-    return encode([...iv, ...result, ...authenticationTag], enc)
+    const totalLength = iv.length + result.length + authenticationTag.length
+    const combined = new Array(totalLength)
+    let offset = 0
+    for (const chunk of [iv, result, authenticationTag]) {
+      for (let i = 0; i < chunk.length; i++) {
+        combined[offset++] = chunk[i]
+      }
+    }
+    return encode(combined, enc)
   }
 
   /**
@@ -71,15 +80,15 @@ export default class SymmetricKey extends BigNumber {
   decrypt (msg: number[] | string, enc?: 'hex' | 'utf8'): string | number[] {
     msg = toArray(msg, enc)
     const iv = msg.slice(0, 32)
-    const ciphertextWithTag = msg.slice(32)
-    const messageTag = ciphertextWithTag.slice(-16)
-    const ciphertext = ciphertextWithTag.slice(0, -16)
+    const tagStart = msg.length - 16
+    const ciphertext = msg.slice(32, tagStart)
+    const messageTag = msg.slice(tagStart)
     const result = AESGCMDecrypt(
       ciphertext,
       [],
       iv,
       messageTag,
-      this.toArray()
+      this.toArray('be', 32)
     )
     if (result === null) {
       throw new Error('Decryption failed!')

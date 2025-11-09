@@ -449,8 +449,15 @@ export class Writer {
     const ret = new Array(totalLength)
     let offset = 0
     for (const buf of this.bufs) {
-      for (const value of buf) {
-        ret[offset++] = value
+      if (buf instanceof Uint8Array) {
+        for (let i = 0; i < buf.length; i++) {
+          ret[offset++] = buf[i]
+        }
+      } else {
+        const arr = buf as number[]
+        for (let i = 0; i < arr.length; i++) {
+          ret[offset++] = arr[i]
+        }
       }
     }
     return ret
@@ -467,14 +474,12 @@ export class Writer {
     for (let i = 0; i < buf2.length; i++) {
       buf2[i] = buf[buf.length - 1 - i]
     }
-    this.bufs.push(buf2)
-    this.length += buf2.length
-    return this
+    return this.write(buf2)
   }
 
   writeUInt8 (n: number): this {
     const buf = new Array(1)
-    buf[0] = n
+    buf[0] = n & 0xff
     this.write(buf)
     return this
   }
@@ -491,9 +496,7 @@ export class Writer {
       (n >> 8) & 0xff, // shift right 8 bits to get the high byte
       n & 0xff // low byte is just the last 8 bits
     ]
-    this.bufs.push(buf)
-    this.length += 2
-    return this
+    return this.write(buf)
   }
 
   writeInt16BE (n: number): this {
@@ -505,9 +508,7 @@ export class Writer {
       n & 0xff, // low byte is just the last 8 bits
       (n >> 8) & 0xff // shift right 8 bits to get the high byte
     ]
-    this.bufs.push(buf)
-    this.length += 2
-    return this
+    return this.write(buf)
   }
 
   writeInt16LE (n: number): this {
@@ -521,9 +522,7 @@ export class Writer {
       (n >> 8) & 0xff,
       n & 0xff // lowest byte
     ]
-    this.bufs.push(buf)
-    this.length += 4
-    return this
+    return this.write(buf)
   }
 
   writeInt32BE (n: number): this {
@@ -537,9 +536,7 @@ export class Writer {
       (n >> 16) & 0xff,
       (n >> 24) & 0xff // highest byte
     ]
-    this.bufs.push(buf)
-    this.length += 4
-    return this
+    return this.write(buf)
   }
 
   writeInt32LE (n: number): this {

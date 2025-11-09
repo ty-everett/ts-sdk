@@ -1047,14 +1047,9 @@ export default class Transaction {
    * @throws Error if there are any missing sourceTransactions unless `allowPartial` is true.
    */
   toAtomicBEEF (allowPartial?: boolean): number[] {
-    const writer = new Writer()
-    // Write the Atomic BEEF prefix
-    writer.writeUInt32LE(0x01010101)
-    // Write the subject TXID (big-endian)
-    writer.write(this.hash())
-    // Append the BEEF data
+    const prefix = [1, 1, 1, 1]
+    const txHash = this.hash() as number[]
     const beefData = this.toBEEF(allowPartial)
-    writer.write(beefData)
-    return writer.toArray()
+    return prefix.concat(txHash, beefData)
   }
 }

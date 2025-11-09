@@ -1,6 +1,19 @@
 // @ts-nocheck
 import ReductionContext from './ReductionContext.js'
 
+const BufferCtor =
+  typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined
+const CAN_USE_BUFFER =
+  BufferCtor != null && typeof BufferCtor.from === 'function'
+const HEX_CHAR_TO_VALUE = new Int8Array(256).fill(-1)
+for (let i = 0; i < 10; i++) {
+  HEX_CHAR_TO_VALUE[48 + i] = i // '0'-'9'
+}
+for (let i = 0; i < 6; i++) {
+  HEX_CHAR_TO_VALUE[65 + i] = 10 + i // 'A'-'F'
+  HEX_CHAR_TO_VALUE[97 + i] = 10 + i // 'a'-'f'
+}
+
 /**
  * JavaScript numbers are only precise up to 53 bits. Since Bitcoin relies on
  * 256-bit cryptography, this BigNumber class enables operations on larger
@@ -1059,31 +1072,30 @@ export default class BigNumber {
   static fromSm (bytes: number[], endian: 'big' | 'little' = 'big'): BigNumber {
     if (bytes.length === 0) return new BigNumber(0n)
 
-    let sign: 0 | 1 = 0
-    let hex = ''
-
+    const beBytes = bytes.slice()
     if (endian === 'little') {
-      const last = bytes.length - 1
-      let firstByte = bytes[last]
-      if ((firstByte & 0x80) !== 0) { sign = 1; firstByte &= 0x7f }
-      hex += (firstByte < 16 ? '0' : '') + firstByte.toString(16)
-      for (let i = last - 1; i >= 0; i--) {
-        const b = bytes[i]
-        hex += (b < 16 ? '0' : '') + b.toString(16)
-      }
-    } else {
-      let firstByte = bytes[0]
-      if ((firstByte & 0x80) !== 0) { sign = 1; firstByte &= 0x7f }
-      hex += (firstByte < 16 ? '0' : '') + firstByte.toString(16)
-      for (let i = 1; i < bytes.length; i++) {
-        const b = bytes[i]
-        hex += (b < 16 ? '0' : '') + b.toString(16)
-      }
+      beBytes.reverse()
+    }
+    let sign: 0 | 1 = 0
+    if (beBytes.length > 0 && (beBytes[0] & 0x80) !== 0) {
+      sign = 1
+      beBytes[0] &= 0x7f
     }
 
-    const mag = hex === '' ? 0n : BigInt('0x' + hex)
+    let magnitude = 0n
+    if (CAN_USE_BUFFER) {
+      const hex = BufferCtor.from(beBytes).toString('hex') as string
+      magnitude = hex.length === 0 ? 0n : BigInt('0x' + hex)
+    } else {
+      let hex = ''
+      for (const byte of beBytes) {
+        hex += byte < 16 ? '0' + byte.toString(16) : byte.toString(16)
+      }
+      magnitude = hex.length === 0 ? 0n : BigInt('0x' + hex)
+    }
+
     const r = new BigNumber(0n)
-    r._initializeState(mag, sign)
+    r._initializeState(magnitude, sign)
     return r
   }
 
@@ -1105,17 +1117,26 @@ export default class BigNumber {
     const byteLen = hex.length / 2
     const bytes = new Array(byteLen)
     for (let i = 0, j = 0; i < hex.length; i += 2) {
-      bytes[j++] = parseInt(hex.slice(i, i + 2), 16)
+      const high = HEX_CHAR_TO_VALUE[hex.charCodeAt(i)]
+      const low = HEX_CHAR_TO_VALUE[hex.charCodeAt(i + 1)]
+      bytes[j++] = ((high & 0xf) << 4) | (low & 0xf)
     }
 
+    let result: number[]
     if (this._sign === 1) {
-      if ((bytes[0] & 0x80) !== 0) bytes.unshift(0x80)
-      else bytes[0] |= 0x80
+      if ((bytes[0] & 0x80) !== 0) {
+        result = [0x80, ...bytes]
+      } else {
+        result = bytes.slice()
+        result[0] |= 0x80
+      }
     } else if ((bytes[0] & 0x80) !== 0) {
-      bytes.unshift(0x00)
+      result = [0x00, ...bytes]
+    } else {
+      result = bytes.slice()
     }
 
-    return endian === 'little' ? bytes.reverse() : bytes
+    return endian === 'little' ? result.reverse() : result
   }
 
   /**
