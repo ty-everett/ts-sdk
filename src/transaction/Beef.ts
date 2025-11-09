@@ -619,12 +619,12 @@ export class Beef {
       return this.hexCache
     }
     const bytes = this.getSerializedBytes()
-    if (BufferCtor != null) {
-      this.hexCache = BufferCtor.from(bytes).toString('hex')
-    } else {
-      this.hexCache = toHex(Array.from(bytes))
-    }
-    return this.hexCache!
+    const hex =
+      BufferCtor != null
+        ? BufferCtor.from(bytes).toString('hex')
+        : toHex(Array.from(bytes))
+    this.hexCache = hex
+    return hex
   }
 
   static fromReader (br: Reader): Beef {

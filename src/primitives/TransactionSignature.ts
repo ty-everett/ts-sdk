@@ -153,9 +153,9 @@ export default class TransactionSignature extends Signature {
       params.inputIndex < params.outputs.length
     ) {
       const key = params.inputIndex
-      const map = cache?.hashOutputsSingle
-      if (map != null && map.has(key)) {
-        hashOutputs = map.get(key) as number[]
+      const cachedSingle = cache?.hashOutputsSingle?.get(key)
+      if (cachedSingle != null) {
+        hashOutputs = cachedSingle
       } else {
         hashOutputs = getOutputsHash(key)
         if (cache != null) {
