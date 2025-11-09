@@ -1,6 +1,6 @@
 import ScriptChunk from './ScriptChunk.js'
 import OP from './OP.js'
-import { encode, toHex, Reader, Writer, toArray } from '../primitives/utils.js'
+import { encode, toHex, toArray } from '../primitives/utils.js'
 import BigNumber from '../primitives/BigNumber.js'
 
 /**
@@ -10,8 +10,14 @@ import BigNumber from '../primitives/BigNumber.js'
  *
  * @property {ScriptChunk[]} chunks - An array of script chunks that make up the script.
  */
+const BufferCtor =
+  typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined
+
 export default class Script {
-  chunks: ScriptChunk[]
+  private _chunks: ScriptChunk[]
+  private parsed: boolean
+  private rawBytesCache?: Uint8Array
+  private hexCache?: string
 
   /**
    * @method fromASM
@@ -110,7 +116,9 @@ export default class Script {
     if (!/^[0-9a-fA-F]+$/.test(hex)) {
       throw new Error('Some elements in this string are not hex encoded.')
     }
-    return Script.fromBinary(toArray(hex, 'hex'))
+    const bin = toArray(hex, 'hex')
+    const rawBytes = Uint8Array.from(bin)
+    return new Script([], rawBytes, hex.toLowerCase(), false)
   }
 
   /**
@@ -122,80 +130,8 @@ export default class Script {
    * const script = Script.fromBinary([0x76, 0xa9, ...])
    */
   static fromBinary (bin: number[]): Script {
-    bin = [...bin]
-    const chunks: ScriptChunk[] = []
-
-    let inConditionalBlock: number = 0
-
-    const br = new Reader(bin)
-    while (!br.eof()) {
-      const op = br.readUInt8()
-
-      // if OP_RETURN and not in a conditional block, do not parse the rest of the data,
-      // rather just return the last chunk as data without prefixing with data length.
-      if (op === OP.OP_RETURN && inConditionalBlock === 0) {
-        chunks.push({
-          op,
-          data: br.read()
-        })
-        break
-      }
-
-      if (op === OP.OP_IF || op === OP.OP_NOTIF || op === OP.OP_VERIF || op === OP.OP_VERNOTIF) {
-        inConditionalBlock++
-      } else if (op === OP.OP_ENDIF) {
-        inConditionalBlock--
-      }
-
-      let len = 0
-      // eslint-disable-next-line @typescript-eslint/no-shadow
-      let data: number[] = []
-      if (op > 0 && op < OP.OP_PUSHDATA1) {
-        len = op
-        chunks.push({
-          data: br.read(len),
-          op
-        })
-      } else if (op === OP.OP_PUSHDATA1) {
-        try {
-          len = br.readUInt8()
-          data = br.read(len)
-        } catch {
-          br.read()
-        }
-        chunks.push({
-          data,
-          op
-        })
-      } else if (op === OP.OP_PUSHDATA2) {
-        try {
-          len = br.readUInt16LE()
-          data = br.read(len)
-        } catch {
-          br.read()
-        }
-        chunks.push({
-          data,
-          op
-        })
-      } else if (op === OP.OP_PUSHDATA4) {
-        try {
-          len = br.readUInt32LE()
-          data = br.read(len)
-        } catch {
-          br.read()
-        }
-        chunks.push({
-          data,
-          op
-        })
-      } else {
-        chunks.push({
-          op
-        })
-      }
-    }
-    return new Script(chunks)
+    const rawBytes = Uint8Array.from(bin)
+    return new Script([], rawBytes, undefined, false)
   }
 
   /**
@@ -203,8 +139,32 @@ export default class Script {
    * Constructs a new Script object.
    * @param chunks=[] - An array of script chunks to directly initialize the script.
    */
-  constructor (chunks: ScriptChunk[] = []) {
-    this.chunks = chunks
+  constructor (chunks: ScriptChunk[] = [], rawBytesCache?: Uint8Array, hexCache?: string, parsed: boolean = true) {
+    this._chunks = chunks
+    this.parsed = parsed
+    this.rawBytesCache = rawBytesCache
+    this.hexCache = hexCache
+  }
+
+  get chunks (): ScriptChunk[] {
+    this.ensureParsed()
+    return this._chunks
+  }
+
+  set chunks (value: ScriptChunk[]) {
+    this._chunks = value
+    this.parsed = true
+    this.invalidateSerializationCaches()
+  }
+
+  private ensureParsed (): void {
+    if (this.parsed) return
+    if (this.rawBytesCache != null) {
+      this._chunks = Script.parseChunks(this.rawBytesCache)
+    } else {
+      this._chunks = []
+    }
+    this.parsed = true
   }
 
   /**
@@ -228,7 +188,18 @@ export default class Script {
    * @returns The script in hexadecimal format.
    */
   toHex (): string {
-    return encode(this.toBinary(), 'hex') as string
+    if (this.hexCache != null) {
+      return this.hexCache
+    }
+    if (this.rawBytesCache == null) {
+      this.rawBytesCache = this.serializeChunksToBytes()
+    }
+    const hex =
+      BufferCtor != null
+        ? BufferCtor.from(this.rawBytesCache).toString('hex')
+        : (encode(Array.from(this.rawBytesCache), 'hex') as string)
+    this.hexCache = hex
+    return hex
   }
 
   /**
@@ -237,32 +208,12 @@ export default class Script {
    * @returns The script in binary array format.
    */
   toBinary (): number[] {
-    const writer = new Writer()
-
-    for (let i = 0; i < this.chunks.length; i++) {
-      const chunk = this.chunks[i]
-      const op = chunk.op
-      writer.writeUInt8(op)
-      if (op === OP.OP_RETURN && chunk.data != null) { // special case for unformatted data
-        writer.write(chunk.data)
-        break
-      } else if (chunk.data != null) {
-        if (op < OP.OP_PUSHDATA1) {
-          writer.write(chunk.data)
-        } else if (op === OP.OP_PUSHDATA1) {
-          writer.writeUInt8(chunk.data.length)
-          writer.write(chunk.data)
-        } else if (op === OP.OP_PUSHDATA2) {
-          writer.writeUInt16LE(chunk.data.length)
-          writer.write(chunk.data)
-        } else if (op === OP.OP_PUSHDATA4) {
-          writer.writeUInt32LE(chunk.data.length)
-          writer.write(chunk.data)
-        }
-      }
+    if (this.rawBytesCache != null) {
+      return Array.from(this.rawBytesCache)
     }
-
-    return writer.toArray()
+    const bytes = this.serializeChunksToBytes()
+    this.rawBytesCache = bytes
+    return Array.from(bytes)
   }
 
   /**
@@ -272,6 +223,7 @@ export default class Script {
    * @returns This script instance for chaining.
    */
   writeScript (script: Script): Script {
+    this.invalidateSerializationCaches()
     this.chunks = this.chunks.concat(script.chunks)
     return this
   }
@@ -283,6 +235,7 @@ export default class Script {
    * @returns This script instance for chaining.
    */
   writeOpCode (op: number): Script {
+    this.invalidateSerializationCaches()
     this.chunks.push({ op })
     return this
   }
@@ -295,6 +248,7 @@ export default class Script {
    * @returns This script instance for chaining.
    */
   setChunkOpCode (i: number, op: number): Script {
+    this.invalidateSerializationCaches()
     this.chunks[i] = { op }
     return this
   }
@@ -306,6 +260,7 @@ export default class Script {
    * @returns This script instance for chaining.
    */
   writeBn (bn: BigNumber): Script {
+    this.invalidateSerializationCaches()
     if (bn.cmpn(0) === OP.OP_0) {
       this.chunks.push({
         op: OP.OP_0
@@ -334,6 +289,7 @@ export default class Script {
    * @throws {Error} Throws an error if the data is too large to be pushed.
    */
   writeBin (bin: number[]): Script {
+    this.invalidateSerializationCaches()
     let op: number
     const data = bin.length > 0 ? bin : undefined
     if (bin.length > 0 && bin.length < OP.OP_PUSHDATA1) {
@@ -363,6 +319,7 @@ export default class Script {
    * @returns This script instance for chaining.
    */
   writeNumber (num: number): Script {
+    this.invalidateSerializationCaches()
     this.writeBn(new BigNumber(num))
     return this
   }
@@ -373,6 +330,7 @@ export default class Script {
    * @returns This script instance for chaining.
    */
   removeCodeseparators (): Script {
+    this.invalidateSerializationCaches()
     const chunks: ScriptChunk[] = []
     for (let i = 0; i < this.chunks.length; i++) {
       if (this.chunks[i].op !== OP.OP_CODESEPARATOR) {
@@ -391,6 +349,7 @@ export default class Script {
    * @returns This script instance for chaining.
    */
   findAndDelete (script: Script): Script {
+    this.invalidateSerializationCaches()
     const buf = script.toHex()
     for (let i = 0; i < this.chunks.length; i++) {
       const script2 = new Script([this.chunks[i]])
@@ -443,6 +402,176 @@ export default class Script {
    * @param chunk - The script chunk.
    * @returns The string representation of the chunk.
    */
+  private static computeSerializedLength (chunks: ScriptChunk[]): number {
+    let total = 0
+    for (const chunk of chunks) {
+      total += 1
+      if (chunk.data == null) continue
+      const len = chunk.data.length
+      if (chunk.op === OP.OP_RETURN) {
+        total += len
+        break
+      }
+      if (chunk.op < OP.OP_PUSHDATA1) {
+        total += len
+      } else if (chunk.op === OP.OP_PUSHDATA1) {
+        total += 1 + len
+      } else if (chunk.op === OP.OP_PUSHDATA2) {
+        total += 2 + len
+      } else if (chunk.op === OP.OP_PUSHDATA4) {
+        total += 4 + len
+      }
+    }
+    return total
+  }
+
+  private serializeChunksToBytes (): Uint8Array {
+    const chunks = this.chunks
+    const totalLength = Script.computeSerializedLength(chunks)
+    const bytes = new Uint8Array(totalLength)
+    let offset = 0
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]
+      bytes[offset++] = chunk.op
+      if (chunk.data == null) continue
+      if (chunk.op === OP.OP_RETURN) {
+        bytes.set(chunk.data, offset)
+        offset += chunk.data.length
+        break
+      }
+      offset = Script.writeChunkData(bytes, offset, chunk.op, chunk.data)
+    }
+
+    return bytes
+  }
+
+  private invalidateSerializationCaches (): void {
+    this.rawBytesCache = undefined
+    this.hexCache = undefined
+  }
+
+  private static writeChunkData (
+    target: Uint8Array,
+    offset: number,
+    op: number,
+    data: number[]
+  ): number {
+    const len = data.length
+    if (op < OP.OP_PUSHDATA1) {
+      target.set(data, offset)
+      return offset + len
+    } else if (op === OP.OP_PUSHDATA1) {
+      target[offset++] = len & 0xff
+      target.set(data, offset)
+      return offset + len
+    } else if (op === OP.OP_PUSHDATA2) {
+      target[offset++] = len & 0xff
+      target[offset++] = (len >> 8) & 0xff
+      target.set(data, offset)
+      return offset + len
+    } else if (op === OP.OP_PUSHDATA4) {
+      const size = len >>> 0
+      target[offset++] = size & 0xff
+      target[offset++] = (size >> 8) & 0xff
+      target[offset++] = (size >> 16) & 0xff
+      target[offset++] = (size >> 24) & 0xff
+      target.set(data, offset)
+      return offset + len
+    }
+    return offset
+  }
+
+  private static parseChunks (bytes: ArrayLike<number>): ScriptChunk[] {
+    const chunks: ScriptChunk[] = []
+    const length = bytes.length
+    let pos = 0
+    let inConditionalBlock = 0
+
+    while (pos < length) {
+      const op = bytes[pos++] ?? 0
+
+      if (op === OP.OP_RETURN && inConditionalBlock === 0) {
+        chunks.push({
+          op,
+          data: Script.copyRange(bytes, pos, length)
+        })
+        break
+      }
+
+      if (
+        op === OP.OP_IF ||
+        op === OP.OP_NOTIF ||
+        op === OP.OP_VERIF ||
+        op === OP.OP_VERNOTIF
+      ) {
+        inConditionalBlock++
+      } else if (op === OP.OP_ENDIF) {
+        inConditionalBlock--
+      }
+
+      if (op > 0 && op < OP.OP_PUSHDATA1) {
+        const len = op
+        const end = Math.min(pos + len, length)
+        chunks.push({
+          data: Script.copyRange(bytes, pos, end),
+          op
+        })
+        pos = end
+      } else if (op === OP.OP_PUSHDATA1) {
+        const len = pos < length ? bytes[pos++] ?? 0 : 0
+        const end = Math.min(pos + len, length)
+        chunks.push({
+          data: Script.copyRange(bytes, pos, end),
+          op
+        })
+        pos = end
+      } else if (op === OP.OP_PUSHDATA2) {
+        const b0 = bytes[pos] ?? 0
+        const b1 = bytes[pos + 1] ?? 0
+        const len = b0 | (b1 << 8)
+        pos = Math.min(pos + 2, length)
+        const end = Math.min(pos + len, length)
+        chunks.push({
+          data: Script.copyRange(bytes, pos, end),
+          op
+        })
+        pos = end
+      } else if (op === OP.OP_PUSHDATA4) {
+        const len =
+          ((bytes[pos] ?? 0) |
+            ((bytes[pos + 1] ?? 0) << 8) |
+            ((bytes[pos + 2] ?? 0) << 16) |
+            ((bytes[pos + 3] ?? 0) << 24)) >>>
+          0
+        pos = Math.min(pos + 4, length)
+        const end = Math.min(pos + len, length)
+        chunks.push({
+          data: Script.copyRange(bytes, pos, end),
+          op
+        })
+        pos = end
+      } else {
+        chunks.push({ op })
+      }
+    }
+
+    return chunks
+  }
+
+  private static copyRange (
+    bytes: ArrayLike<number>,
+    start: number,
+    end: number
+  ): number[] {
+    const size = Math.max(end - start, 0)
+    const data = new Array(size)
+    for (let i = 0; i < size; i++) {
+      data[i] = bytes[start + i] ?? 0
+    }
+    return data
+  }
+
   private _chunkToString (chunk: ScriptChunk): string {
     const op = chunk.op
     let str = ''
