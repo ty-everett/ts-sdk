@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.9.1 - 2025-11-10](#191---2025-11-10)
+- [1.9.0 - 2025-11-09](#190---2025-11-09)
 - [1.8.13 - 2025-11-06](#1813---2025-11-06)
 - [1.8.12 - 2025-11-06](#1812---2025-11-06)
 - [1.8.11 - 2025-10-30](#1811---2025-10-30)
@@ -173,11 +175,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
-### [1.8.13] - 2025-11-06
+### [1.9.1] - 2025-11-10
 
-### Added
+### Fixed
 
-- LookupResolver: Support for custom overlay ranking to allow for expedited lookups and reputation tracking.
+- Added support for originator param in LocalKVStore wallet calls.
 
 ---
 
@@ -190,6 +192,15 @@ All notable changes to this project will be documented in this file. The format 
 - Cache signatures in Spend to avoid repeated verifications
 - Cache serialized values and use Uint8Array in more places
 - These changes are not intended to be breaking, but a minor version increment is performed out of an abundance of caution
+
+---
+
+
+### [1.8.13] - 2025-11-06
+
+### Added
+
+- LookupResolver: Support for custom overlay ranking to allow for expedited lookups and reputation tracking.
 
 ---
 
