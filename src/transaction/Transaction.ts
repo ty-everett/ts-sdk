@@ -16,6 +16,9 @@ import { defaultChainTracker } from './chaintrackers/DefaultChainTracker.js'
 import { Beef, BEEF_V1 } from './Beef.js'
 import P2PKH from '../script/templates/P2PKH.js'
 
+const BufferCtor =
+  typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined
+
 /**
  * Represents a complete Bitcoin transaction. This class encapsulates all the details
  * required for creating, signing, and processing a Bitcoin transaction, including
@@ -59,6 +62,8 @@ export default class Transaction {
   metadata: Record<string, any>
   merklePath?: MerklePath
   private cachedHash?: number[]
+  private rawBytesCache?: Uint8Array
+  private hexCache?: string
 
   // Recursive function for adding merkle proofs or input transactions
   private static addPathOrInputs (
@@ -280,8 +285,12 @@ export default class Transaction {
    * @returns {Transaction} - A new Transaction instance.
    */
   static fromBinary (bin: number[]): Transaction {
-    const br = new Reader(bin)
-    return Transaction.fromReader(br)
+    const copy = bin.slice()
+    const rawBytes = Uint8Array.from(copy)
+    const br = new Reader(copy)
+    const tx = Transaction.fromReader(br)
+    tx.rawBytesCache = rawBytes
+    return tx
   }
 
   /**
@@ -292,7 +301,16 @@ export default class Transaction {
    * @returns {Transaction} - A new Transaction instance.
    */
   static fromHex (hex: string): Transaction {
-    return Transaction.fromBinary(toArray(hex, 'hex'))
+    const bin = toArray(hex, 'hex')
+    const rawBytes = Uint8Array.from(bin)
+    const br = new Reader(bin)
+    const tx = Transaction.fromReader(br)
+    tx.rawBytesCache = rawBytes
+    tx.hexCache =
+      BufferCtor != null
+        ? BufferCtor.from(rawBytes).toString('hex')
+        : toHex(bin)
+    return tx
   }
 
   /**
@@ -337,6 +355,12 @@ export default class Transaction {
     this.merklePath = merklePath
   }
 
+  private invalidateSerializationCaches (): void {
+    this.cachedHash = undefined
+    this.rawBytesCache = undefined
+    this.hexCache = undefined
+  }
+
   /**
    * Adds a new input to the transaction.
    *
@@ -356,7 +380,7 @@ export default class Transaction {
     if (typeof input.sequence === 'undefined') {
       input.sequence = 0xffffffff
     }
-    this.cachedHash = undefined
+    this.invalidateSerializationCaches()
     this.inputs.push(input)
   }
 
@@ -423,7 +447,7 @@ export default class Transaction {
     modelOrFee: FeeModel | number = LivePolicy.getInstance(),
     changeDistribution: 'equal' | 'random' = 'equal'
   ): Promise<void> {
-    this.cachedHash = undefined
+    this.invalidateSerializationCaches()
     if (typeof modelOrFee === 'number') {
       const sats = modelOrFee
       modelOrFee = {
@@ -550,7 +574,7 @@ export default class Transaction {
    * Signs a transaction, hydrating all its unlocking scripts based on the provided script templates where they are available.
    */
   async sign (): Promise<void> {
-    this.cachedHash = undefined
+    this.invalidateSerializationCaches()
     for (const out of this.outputs) {
       if (typeof out.satoshis === 'undefined') {
         if (out.change === true) {
@@ -592,13 +616,7 @@ export default class Transaction {
     return await broadcaster.broadcast(this)
   }
 
-  /**
-   * Converts the transaction to a binary array format.
-   *
-   * @returns {number[]} - The binary array representation of the transaction.
-   */
-  toBinary (): number[] {
-    const writer = new Writer()
+  private writeTransactionBody (writer: Writer): void {
     writer.writeUInt32LE(this.version)
     writer.writeVarIntNum(this.inputs.length)
     for (const i of this.inputs) {
@@ -615,20 +633,45 @@ export default class Transaction {
       if (i.unlockingScript == null) {
         throw new Error('unlockingScript is undefined')
       }
-      const scriptBin = i.unlockingScript.toBinary()
+      const scriptBin = i.unlockingScript.toUint8Array()
       writer.writeVarIntNum(scriptBin.length)
       writer.write(scriptBin)
-      writer.writeUInt32LE(i.sequence ?? 0xffffffff) // default to max sequence
+      writer.writeUInt32LE(i.sequence ?? 0xffffffff)
     }
     writer.writeVarIntNum(this.outputs.length)
     for (const o of this.outputs) {
       writer.writeUInt64LE(o.satoshis ?? 0)
-      const scriptBin = o.lockingScript.toBinary()
+      const scriptBin = o.lockingScript.toUint8Array()
       writer.writeVarIntNum(scriptBin.length)
       writer.write(scriptBin)
     }
     writer.writeUInt32LE(this.lockTime)
-    return writer.toArray()
+  }
+
+  private buildSerializedBytes (): Uint8Array {
+    const writer = new Writer()
+    this.writeTransactionBody(writer)
+    return writer.toUint8Array()
+  }
+
+  private getSerializedBytes (): Uint8Array {
+    if (this.rawBytesCache == null) {
+      this.rawBytesCache = this.buildSerializedBytes()
+    }
+    return this.rawBytesCache
+  }
+
+  /**
+   * Converts the transaction to a binary array format.
+   *
+   * @returns {number[]} - The binary array representation of the transaction.
+   */
+  toBinary (): number[] {
+    return Array.from(this.getSerializedBytes())
+  }
+
+  toUint8Array (): Uint8Array {
+    return this.getSerializedBytes()
   }
 
   /**
@@ -696,7 +739,16 @@ export default class Transaction {
    * @returns {string} - The hexadecimal string representation of the transaction.
    */
   toHex (): string {
-    return toHex(this.toBinary())
+    if (this.hexCache != null) {
+      return this.hexCache
+    }
+    const bytes = this.getSerializedBytes()
+    const hex =
+      BufferCtor != null
+        ? BufferCtor.from(bytes).toString('hex')
+        : toHex(Array.from(bytes))
+    this.hexCache = hex
+    return hex
   }
 
   /**
@@ -724,17 +776,13 @@ export default class Transaction {
    * @returns {string | number[]} - The hash of the transaction in the specified format.
    */
   hash (enc?: 'hex'): number[] | string {
-    let hash
-    if (this.cachedHash != null) {
-      hash = this.cachedHash
-    } else {
-      hash = hash256(this.toBinary())
-      this.cachedHash = hash
+    if (this.cachedHash == null) {
+      this.cachedHash = hash256(this.getSerializedBytes())
     }
     if (enc === 'hex') {
-      return toHex(hash)
+      return toHex(this.cachedHash)
     }
-    return hash
+    return this.cachedHash
   }
 
   /**
@@ -999,14 +1047,9 @@ export default class Transaction {
    * @throws Error if there are any missing sourceTransactions unless `allowPartial` is true.
    */
   toAtomicBEEF (allowPartial?: boolean): number[] {
-    const writer = new Writer()
-    // Write the Atomic BEEF prefix
-    writer.writeUInt32LE(0x01010101)
-    // Write the subject TXID (big-endian)
-    writer.write(this.hash())
-    // Append the BEEF data
+    const prefix = [1, 1, 1, 1]
+    const txHash = this.hash() as number[]
     const beefData = this.toBEEF(allowPartial)
-    writer.write(beefData)
-    return writer.toArray()
+    return prefix.concat(txHash, beefData)
   }
 }

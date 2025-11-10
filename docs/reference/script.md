@@ -418,20 +418,18 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ### Class: Script
 
-The Script class represents a script in a Bitcoin SV transaction,
-encapsulating the functionality to construct, parse, and serialize
-scripts used in both locking (output) and unlocking (input) scripts.
-
 ```ts
 export default class Script {
-    chunks: ScriptChunk[];
     static fromASM(asm: string): Script 
     static fromHex(hex: string): Script 
     static fromBinary(bin: number[]): Script 
-    constructor(chunks: ScriptChunk[] = []) 
+    constructor(chunks: ScriptChunk[] = [], rawBytesCache?: Uint8Array, hexCache?: string, parsed: boolean = true) 
+    get chunks(): ScriptChunk[] 
+    set chunks(value: ScriptChunk[]) 
     toASM(): string 
     toHex(): string 
     toBinary(): number[] 
+    toUint8Array(): Uint8Array 
     writeScript(script: Script): Script 
     writeOpCode(op: number): Script 
     setChunkOpCode(i: number, op: number): Script 
@@ -451,7 +449,7 @@ See also: [BigNumber](./primitives.md#class-bignumber), [ScriptChunk](./script.m
 #### Constructor
 
 ```ts
-constructor(chunks: ScriptChunk[] = []) 
+constructor(chunks: ScriptChunk[] = [], rawBytesCache?: Uint8Array, hexCache?: string, parsed: boolean = true) 
 ```
 See also: [ScriptChunk](./script.md#interface-scriptchunk)
 
@@ -459,6 +457,12 @@ Argument Details
 
 + **chunks**
   + =[] - An array of script chunks to directly initialize the script.
++ **rawBytesCache**
+  + Optional serialized bytes that can be reused instead of reserializing `chunks`.
++ **hexCache**
+  + Optional lowercase hex string that matches the serialized bytes, used to satisfy `toHex` quickly.
++ **parsed**
+  + When false the script defers parsing `rawBytesCache` until `chunks` is accessed; defaults to true.
 
 #### Method findAndDelete
 

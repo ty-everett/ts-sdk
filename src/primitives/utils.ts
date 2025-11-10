@@ -1,6 +1,12 @@
 import BigNumber from './BigNumber.js'
 import { hash256 } from './Hash.js'
 
+const BufferCtor =
+  typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined
+const CAN_USE_BUFFER =
+  BufferCtor != null && typeof BufferCtor.from === 'function'
+const PURE_HEX_REGEX = /^[0-9a-fA-F]+$/
+
 /**
  * Prepends a '0' to an odd character length word to ensure it has an even number of characters.
  * @param {string} word - The input word.
@@ -19,12 +25,23 @@ export const zero2 = (word: string): string => {
  * @param {number[]} msg - The input array of numbers.
  * @returns {string} - The hexadecimal string representation of the input array.
  */
+const HEX_DIGITS = '0123456789abcdef'
+const HEX_BYTE_STRINGS: string[] = new Array(256)
+for (let i = 0; i < 256; i++) {
+  HEX_BYTE_STRINGS[i] =
+    HEX_DIGITS[(i >> 4) & 0xf] + HEX_DIGITS[i & 0xf]
+}
+
 export const toHex = (msg: number[]): string => {
-  let res = ''
-  for (const num of msg) {
-    res += zero2(num.toString(16))
+  if (CAN_USE_BUFFER) {
+    return BufferCtor.from(msg).toString('hex')
   }
-  return res
+  if (msg.length === 0) return ''
+  const out = new Array(msg.length)
+  for (let i = 0; i < msg.length; i++) {
+    out[i] = HEX_BYTE_STRINGS[msg[i] & 0xff]
+  }
+  return out.join('')
 }
 
 /**
@@ -53,13 +70,37 @@ export const toArray = (msg: any, enc?: 'hex' | 'utf8' | 'base64'): any[] => {
   }
 }
 
+const HEX_CHAR_TO_VALUE = new Int8Array(256).fill(-1)
+for (let i = 0; i < 10; i++) {
+  HEX_CHAR_TO_VALUE[48 + i] = i // '0'-'9'
+}
+for (let i = 0; i < 6; i++) {
+  HEX_CHAR_TO_VALUE[65 + i] = 10 + i // 'A'-'F'
+  HEX_CHAR_TO_VALUE[97 + i] = 10 + i // 'a'-'f'
+}
+
 const hexToArray = (msg: string): number[] => {
-  msg = msg.replace(/[^a-z0-9]+/gi, '')
-  if (msg.length % 2 !== 0) msg = '0' + msg
-  const res: number[] = []
-  for (let i = 0; i < msg.length; i += 2) {
-    res.push(parseInt(msg[i] + msg[i + 1], 16))
+  if (CAN_USE_BUFFER && PURE_HEX_REGEX.test(msg)) {
+    const normalized = msg.length % 2 === 0 ? msg : '0' + msg
+    return Array.from(BufferCtor.from(normalized, 'hex'))
   }
+  const res: number[] = new Array(Math.ceil(msg.length / 2))
+  let nibble = -1
+  let size = 0
+  for (let i = 0; i < msg.length; i++) {
+    const value = HEX_CHAR_TO_VALUE[msg.charCodeAt(i)]
+    if (value === -1) continue
+    if (nibble === -1) {
+      nibble = value
+    } else {
+      res[size++] = (nibble << 4) | value
+      nibble = -1
+    }
+  }
+  if (nibble !== -1) {
+    res[size++] = nibble
+  }
+  if (size !== res.length) res.length = size
   return res
 }
 
@@ -377,11 +418,13 @@ export const fromBase58Check = (
   return { prefix, data }
 }
 
+type WriterChunk = readonly number[] | Uint8Array
+
 export class Writer {
-  public bufs: number[][]
+  public bufs: WriterChunk[]
   private length: number
 
-  constructor (bufs?: number[][]) {
+  constructor (bufs?: WriterChunk[]) {
     this.bufs = bufs !== undefined ? bufs : []
     this.length = 0
     for (const b of this.bufs) this.length += b.length
@@ -391,19 +434,36 @@ export class Writer {
     return this.length
   }
 
+  toUint8Array (): Uint8Array {
+    const out = new Uint8Array(this.length)
+    let offset = 0
+    for (const buf of this.bufs) {
+      out.set(buf, offset)
+      offset += buf.length
+    }
+    return out
+  }
+
   toArray (): number[] {
     const totalLength = this.length
     const ret = new Array(totalLength)
     let offset = 0
     for (const buf of this.bufs) {
-      for (const value of buf) {
-        ret[offset++] = value
+      if (buf instanceof Uint8Array) {
+        for (let i = 0; i < buf.length; i++) {
+          ret[offset++] = buf[i]
+        }
+      } else {
+        const arr = buf as number[]
+        for (let i = 0; i < arr.length; i++) {
+          ret[offset++] = arr[i]
+        }
       }
     }
     return ret
   }
 
-  write (buf: number[]): this {
+  write (buf: WriterChunk): this {
     this.bufs.push(buf)
     this.length += buf.length
     return this
@@ -414,14 +474,12 @@ export class Writer {
     for (let i = 0; i < buf2.length; i++) {
       buf2[i] = buf[buf.length - 1 - i]
     }
-    this.bufs.push(buf2)
-    this.length += buf2.length
-    return this
+    return this.write(buf2)
   }
 
   writeUInt8 (n: number): this {
     const buf = new Array(1)
-    buf[0] = n
+    buf[0] = n & 0xff
     this.write(buf)
     return this
   }
@@ -438,9 +496,7 @@ export class Writer {
       (n >> 8) & 0xff, // shift right 8 bits to get the high byte
       n & 0xff // low byte is just the last 8 bits
     ]
-    this.bufs.push(buf)
-    this.length += 2
-    return this
+    return this.write(buf)
   }
 
   writeInt16BE (n: number): this {
@@ -452,9 +508,7 @@ export class Writer {
       n & 0xff, // low byte is just the last 8 bits
       (n >> 8) & 0xff // shift right 8 bits to get the high byte
     ]
-    this.bufs.push(buf)
-    this.length += 2
-    return this
+    return this.write(buf)
   }
 
   writeInt16LE (n: number): this {
@@ -468,9 +522,7 @@ export class Writer {
       (n >> 8) & 0xff,
       n & 0xff // lowest byte
     ]
-    this.bufs.push(buf)
-    this.length += 4
-    return this
+    return this.write(buf)
   }
 
   writeInt32BE (n: number): this {
@@ -484,9 +536,7 @@ export class Writer {
       (n >> 16) & 0xff,
       (n >> 24) & 0xff // highest byte
     ]
-    this.bufs.push(buf)
-    this.length += 4
-    return this
+    return this.write(buf)
   }
 
   writeInt32LE (n: number): this {

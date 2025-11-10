@@ -4,6 +4,15 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ## Interfaces
 
+| |
+| --- |
+| [JacobianPointBI](#interface-jacobianpointbi) |
+| [SignatureHashCache](#interface-signaturehashcache) |
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+
 ### Interface: JacobianPointBI
 
 ```ts
@@ -11,6 +20,20 @@ export interface JacobianPointBI {
     X: bigint;
     Y: bigint;
     Z: bigint;
+}
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
+### Interface: SignatureHashCache
+
+```ts
+export interface SignatureHashCache {
+    hashPrevouts?: number[];
+    hashSequence?: number[];
+    hashOutputsAll?: number[];
+    hashOutputsSingle?: Map<number, number[]>;
 }
 ```
 
@@ -3898,7 +3921,7 @@ const sha256 = new SHA256();
 ```ts
 export class SHA256 {
     constructor() 
-    update(msg: number[] | string, enc?: "hex" | "utf8"): this 
+    update(msg: Uint8Array | number[] | string, enc?: "hex" | "utf8"): this 
     digest(): number[] 
     digestHex(): string 
 }
@@ -3919,8 +3942,8 @@ This class also uses the SHA-256 cryptographic hash algorithm that produces a 25
 export class SHA256HMAC {
     blockSize = 64;
     outSize = 32;
-    constructor(key: number[] | string) 
-    update(msg: number[] | string, enc?: "hex"): SHA256HMAC 
+    constructor(key: Uint8Array | number[] | string) 
+    update(msg: Uint8Array | number[] | string, enc?: "hex"): SHA256HMAC 
     digest(): number[] 
     digestHex(): string 
 }
@@ -3935,7 +3958,7 @@ If the key size is larger than the blockSize, it is digested using SHA-256.
 If the key size is less than the blockSize, it is padded with zeroes.
 
 ```ts
-constructor(key: number[] | string) 
+constructor(key: Uint8Array | number[] | string) 
 ```
 
 Argument Details
@@ -4006,7 +4029,7 @@ let hashedMessage = myHMAC.digestHex();
 Updates the `SHA256HMAC` object with part of the message to be hashed.
 
 ```ts
-update(msg: number[] | string, enc?: "hex"): SHA256HMAC 
+update(msg: Uint8Array | number[] | string, enc?: "hex"): SHA256HMAC 
 ```
 See also: [SHA256HMAC](./primitives.md#class-sha256hmac)
 
@@ -4067,8 +4090,8 @@ This class also uses the SHA-512 cryptographic hash algorithm that produces a 51
 export class SHA512HMAC {
     blockSize = 128;
     outSize = 32;
-    constructor(key: number[] | string) 
-    update(msg: number[] | string, enc?: "hex" | "utf8"): SHA512HMAC 
+    constructor(key: Uint8Array | number[] | string) 
+    update(msg: Uint8Array | number[] | string, enc?: "hex" | "utf8"): SHA512HMAC 
     digest(): number[] 
     digestHex(): string 
 }
@@ -4083,7 +4106,7 @@ If the key size is larger than the blockSize, it is digested using SHA-512.
 If the key size is less than the blockSize, it is padded with zeroes.
 
 ```ts
-constructor(key: number[] | string) 
+constructor(key: Uint8Array | number[] | string) 
 ```
 
 Argument Details
@@ -4154,7 +4177,7 @@ let hashedMessage = myHMAC.digestHex();
 Updates the `SHA512HMAC` object with part of the message to be hashed.
 
 ```ts
-update(msg: number[] | string, enc?: "hex" | "utf8"): SHA512HMAC 
+update(msg: Uint8Array | number[] | string, enc?: "hex" | "utf8"): SHA512HMAC 
 ```
 See also: [SHA512HMAC](./primitives.md#class-sha512hmac)
 
@@ -4682,19 +4705,8 @@ export default class TransactionSignature extends Signature {
     public static readonly SIGHASH_FORKID = 64;
     public static readonly SIGHASH_ANYONECANPAY = 128;
     scope: number;
-    static format(params: {
-        sourceTXID: string;
-        sourceOutputIndex: number;
-        sourceSatoshis: number;
-        transactionVersion: number;
-        otherInputs: TransactionInput[];
-        outputs: TransactionOutput[];
-        inputIndex: number;
-        subscript: Script;
-        inputSequence: number;
-        lockTime: number;
-        scope: number;
-    }): number[] 
+    static format(params: TransactionSignatureFormatParams): number[] 
+    static formatBytes(params: TransactionSignatureFormatParams): Uint8Array 
     static fromChecksigFormat(buf: number[]): TransactionSignature 
     constructor(r: BigNumber, s: BigNumber, scope: number) 
     public hasLowS(): boolean 
@@ -4702,7 +4714,41 @@ export default class TransactionSignature extends Signature {
 }
 ```
 
-See also: [BigNumber](./primitives.md#class-bignumber), [Script](./script.md#class-script), [Signature](./primitives.md#class-signature), [TransactionInput](./transaction.md#interface-transactioninput), [TransactionOutput](./transaction.md#interface-transactionoutput)
+See also: [BigNumber](./primitives.md#class-bignumber), [Signature](./primitives.md#class-signature)
+
+#### Method format
+
+Formats the SIGHASH preimage for the targeted input, optionally using a cache to skip recomputing shared hash prefixes.
+
+```ts
+static format(params: TransactionSignatureFormatParams): number[] 
+```
+
+Argument Details
+
++ **params**
+  + Context for the signing input plus transaction metadata.
++ **params.cache**
+  + Optional cache storing previously computed `hashPrevouts`, `hashSequence`, or `hashOutputs*` values; it will be populated if present.
+
+#### Method formatBytes
+
+Formats the same SIGHASH preimage bytes as `format`, supporting the optional cache for hash reuse.
+
+```ts
+static formatBytes(params: TransactionSignatureFormatParams): Uint8Array 
+```
+
+Returns
+
+Bytes for signing.
+
+Argument Details
+
++ **params**
+  + Context for the signing operation.
++ **params.cache**
+  + Optional `SignatureHashCache` that may already contain hashed prefixes and is populated during formatting.
 
 #### Method hasLowS
 
@@ -4721,11 +4767,12 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export class Writer {
-    public bufs: number[][];
-    constructor(bufs?: number[][]) 
+    public bufs: WriterChunk[];
+    constructor(bufs?: WriterChunk[]) 
     getLength(): number 
+    toUint8Array(): Uint8Array 
     toArray(): number[] 
-    write(buf: number[]): this 
+    write(buf: WriterChunk): this 
     writeReverse(buf: number[]): this 
     writeUInt8(n: number): this 
     writeInt8(n: number): this 
@@ -5309,7 +5356,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: hash160
 
 ```ts
-hash160 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
+hash160 = (msg: Uint8Array | number[] | string, enc?: "hex" | "utf8"): number[] => {
     const first = new SHA256().update(msg, enc).digest();
     return new RIPEMD160().update(first).digest();
 }
@@ -5323,7 +5370,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: hash256
 
 ```ts
-hash256 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
+hash256 = (msg: Uint8Array | number[] | string, enc?: "hex" | "utf8"): number[] => {
     const first = new SHA256().update(msg, enc).digest();
     return new SHA256().update(first).digest();
 }
@@ -5655,7 +5702,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: sha256
 
 ```ts
-sha256 = (msg: number[] | string, enc?: "hex" | "utf8"): number[] => {
+sha256 = (msg: Uint8Array | number[] | string, enc?: "hex" | "utf8"): number[] => {
     return new SHA256().update(msg, enc).digest();
 }
 ```
@@ -5668,7 +5715,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: sha256hmac
 
 ```ts
-sha256hmac = (key: number[] | string, msg: number[] | string, enc?: "hex"): number[] => {
+sha256hmac = (key: Uint8Array | number[] | string, msg: Uint8Array | number[] | string, enc?: "hex"): number[] => {
     return new SHA256HMAC(key).update(msg, enc).digest();
 }
 ```
@@ -5694,7 +5741,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ### Variable: sha512hmac
 
 ```ts
-sha512hmac = (key: number[] | string, msg: number[] | string, enc?: "hex"): number[] => {
+sha512hmac = (key: Uint8Array | number[] | string, msg: Uint8Array | number[] | string, enc?: "hex"): number[] => {
     return new SHA512HMAC(key).update(msg, enc).digest();
 }
 ```
@@ -5851,15 +5898,18 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 toHex = (msg: number[]): string => {
-    let res = "";
-    for (const num of msg) {
-        res += zero2(num.toString(16));
+    if (CAN_USE_BUFFER) {
+        return BufferCtor.from(msg).toString("hex");
     }
-    return res;
+    if (msg.length === 0)
+        return "";
+    const out = new Array(msg.length);
+    for (let i = 0; i < msg.length; i++) {
+        out[i] = HEX_BYTE_STRINGS[msg[i] & 255];
+    }
+    return out.join("");
 }
 ```
-
-See also: [zero2](./primitives.md#variable-zero2)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 

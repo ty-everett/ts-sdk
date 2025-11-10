@@ -613,8 +613,12 @@ export class SHA256 {
     this.h = new FastSHA256()
   }
 
-  update (msg: number[] | string, enc?: 'hex' | 'utf8'): this {
-    const data = Uint8Array.from(toArray(msg, enc))
+  update (
+    msg: Uint8Array | number[] | string,
+    enc?: 'hex' | 'utf8'
+  ): this {
+    const data =
+      msg instanceof Uint8Array ? msg : Uint8Array.from(toArray(msg, enc))
     this.h.update(data)
     return this
   }
@@ -778,8 +782,16 @@ export class SHA256HMAC {
    * @example
    * const myHMAC = new SHA256HMAC('deadbeef');
    */
-  constructor (key: number[] | string) {
-    const k = Uint8Array.from(toArray(key, 'hex'))
+  constructor (key: Uint8Array | number[] | string) {
+    const k =
+      key instanceof Uint8Array
+        ? key
+        : Uint8Array.from(
+          toArray(
+            key,
+            typeof key === 'string' ? 'hex' : undefined
+          )
+        )
     this.h = new HMAC(sha256Fast, k)
   }
 
@@ -794,8 +806,10 @@ export class SHA256HMAC {
    * @example
    * myHMAC.update('deadbeef', 'hex');
    */
-  update (msg: number[] | string, enc?: 'hex'): SHA256HMAC {
-    this.h.update(Uint8Array.from(toArray(msg, enc)))
+  update (msg: Uint8Array | number[] | string, enc?: 'hex'): SHA256HMAC {
+    const data =
+      msg instanceof Uint8Array ? msg : Uint8Array.from(toArray(msg, enc))
+    this.h.update(data)
     return this
   }
 
@@ -902,8 +916,16 @@ export class SHA512HMAC {
    * @example
    * const myHMAC = new SHA512HMAC('deadbeef');
    */
-  constructor (key: number[] | string) {
-    const k = Uint8Array.from(toArray(key, 'hex'))
+  constructor (key: Uint8Array | number[] | string) {
+    const k =
+      key instanceof Uint8Array
+        ? key
+        : Uint8Array.from(
+          toArray(
+            key,
+            typeof key === 'string' ? 'hex' : undefined
+          )
+        )
     this.h = new HMAC(sha512Fast, k)
   }
 
@@ -918,8 +940,10 @@ export class SHA512HMAC {
    * @example
    * myHMAC.update('deadbeef', 'hex');
    */
-  update (msg: number[] | string, enc?: 'hex' | 'utf8'): SHA512HMAC {
-    this.h.update(Uint8Array.from(toArray(msg, enc)))
+  update (msg: Uint8Array | number[] | string, enc?: 'hex' | 'utf8'): SHA512HMAC {
+    const data =
+      msg instanceof Uint8Array ? msg : Uint8Array.from(toArray(msg, enc))
+    this.h.update(data)
     return this
   }
 
@@ -998,7 +1022,7 @@ export const sha1 = (
  * const digest = sha256('Hello, world!');
  */
 export const sha256 = (
-  msg: number[] | string,
+  msg: Uint8Array | number[] | string,
   enc?: 'hex' | 'utf8'
 ): number[] => {
   return new SHA256().update(msg, enc).digest()
@@ -1036,7 +1060,7 @@ export const sha512 = (
  * const doubleHash = hash256('Hello, world!');
  */
 export const hash256 = (
-  msg: number[] | string,
+  msg: Uint8Array | number[] | string,
   enc?: 'hex' | 'utf8'
 ): number[] => {
   const first = new SHA256().update(msg, enc).digest()
@@ -1056,7 +1080,7 @@ export const hash256 = (
  * const hash = hash160('Hello, world!');
  */
 export const hash160 = (
-  msg: number[] | string,
+  msg: Uint8Array | number[] | string,
   enc?: 'hex' | 'utf8'
 ): number[] => {
   const first = new SHA256().update(msg, enc).digest()
@@ -1076,8 +1100,8 @@ export const hash160 = (
  * const digest = sha256hmac('deadbeef', 'ffff001d');
  */
 export const sha256hmac = (
-  key: number[] | string,
-  msg: number[] | string,
+  key: Uint8Array | number[] | string,
+  msg: Uint8Array | number[] | string,
   enc?: 'hex'
 ): number[] => {
   return new SHA256HMAC(key).update(msg, enc).digest()
@@ -1096,8 +1120,8 @@ export const sha256hmac = (
  * const digest = sha512hmac('deadbeef', 'ffff001d');
  */
 export const sha512hmac = (
-  key: number[] | string,
-  msg: number[] | string,
+  key: Uint8Array | number[] | string,
+  msg: Uint8Array | number[] | string,
   enc?: 'hex'
 ): number[] => {
   return new SHA512HMAC(key).update(msg, enc).digest()
