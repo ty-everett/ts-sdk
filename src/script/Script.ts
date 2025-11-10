@@ -138,6 +138,9 @@ export default class Script {
    * @constructor
    * Constructs a new Script object.
    * @param chunks=[] - An array of script chunks to directly initialize the script.
+   * @param rawBytesCache - Optional serialized bytes that can be reused instead of reserializing `chunks`.
+   * @param hexCache - Optional lowercase hex string that matches the serialized bytes, used to satisfy `toHex` quickly.
+   * @param parsed - When false the script defers parsing `rawBytesCache` until `chunks` is accessed; defaults to true.
    */
   constructor (chunks: ScriptChunk[] = [], rawBytesCache?: Uint8Array, hexCache?: string, parsed: boolean = true) {
     this._chunks = chunks

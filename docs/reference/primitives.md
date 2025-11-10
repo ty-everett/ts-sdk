@@ -4716,6 +4716,40 @@ export default class TransactionSignature extends Signature {
 
 See also: [BigNumber](./primitives.md#class-bignumber), [Signature](./primitives.md#class-signature)
 
+#### Method format
+
+Formats the SIGHASH preimage for the targeted input, optionally using a cache to skip recomputing shared hash prefixes.
+
+```ts
+static format(params: TransactionSignatureFormatParams): number[] 
+```
+
+Argument Details
+
++ **params**
+  + Context for the signing input plus transaction metadata.
++ **params.cache**
+  + Optional cache storing previously computed `hashPrevouts`, `hashSequence`, or `hashOutputs*` values; it will be populated if present.
+
+#### Method formatBytes
+
+Formats the same SIGHASH preimage bytes as `format`, supporting the optional cache for hash reuse.
+
+```ts
+static formatBytes(params: TransactionSignatureFormatParams): Uint8Array 
+```
+
+Returns
+
+Bytes for signing.
+
+Argument Details
+
++ **params**
+  + Context for the signing operation.
++ **params.cache**
+  + Optional `SignatureHashCache` that may already contain hashed prefixes and is populated during formatting.
+
 #### Method hasLowS
 
 Compares to bitcoind's IsLowDERSignature

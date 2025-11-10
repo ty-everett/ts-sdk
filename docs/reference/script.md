@@ -457,6 +457,12 @@ Argument Details
 
 + **chunks**
   + =[] - An array of script chunks to directly initialize the script.
++ **rawBytesCache**
+  + Optional serialized bytes that can be reused instead of reserializing `chunks`.
++ **hexCache**
+  + Optional lowercase hex string that matches the serialized bytes, used to satisfy `toHex` quickly.
++ **parsed**
+  + When false the script defers parsing `rawBytesCache` until `chunks` is accessed; defaults to true.
 
 #### Method findAndDelete
 

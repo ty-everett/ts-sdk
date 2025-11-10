@@ -39,10 +39,21 @@ export default class TransactionSignature extends Signature {
 
   scope: number
 
+  /**
+   * Formats the SIGHASH preimage for the targeted input, optionally using a cache to skip recomputing shared hash prefixes.
+   * @param params - Context for the signing input plus transaction metadata.
+   * @param params.cache - Optional cache storing previously computed `hashPrevouts`, `hashSequence`, or `hashOutputs*` values; it will be populated if present.
+   */
   static format (params: TransactionSignatureFormatParams): number[] {
     return Array.from(this.formatBytes(params))
   }
 
+  /**
+   * Formats the same SIGHASH preimage bytes as `format`, supporting the optional cache for hash reuse.
+   * @param params - Context for the signing operation.
+   * @param params.cache - Optional `SignatureHashCache` that may already contain hashed prefixes and is populated during formatting.
+   * @returns Bytes for signing.
+   */
   static formatBytes (params: TransactionSignatureFormatParams): Uint8Array {
     const cache = params.cache
     const currentInput = {
