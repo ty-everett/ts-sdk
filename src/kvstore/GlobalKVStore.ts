@@ -22,7 +22,7 @@ const DEFAULT_CONFIG: KVStoreConfig = {
   topics: ['tm_kvstore'],
   networkPreset: 'mainnet',
   acceptDelayedBroadcast: false,
-  overlayBroadcast: true, // Let overlay handle broadcasting to prevent UTXO spending on rejection
+  overlayBroadcast: false, // Use overlay broadcasting to prevent UTXO spending on broadcast rejection.
   tokenSetDescription: '', // Will be set dynamically
   tokenUpdateDescription: '', // Will be set dynamically
   tokenRemovalDescription: '' // Will be set dynamically
