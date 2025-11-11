@@ -45,11 +45,11 @@ const REGISTRANT_KEY_ID = '1'
  */
 export class RegistryClient {
   private network: 'mainnet' | 'testnet' | undefined
-  private resolver: LookupResolver
+  private readonly resolver: LookupResolver
   private cachedIdentityKey: PubKeyHex | undefined
   private readonly acceptDelayedBroadcast: boolean
 
-  constructor(
+  constructor (
     private readonly wallet: WalletInterface = new WalletClient(),
     options: { acceptDelayedBroadcast?: boolean, resolver?: LookupResolver } = {}
   ) {
@@ -61,7 +61,7 @@ export class RegistryClient {
    * Gets the wallet's identity key, caching it after the first call.
    * @returns The public identity key as a hex string.
    */
-  private async getIdentityKey(): Promise<PubKeyHex> {
+  private async getIdentityKey (): Promise<PubKeyHex> {
     if (this.cachedIdentityKey === undefined) {
       this.cachedIdentityKey = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
     }
@@ -72,7 +72,7 @@ export class RegistryClient {
    * Gets the network, initializing and caching it on first call.
    * @returns The network type ('mainnet' or 'testnet').
    */
-  private async getNetwork(): Promise<'mainnet' | 'testnet'> {
+  private async getNetwork (): Promise<'mainnet' | 'testnet'> {
     if (this.network === undefined) {
       this.network = (await this.wallet.getNetwork({})).network
     }
@@ -89,7 +89,7 @@ export class RegistryClient {
    * @param data - Structured information about a 'basket', 'protocol', or 'certificate'.
    * @returns A promise with the broadcast result or failure.
    */
-  async registerDefinition(data: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> {
+  async registerDefinition (data: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> {
     const registryOperator = await this.getIdentityKey()
     const pushdrop = new PushDrop(this.wallet)
 
@@ -103,7 +103,6 @@ export class RegistryClient {
     const lockingScript = await pushdrop.lock(fields, protocol, REGISTRANT_KEY_ID, 'anyone', true)
 
     // Create a transaction
-    console.time('createAction')
     const { tx } = await this.wallet.createAction({
       description: `Register a new ${data.definitionType} item`,
       outputs: [
@@ -119,11 +118,9 @@ export class RegistryClient {
         randomizeOutputs: false
       }
     })
-    console.timeEnd('createAction')
     if (tx === undefined) {
       throw new Error(`Failed to create ${data.definitionType} registration transaction!`)
     }
-    console.time('broadcast')
     // Broadcast to the relevant topic
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(data.definitionType)],
@@ -133,7 +130,6 @@ export class RegistryClient {
       }
     )
     const result = await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
-    console.timeEnd('broadcast')
     return result
   }
 
@@ -186,7 +182,7 @@ export class RegistryClient {
    * @param definitionType - The type of registry definition to list ('basket', 'protocol', or 'certificate').
    * @returns A promise that resolves to an array of RegistryRecord objects.
    */
-  async listOwnRegistryEntries(definitionType: DefinitionType): Promise<RegistryRecord[]> {
+  async listOwnRegistryEntries (definitionType: DefinitionType): Promise<RegistryRecord[]> {
     const relevantBasketName = this.mapDefinitionTypeToBasketName(definitionType)
     const { outputs, BEEF } = await this.wallet.listOutputs({
       basket: relevantBasketName,
@@ -228,10 +224,9 @@ export class RegistryClient {
    * @param registryRecord - The registry record to remove (must have valid txid, outputIndex, and lockingScript).
    * @returns Broadcast success/failure.
    */
-  async removeDefinition(
+  async removeDefinition (
     registryRecord: RegistryRecord
   ): Promise<BroadcastResponse | BroadcastFailure> {
-    console.time('removeDefinition')
     if (registryRecord.txid === undefined || typeof registryRecord.outputIndex === 'undefined' || registryRecord.lockingScript === undefined) {
       throw new Error('Invalid registry record. Missing txid, outputIndex, or lockingScript.')
     }
@@ -242,7 +237,6 @@ export class RegistryClient {
       throw new Error('This registry token does not belong to the current wallet.')
     }
 
-    console.time('createAction')
     // Create a descriptive label for the item we're removing
     const itemIdentifier =
       registryRecord.definitionType === 'basket'
@@ -269,12 +263,10 @@ export class RegistryClient {
         randomizeOutputs: false
       }
     })
-    console.timeEnd('createAction')
 
     if (signableTransaction === undefined) {
       throw new Error('Failed to create signable transaction.')
     }
-    console.time('signAction')
     const partialTx = Transaction.fromAtomicBEEF(signableTransaction.tx)
 
     // Prepare the unlocker
@@ -304,9 +296,7 @@ export class RegistryClient {
     if (signedTx === undefined) {
       throw new Error('Failed to finalize the transaction signature.')
     }
-    console.timeEnd('signAction')
     // Broadcast
-    console.time('broadcast')
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(registryRecord.definitionType)],
       {
@@ -315,8 +305,6 @@ export class RegistryClient {
       }
     )
     const result = await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx))
-    console.timeEnd('broadcast')
-    console.timeEnd('removeDefinition')
     return result
   }
 
@@ -327,7 +315,7 @@ export class RegistryClient {
    * @param updatedData - The new definition data to replace the old record.
    * @returns Broadcast success/failure.
    */
-  async updateDefinition(
+  async updateDefinition (
     registryRecord: RegistryRecord,
     updatedData: DefinitionData
   ): Promise<BroadcastResponse | BroadcastFailure> {
@@ -440,7 +428,7 @@ export class RegistryClient {
    * Convert definition data into an array of pushdrop fields (strings).
    * Each definition type has a slightly different shape.
    */
-  private buildPushDropFields(
+  private buildPushDropFields (
     data: DefinitionData,
     registryOperator: PubKeyHex
   ): number[][] {
@@ -489,7 +477,7 @@ export class RegistryClient {
    * Decodes a pushdrop locking script for a given definition type,
    * returning a typed record with the appropriate fields.
    */
-  private async parseLockingScript(
+  private async parseLockingScript (
     definitionType: DefinitionType,
     lockingScript: LockingScript
   ): Promise<DefinitionData> {
@@ -506,7 +494,7 @@ export class RegistryClient {
         if (decoded.fields.length !== 7) {
           throw new Error('Unexpected field count for basket type.')
         }
-        const [basketID, name, iconURL, description, docURL, operator, _signature] = decoded.fields
+        const [basketID, name, iconURL, description, docURL, operator] = decoded.fields
         registryOperator = Utils.toUTF8(operator)
 
         parsedData = {
@@ -530,8 +518,7 @@ export class RegistryClient {
           iconURL,
           description,
           docURL,
-          operator,
-          _signature
+          operator
         ] = decoded.fields
         registryOperator = Utils.toUTF8(operator)
 
@@ -557,8 +544,7 @@ export class RegistryClient {
           description,
           docURL,
           fieldsJSON,
-          operator,
-          _signature
+          operator
         ] = decoded.fields
         registryOperator = Utils.toUTF8(operator)
 
@@ -592,7 +578,7 @@ export class RegistryClient {
   /**
    * Convert our definitionType to the wallet protocol format ([protocolID, keyID]).
    */
-  private mapDefinitionTypeToWalletProtocol(definitionType: DefinitionType): WalletProtocol {
+  private mapDefinitionTypeToWalletProtocol (definitionType: DefinitionType): WalletProtocol {
     switch (definitionType) {
       case 'basket':
         return [1, 'basketmap']
@@ -608,7 +594,7 @@ export class RegistryClient {
   /**
    * Convert 'basket'|'protocol'|'certificate' to the basket name used by the wallet.
    */
-  private mapDefinitionTypeToBasketName(definitionType: DefinitionType): string {
+  private mapDefinitionTypeToBasketName (definitionType: DefinitionType): string {
     switch (definitionType) {
       case 'basket':
         return 'basketmap'
@@ -624,7 +610,7 @@ export class RegistryClient {
   /**
    * Convert 'basket'|'protocol'|'certificate' to the broadcast topic name.
    */
-  private mapDefinitionTypeToTopic(definitionType: DefinitionType): string {
+  private mapDefinitionTypeToTopic (definitionType: DefinitionType): string {
     switch (definitionType) {
       case 'basket':
         return 'tm_basketmap'
@@ -640,7 +626,7 @@ export class RegistryClient {
   /**
    * Convert 'basket'|'protocol'|'certificate' to the lookup service name.
    */
-  private mapDefinitionTypeToServiceName(definitionType: DefinitionType): string {
+  private mapDefinitionTypeToServiceName (definitionType: DefinitionType): string {
     switch (definitionType) {
       case 'basket':
         return 'ls_basketmap'
@@ -654,7 +640,7 @@ export class RegistryClient {
   }
 }
 
-export function deserializeWalletProtocol(str: string): WalletProtocol {
+export function deserializeWalletProtocol (str: string): WalletProtocol {
   // Parse the JSON string back into a JavaScript value.
   const parsed = JSON.parse(str)
 
