@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.9.2 - 2025-11-11](#192---2025-11-11)
 - [1.9.1 - 2025-11-10](#191---2025-11-10)
 - [1.9.0 - 2025-11-09](#190---2025-11-09)
 - [1.8.13 - 2025-11-06](#1813---2025-11-06)
@@ -172,6 +173,15 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.9.2] - 2025-11-11
+
+### Fixed
+
+- Fixed bug with RegistryClient definition removal.
+- Added support for updating existing registry definitions.
 
 ---
 

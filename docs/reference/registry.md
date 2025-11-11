@@ -205,22 +205,27 @@ It provides methods to:
 - Register new definitions using pushdrop-based UTXOs.
 - Resolve existing definitions using a lookup service.
 - List registry entries associated with the operator's wallet.
-- Revoke an existing registry entry by spending its UTXO.
+- Remove existing registry entries by spending their UTXOs.
+- Update existing registry entries.
 
 Registry operators use this client to establish and manage
 canonical references for baskets, protocols, and certificate types.
 
 ```ts
 export class RegistryClient {
-    constructor(private readonly wallet: WalletInterface = new WalletClient()) 
+    constructor(private readonly wallet: WalletInterface = new WalletClient(), options: {
+        acceptDelayedBroadcast?: boolean;
+        resolver?: LookupResolver;
+    } = {}) 
     async registerDefinition(data: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> 
     async resolve<T extends DefinitionType>(definitionType: T, query: RegistryQueryMapping[T]): Promise<DefinitionData[]> 
     async listOwnRegistryEntries(definitionType: DefinitionType): Promise<RegistryRecord[]> 
-    async revokeOwnRegistryEntry(registryRecord: RegistryRecord): Promise<BroadcastResponse | BroadcastFailure> 
+    async removeDefinition(registryRecord: RegistryRecord): Promise<BroadcastResponse | BroadcastFailure> 
+    async updateDefinition(registryRecord: RegistryRecord, updatedData: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> 
 }
 ```
 
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [DefinitionData](./registry.md#type-definitiondata), [DefinitionType](./registry.md#type-definitiontype), [RegistryQueryMapping](./registry.md#interface-registryquerymapping), [RegistryRecord](./registry.md#type-registryrecord), [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [DefinitionData](./registry.md#type-definitiondata), [DefinitionType](./registry.md#type-definitiontype), [LookupResolver](./overlay-tools.md#class-lookupresolver), [RegistryQueryMapping](./registry.md#interface-registryquerymapping), [RegistryRecord](./registry.md#type-registryrecord), [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface)
 
 #### Method listOwnRegistryEntries
 
@@ -264,6 +269,24 @@ Argument Details
 + **data**
   + Structured information about a 'basket', 'protocol', or 'certificate'.
 
+#### Method removeDefinition
+
+Removes a registry definition by spending its associated UTXO.
+
+```ts
+async removeDefinition(registryRecord: RegistryRecord): Promise<BroadcastResponse | BroadcastFailure> 
+```
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [RegistryRecord](./registry.md#type-registryrecord)
+
+Returns
+
+Broadcast success/failure.
+
+Argument Details
+
++ **registryRecord**
+  + The registry record to remove (must have valid txid, outputIndex, and lockingScript).
+
 #### Method resolve
 
 Resolves registrant tokens of a particular type using a lookup service.
@@ -292,14 +315,14 @@ Argument Details
 + **query**
   + The query object used to filter registry records, whose shape is determined by the registry type.
 
-#### Method revokeOwnRegistryEntry
+#### Method updateDefinition
 
-Revokes a registry record by spending its associated UTXO.
+Updates an existing registry record by spending its UTXO and creating a new one with updated data.
 
 ```ts
-async revokeOwnRegistryEntry(registryRecord: RegistryRecord): Promise<BroadcastResponse | BroadcastFailure> 
+async updateDefinition(registryRecord: RegistryRecord, updatedData: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> 
 ```
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [RegistryRecord](./registry.md#type-registryrecord)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [DefinitionData](./registry.md#type-definitiondata), [RegistryRecord](./registry.md#type-registryrecord)
 
 Returns
 
@@ -308,7 +331,9 @@ Broadcast success/failure.
 Argument Details
 
 + **registryRecord**
-  + Must have valid txid, outputIndex, and lockingScript.
+  + The existing registry record to update (must have valid txid, outputIndex, and lockingScript).
++ **updatedData**
+  + The new definition data to replace the old record.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
 
