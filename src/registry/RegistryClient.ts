@@ -51,10 +51,10 @@ export class RegistryClient {
 
   constructor(
     private readonly wallet: WalletInterface = new WalletClient(),
-    options: { acceptDelayedBroadcast?: boolean } = {}
+    options: { acceptDelayedBroadcast?: boolean, resolver?: LookupResolver } = {}
   ) {
     this.acceptDelayedBroadcast = options.acceptDelayedBroadcast ?? false
-    this.resolver = new LookupResolver()
+    this.resolver = options.resolver ?? new LookupResolver()
   }
 
   /**
@@ -128,7 +128,8 @@ export class RegistryClient {
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(data.definitionType)],
       {
-        networkPreset: await this.getNetwork()
+        networkPreset: await this.getNetwork(),
+        resolver: this.resolver
       }
     )
     const result = await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
