@@ -55,7 +55,7 @@ export default class LocalKVStore {
    * @param {string} [originator] — An originator to use with PushDrop and the wallet, if provided.
    * @throws {Error} If the context is missing or empty.
    */
-  constructor (
+  constructor(
     wallet: WalletInterface = new WalletClient(),
     context = 'kvstore default',
     encrypt = true,
@@ -72,7 +72,7 @@ export default class LocalKVStore {
     this.acceptDelayedBroadcast = acceptDelayedBroadcast
   }
 
-  private async queueOperationOnKey (key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
+  private async queueOperationOnKey(key: string): Promise<Array<(value: void | PromiseLike<void>) => void>> {
     // Check if a lock exists for this key and wait for it to resolve
     let lockQueue = this.keyLocks.get(key)
     if (lockQueue == null) {
@@ -96,7 +96,7 @@ export default class LocalKVStore {
     return lockQueue
   }
 
-  private finishOperationOnKey (key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
+  private finishOperationOnKey(key: string, lockQueue: Array<(value: void | PromiseLike<void>) => void>): void {
     lockQueue.shift() // Remove the current lock from the queue
     if (lockQueue.length > 0) {
       // If there are more locks waiting, resolve the next one
@@ -104,11 +104,11 @@ export default class LocalKVStore {
     }
   }
 
-  private getProtocol (key: string): { protocolID: WalletProtocol, keyID: string } {
+  private getProtocol(key: string): { protocolID: WalletProtocol, keyID: string } {
     return { protocolID: [2, this.context], keyID: key }
   }
 
-  private async getOutputs (key: string, limit?: number): Promise<ListOutputsResult> {
+  private async getOutputs(key: string, limit?: number): Promise<ListOutputsResult> {
     const results = await this.wallet.listOutputs({
       basket: this.context,
       tags: [key],
@@ -129,7 +129,7 @@ export default class LocalKVStore {
    * @throws {Error} If too many outputs are found for the key (ambiguous state).
    * @throws {Error} If the found output's locking script cannot be decoded or represents an invalid token format.
    */
-  async get (key: string, defaultValue: string | undefined = undefined): Promise<string | undefined> {
+  async get(key: string, defaultValue: string | undefined = undefined): Promise<string | undefined> {
     const lockQueue = await this.queueOperationOnKey(key)
 
     try {
@@ -140,7 +140,7 @@ export default class LocalKVStore {
     }
   }
 
-  private getLockingScript (output: WalletOutput, beef: Beef): LockingScript {
+  private getLockingScript(output: WalletOutput, beef: Beef): LockingScript {
     const [txid, vout] = output.outpoint.split('.')
     const tx = beef.findTxid(txid)?.tx
     if (tx == null) { throw new Error(`beef must contain txid ${txid}`) }
@@ -148,7 +148,7 @@ export default class LocalKVStore {
     return lockingScript
   }
 
-  private async lookupValue (key: string, defaultValue: string | undefined, limit?: number): Promise<LookupValueResult> {
+  private async lookupValue(key: string, defaultValue: string | undefined, limit?: number): Promise<LookupValueResult> {
     const lor = await this.getOutputs(key, limit)
     const r: LookupValueResult = { value: defaultValue, outpoint: undefined, lor }
     const { outputs } = lor
@@ -181,7 +181,7 @@ export default class LocalKVStore {
     return r
   }
 
-  private getInputs (outputs: WalletOutput[]): CreateActionInput[] {
+  private getInputs(outputs: WalletOutput[]): CreateActionInput[] {
     const inputs: CreateActionInput[] = []
     for (let i = 0; i < outputs.length; i++) {
       inputs.push({
@@ -193,7 +193,7 @@ export default class LocalKVStore {
     return inputs
   }
 
-  private async getSpends (key: string, outputs: WalletOutput[], pushdrop: PushDrop, atomicBEEF: AtomicBEEF): Promise<Record<number, SignActionSpend>> {
+  private async getSpends(key: string, outputs: WalletOutput[], pushdrop: PushDrop, atomicBEEF: AtomicBEEF): Promise<Record<number, SignActionSpend>> {
     const p = this.getProtocol(key)
     const tx = Transaction.fromAtomicBEEF(atomicBEEF)
     const spends: Record<number, SignActionSpend> = {}
@@ -222,7 +222,7 @@ export default class LocalKVStore {
    * @param {string} value - The value to associate with the key.
    * @returns {Promise<OutpointString>} A promise that resolves to the outpoint string (txid.vout) of the new or updated token output.
    */
-  async set (key: string, value: string): Promise<OutpointString> {
+  async set(key: string, value: string): Promise<OutpointString> {
     const lockQueue = await this.queueOperationOnKey(key)
 
     try {
@@ -308,7 +308,7 @@ export default class LocalKVStore {
    * @param {string} key - The key to remove.
    * @returns {Promise<string[]>} A promise that resolves to the txids of the removal transactions if successful.
    */
-  async remove (key: string): Promise<string[]> {
+  async remove(key: string): Promise<string[]> {
     const lockQueue = await this.queueOperationOnKey(key)
 
     try {
