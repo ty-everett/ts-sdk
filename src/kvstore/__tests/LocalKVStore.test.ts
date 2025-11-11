@@ -104,7 +104,7 @@ describe('localKVStore', () => {
   // const testUnlockingScriptHex = 'mockUnlockingScriptHex'; // Defined above
 
   beforeEach(() => {
-  // Reset mocks before each test (clears calls and resets implementations)
+    // Reset mocks before each test (clears calls and resets implementations)
     jest.clearAllMocks()
 
     // Create a fresh mock wallet for each test
@@ -122,7 +122,7 @@ describe('localKVStore', () => {
   // --- Constructor Tests ---
   describe('constructor', () => {
     it('should create an instance with default wallet and encrypt=true', () => {
-    // We need to mock the default WalletClient if the SUT uses it
+      // We need to mock the default WalletClient if the SUT uses it
       const MockedWalletClient = require('../../../mod.js').WalletClient
       const store = new LocalKVStore(undefined, 'default-context')
       expect(store).toBeInstanceOf(LocalKVStore)
@@ -200,7 +200,7 @@ describe('localKVStore', () => {
     let pushDropInstance: PushDrop // To access the instance methods
 
     beforeEach(() => {
-    // Get the mock instance that will be created by `new PushDrop()`
+      // Get the mock instance that will be created by `new PushDrop()`
       pushDropInstance = new (PushDrop as any)()
     })
 
@@ -223,7 +223,7 @@ describe('localKVStore', () => {
         plaintext: valueArray, // Should be Array<number>
         protocolID: [2, testContext],
         keyID: testKey
-      })
+      }, undefined)
       // Check the mock instance's lock method
       expect(mockPDInstance.lock).toHaveBeenCalledWith(
         // The lock function expects Array<number[] | Uint8Array>
@@ -250,7 +250,7 @@ describe('localKVStore', () => {
           acceptDelayedBroadcast: false,
           randomizeOutputs: false
         }
-      })
+      }, undefined)
       expect(mockWallet.signAction).not.toHaveBeenCalled()
       expect(mockWallet.relinquishOutput).not.toHaveBeenCalled()
     })
@@ -293,7 +293,7 @@ describe('localKVStore', () => {
           acceptDelayedBroadcast: false,
           randomizeOutputs: false
         }
-      })
+      }, undefined)
       expect(mockWallet.signAction).not.toHaveBeenCalled()
       expect(mockWallet.relinquishOutput).not.toHaveBeenCalled()
     })
@@ -301,7 +301,7 @@ describe('localKVStore', () => {
     it('should update an existing output (spend and create)', async () => {
       const existingOutpoint = 'oldTxId.0'
       const existingOutput = { outpoint: existingOutpoint, txid: 'oldTxId', vout: 0, lockingScript: 'oldScriptHex' } // Added script
-      const mockBEEF = [1,2,3,4,5,6]
+      const mockBEEF = [1, 2, 3, 4, 5, 6]
       const signableRef = 'signableTxRef123'
       const signableTx = []
       const updatedTxId = 'updatedTxId'
@@ -366,7 +366,7 @@ describe('localKVStore', () => {
         outputs: expect.arrayContaining([ // Check outputs array
           expect.objectContaining({ lockingScript: testLockingScriptHex }) // Check the new output script
         ])
-      }))
+      }), undefined)
 
       // Verify signing steps
       expect(MockedTransaction.fromAtomicBEEF).toHaveBeenCalledWith(signableTx)
@@ -383,7 +383,7 @@ describe('localKVStore', () => {
         spends: {
           0: { unlockingScript: testUnlockingScriptHex } // Check unlocking script from mock sign result
         }
-      })
+      }, undefined)
       expect(mockWallet.relinquishOutput).not.toHaveBeenCalled()
     })
 
@@ -395,7 +395,7 @@ describe('localKVStore', () => {
       const existingOutpoint2 = 'oldTxId2.1'
       const existingOutput1 = { outpoint: existingOutpoint1, txid: 'oldTxId1', vout: 0, lockingScript: 's1' }
       const existingOutput2 = { outpoint: existingOutpoint2, txid: 'oldTxId2', vout: 1, lockingScript: 's2' }
-      const mockBEEF = [1,2,3,4,5,6]
+      const mockBEEF = [1, 2, 3, 4, 5, 6]
       const signableRef = 'signableTxRefMulti'
       const signableTx = []
       const updatedTxId = 'updatedTxIdMulti'
@@ -457,7 +457,7 @@ describe('localKVStore', () => {
         outputs: expect.arrayContaining([
           expect.objectContaining({ lockingScript: testLockingScriptHex })
         ])
-      }))
+      }), undefined)
 
       // Verify signing loop
       expect(MockedTransaction.fromAtomicBEEF).toHaveBeenCalledWith(signableTx)
@@ -478,14 +478,14 @@ describe('localKVStore', () => {
           0: { unlockingScript: testUnlockingScriptHex }, // Same mock script for both
           1: { unlockingScript: testUnlockingScriptHex }
         }
-      })
+      }, undefined)
       expect(mockWallet.relinquishOutput).not.toHaveBeenCalled()
     })
 
     it('should preserve original error message when createAction fails', async () => {
       const originalErrorMessage = 'Network connection timeout while creating transaction'
       const originalError = new Error(originalErrorMessage)
-      
+
       // Mock the lookupValue to return a value that differs from what we're setting
       // to ensure set() will attempt to create a transaction
       const mockedLor: ListOutputsResult = {
@@ -533,7 +533,7 @@ describe('localKVStore', () => {
     let pushDropInstance: PushDrop // To access the instance methods
 
     beforeEach(() => {
-    // Get the mock instance that will be created by `new PushDrop()`
+      // Get the mock instance that will be created by `new PushDrop()`
       pushDropInstance = new (PushDrop as any)()
     })
 
@@ -598,7 +598,7 @@ describe('localKVStore', () => {
         options: {
           acceptDelayedBroadcast: false
         }
-      })
+      }, undefined)
       // Check that outputs key is absent
       expect(mockWallet.createAction.mock.calls[0][0]).not.toHaveProperty('outputs')
 
@@ -619,7 +619,7 @@ describe('localKVStore', () => {
           0: { unlockingScript: testUnlockingScriptHex },
           1: { unlockingScript: testUnlockingScriptHex }
         }
-      })
+      }, undefined)
       expect(mockWallet.relinquishOutput).not.toHaveBeenCalled()
     })
 
@@ -659,7 +659,7 @@ describe('localKVStore', () => {
     it('should preserve original error message when wallet operations fail during removal', async () => {
       const originalErrorMessage = 'Insufficient funds to cover transaction fees'
       const originalError = new Error(originalErrorMessage)
-      
+
       const existingOutpoint = 'failTxId.0'
       const existingOutput = { outpoint: existingOutpoint, txid: 'failTxId', vout: 0, lockingScript: 's1' }
       const mockBEEF = Buffer.from('mockBEEFFail')

@@ -115,7 +115,7 @@ export default class LocalKVStore {
       tagQueryMode: 'all',
       include: 'entire transactions',
       limit
-    })
+    }, this.originator)
     return results
   }
 
@@ -175,7 +175,7 @@ export default class LocalKVStore {
       const { plaintext } = await this.wallet.decrypt({
         ...this.getProtocol(key),
         ciphertext: field
-      })
+      }, this.originator)
       r.value = Utils.toUTF8(plaintext)
     }
     return r
@@ -241,7 +241,7 @@ export default class LocalKVStore {
         const { ciphertext } = await this.wallet.encrypt({
           ...protocol,
           plaintext: valueAsArray
-        })
+        }, this.originator)
         valueAsArray = ciphertext
       }
 
@@ -272,7 +272,7 @@ export default class LocalKVStore {
             acceptDelayedBroadcast: this.acceptDelayedBroadcast,
             randomizeOutputs: false
           }
-        })
+        }, this.originator)
 
         if (outputs.length > 0 && typeof signableTransaction !== 'object') {
           throw new Error('Wallet did not return a signable transaction when expected.')
@@ -285,7 +285,7 @@ export default class LocalKVStore {
           const { txid } = await this.wallet.signAction({
             reference: signableTransaction.reference,
             spends
-          })
+          }, this.originator)
           outpoint = `${txid as string}.0`
         }
       } catch (error) {
@@ -326,7 +326,7 @@ export default class LocalKVStore {
               options: {
                 acceptDelayedBroadcast: this.acceptDelayedBroadcast
               }
-            })
+            }, this.originator)
             if (typeof signableTransaction !== 'object') {
               throw new Error('Wallet did not return a signable transaction when expected.')
             }
@@ -334,7 +334,7 @@ export default class LocalKVStore {
             const { txid } = await this.wallet.signAction({
               reference: signableTransaction.reference,
               spends
-            })
+            }, this.originator)
             if (txid === undefined) { throw new Error('signAction must return a valid txid') }
             txids.push(txid)
           } catch (error) {
