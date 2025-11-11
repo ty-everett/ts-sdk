@@ -213,7 +213,10 @@ canonical references for baskets, protocols, and certificate types.
 
 ```ts
 export class RegistryClient {
-    constructor(private readonly wallet: WalletInterface = new WalletClient(), options?: { acceptDelayedBroadcast?: boolean }) 
+    constructor(private readonly wallet: WalletInterface = new WalletClient(), options: {
+        acceptDelayedBroadcast?: boolean;
+        resolver?: LookupResolver;
+    } = {}) 
     async registerDefinition(data: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> 
     async resolve<T extends DefinitionType>(definitionType: T, query: RegistryQueryMapping[T]): Promise<DefinitionData[]> 
     async listOwnRegistryEntries(definitionType: DefinitionType): Promise<RegistryRecord[]> 
@@ -222,7 +225,7 @@ export class RegistryClient {
 }
 ```
 
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [DefinitionData](./registry.md#type-definitiondata), [DefinitionType](./registry.md#type-definitiontype), [RegistryQueryMapping](./registry.md#interface-registryquerymapping), [RegistryRecord](./registry.md#type-registryrecord), [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface)
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [DefinitionData](./registry.md#type-definitiondata), [DefinitionType](./registry.md#type-definitiontype), [LookupResolver](./overlay-tools.md#class-lookupresolver), [RegistryQueryMapping](./registry.md#interface-registryquerymapping), [RegistryRecord](./registry.md#type-registryrecord), [WalletClient](./wallet.md#class-walletclient), [WalletInterface](./wallet.md#interface-walletinterface)
 
 #### Method listOwnRegistryEntries
 
@@ -266,6 +269,24 @@ Argument Details
 + **data**
   + Structured information about a 'basket', 'protocol', or 'certificate'.
 
+#### Method removeDefinition
+
+Removes a registry definition by spending its associated UTXO.
+
+```ts
+async removeDefinition(registryRecord: RegistryRecord): Promise<BroadcastResponse | BroadcastFailure> 
+```
+See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [RegistryRecord](./registry.md#type-registryrecord)
+
+Returns
+
+Broadcast success/failure.
+
+Argument Details
+
++ **registryRecord**
+  + The registry record to remove (must have valid txid, outputIndex, and lockingScript).
+
 #### Method resolve
 
 Resolves registrant tokens of a particular type using a lookup service.
@@ -293,24 +314,6 @@ Argument Details
   + The registry type, which can be 'basket', 'protocol', or 'certificate'.
 + **query**
   + The query object used to filter registry records, whose shape is determined by the registry type.
-
-#### Method removeDefinition
-
-Removes a registry definition by spending its associated UTXO.
-
-```ts
-async removeDefinition(registryRecord: RegistryRecord): Promise<BroadcastResponse | BroadcastFailure> 
-```
-See also: [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse), [RegistryRecord](./registry.md#type-registryrecord)
-
-Returns
-
-Broadcast success/failure.
-
-Argument Details
-
-+ **registryRecord**
-  + The registry record to remove (must have valid txid, outputIndex, and lockingScript).
 
 #### Method updateDefinition
 
