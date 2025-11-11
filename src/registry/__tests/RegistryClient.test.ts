@@ -35,7 +35,7 @@ jest.mock('../../script/index.js', () => {
     PushDrop: Object.assign(
       jest.fn().mockImplementation(() => ({
         lock: jest.fn().mockResolvedValue({ toHex: () => 'mockLockingScriptHex' }),
-        unlock: jest.fn().mockResolvedValue({
+        unlock: jest.fn().mockReturnValue({
           sign: jest.fn().mockResolvedValue({
             toHex: () => 'mockUnlockingScriptHex'
           })
@@ -164,6 +164,11 @@ describe('RegistryClient', () => {
     }
 
     registryClient = new RegistryClient(walletMock as WalletInterface)
+    
+    // Mock the resolver instance since it's now initialized in constructor
+    ; (registryClient as any).resolver = {
+      query: jest.fn().mockResolvedValue({ type: 'output-list', outputs: [] })
+    }
 
     jest.clearAllMocks()
     mockBroadcast.mockClear()
@@ -192,9 +197,9 @@ describe('RegistryClient', () => {
           ])
         })
       )
-      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_basketmap'], {
+      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_basketmap'], expect.objectContaining({
         networkPreset: 'main'
-      })
+      }))
       expect(mockBroadcast).toHaveBeenCalledTimes(1)
     })
 
@@ -217,9 +222,9 @@ describe('RegistryClient', () => {
         })
       )
 
-      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_protomap'], {
+      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_protomap'], expect.objectContaining({
         networkPreset: 'main'
-      })
+      }))
       expect(mockBroadcast).toHaveBeenCalledTimes(1)
     })
 
@@ -242,9 +247,9 @@ describe('RegistryClient', () => {
         })
       )
 
-      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_certmap'], {
+      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_certmap'], expect.objectContaining({
         networkPreset: 'main'
-      })
+      }))
       expect(mockBroadcast).toHaveBeenCalledTimes(1)
     })
 
@@ -272,32 +277,30 @@ describe('RegistryClient', () => {
   // ------------------------------------------------------------------
   describe('resolve', () => {
     it('should return empty array if resolver does not return output-list', async () => {
-      ; (LookupResolver as jest.Mock).mockImplementation(() => ({
-        query: jest.fn().mockResolvedValue({ type: 'not-output-list' })
-      }))
+      // Mock the instance resolver
+      ; (registryClient as any).resolver.query = jest.fn().mockResolvedValue({ type: 'not-output-list' })
 
       const result = await registryClient.resolve('basket', { name: 'foo' })
       expect(result).toEqual([])
     })
 
     it('should parse outputs from resolver if type is output-list', async () => {
-      ; (LookupResolver as jest.Mock).mockImplementation(() => ({
-        query: jest.fn().mockResolvedValue({
-          type: 'output-list',
-          outputs: [{ beef: [9, 9, 9], outputIndex: 0 }]
-        })
-      }))
+      // Mock the instance resolver
+      ; (registryClient as any).resolver.query = jest.fn().mockResolvedValue({
+        type: 'output-list',
+        outputs: [{ beef: [9, 9, 9], outputIndex: 0 }]
+      })
 
-        // The code expects 7 fields for basket (6 definition fields + 1 extra signature field)
+        // Basket has 7 fields: 5 data fields + operator + signature
         ; (PushDrop.decode as jest.Mock).mockReturnValue({
           fields: [
-            [98], // 'b'
-            [97], // 'a'
-            [115], // 's'
-            [107], // 'k'
-            [101], // 'e'
-            [116], // 't' => operator
-            [111]  // extra signature field
+            [98], // 'b' - basketID
+            [97], // 'a' - name
+            [115], // 's' - iconURL
+            [107], // 'k' - description
+            [101], // 'e' - documentationURL
+            [116], // 't' - operator
+            [111]  // signature field
           ]
         })
 
@@ -320,15 +323,14 @@ describe('RegistryClient', () => {
     })
 
     it('should skip outputs that fail parseLockingScript', async () => {
-      ; (LookupResolver as jest.Mock).mockImplementation(() => ({
-        query: jest.fn().mockResolvedValue({
-          type: 'output-list',
-          outputs: [
-            { beef: [1, 1, 1], outputIndex: 0 },
-            { beef: [2, 2, 2], outputIndex: 1 }
-          ]
-        })
-      }))
+      // Mock the instance resolver
+      ; (registryClient as any).resolver.query = jest.fn().mockResolvedValue({
+        type: 'output-list',
+        outputs: [
+          { beef: [1, 1, 1], outputIndex: 0 },
+          { beef: [2, 2, 2], outputIndex: 1 }
+        ]
+      })
 
         // Return empty fields so parseLockingScript fails the length check
         ; (PushDrop.decode as jest.Mock)
@@ -373,21 +375,20 @@ describe('RegistryClient', () => {
       });
 
       // Use a mockImplementation to inspect the lockingScript and return appropriate decoded fields.
+      // Basket has 7 fields: 5 data fields + operator + signature
       (PushDrop.decode as jest.Mock).mockImplementation((scriptObj) => {
         return {
           fields: [
-            [98],  // 'b'
-            [97],  // 'a'
-            [115], // 's'
-            [107], // 'k'
-            [101], // 'e'
-            [116], // 't'
-            [111]  // extra signature field
+            [98],  // 'b' - basketID
+            [97],  // 'a' - name
+            [115], // 's' - iconURL
+            [107], // 'k' - description
+            [101], // 'e' - documentationURL
+            [116], // 't' - operator
+            [111]  // signature field
           ]
         }
       });
-
-      (walletMock.getPublicKey as jest.Mock).mockResolvedValue({ publicKey: 't' }); // <-- Semicolon
 
       const records = await registryClient.listOwnRegistryEntries('basket');
       expect(walletMock.listOutputs).toHaveBeenCalledWith({
@@ -408,9 +409,9 @@ describe('RegistryClient', () => {
   })
 
   // ------------------------------------------------------------------
-  // revokeOwnRegistryEntry
+  // removeDefinition
   // ------------------------------------------------------------------
-  describe('revokeOwnRegistryEntry', () => {
+  describe('removeDefinition', () => {
     let validRecord: RegistryRecord
 
     beforeEach(() => {
@@ -430,26 +431,26 @@ describe('RegistryClient', () => {
       }
     })
 
-    it('should revoke a record successfully (networkPreset=main)', async () => {
-      const result = await registryClient.revokeOwnRegistryEntry(validRecord)
+    it('should remove a record successfully (networkPreset=main)', async () => {
+      const result = await registryClient.removeDefinition(validRecord)
       expect(result).toBe('mockBroadcastSuccess')
 
       expect(walletMock.createAction).toHaveBeenCalledWith(
         expect.objectContaining({
-          description: 'Revoke basket item: myBasket',
+          description: 'Remove basket item: myBasket',
           inputs: [
             {
               outpoint: 'someTxId.0',
-              unlockingScriptLength: 73,
-              inputDescription: 'Revoking basket token'
+              unlockingScriptLength: 74,
+              inputDescription: 'Removing basket token'
             }
           ]
         })
       )
 
-      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_basketmap'], {
+      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_basketmap'], expect.objectContaining({
         networkPreset: 'main'
-      })
+      }))
       expect(mockBroadcast).toHaveBeenCalled()
     })
 
@@ -458,22 +459,178 @@ describe('RegistryClient', () => {
         tx: [1, 2, 3],
         signableTransaction: undefined
       })
-      await expect(registryClient.revokeOwnRegistryEntry(validRecord)).rejects.toThrow(
+      await expect(registryClient.removeDefinition(validRecord)).rejects.toThrow(
         'Failed to create signable transaction.'
       )
     })
 
     it('should throw if signAction returns no signedTx', async () => {
       ; (walletMock.signAction as jest.Mock).mockResolvedValueOnce({ tx: undefined })
-      await expect(registryClient.revokeOwnRegistryEntry(validRecord)).rejects.toThrow(
+      await expect(registryClient.removeDefinition(validRecord)).rejects.toThrow(
         'Failed to finalize the transaction signature.'
       )
     })
 
     it('should propagate broadcast errors', async () => {
       mockBroadcast.mockRejectedValueOnce(new Error('Broadcast failure!'))
-      await expect(registryClient.revokeOwnRegistryEntry(validRecord)).rejects.toThrow(
+      await expect(registryClient.removeDefinition(validRecord)).rejects.toThrow(
         'Broadcast failure!'
+      )
+    })
+
+    it('should throw if registry record is missing required fields', async () => {
+      const invalidRecord = { ...validRecord, txid: undefined }
+      await expect(registryClient.removeDefinition(invalidRecord as any)).rejects.toThrow(
+        'Invalid registry record. Missing txid, outputIndex, or lockingScript.'
+      )
+    })
+
+    it('should throw if registry record has undefined outputIndex', async () => {
+      const invalidRecord = { ...validRecord, outputIndex: undefined }
+      await expect(registryClient.removeDefinition(invalidRecord as any)).rejects.toThrow(
+        'Invalid registry record. Missing txid, outputIndex, or lockingScript.'
+      )
+    })
+
+    it('should throw if registry record is missing lockingScript', async () => {
+      const invalidRecord = { ...validRecord, lockingScript: undefined }
+      await expect(registryClient.removeDefinition(invalidRecord as any)).rejects.toThrow(
+        'Invalid registry record. Missing txid, outputIndex, or lockingScript.'
+      )
+    })
+
+    it('should throw if registry record does not belong to current wallet', async () => {
+      const otherUserRecord = { ...validRecord, registryOperator: 'differentPublicKey' }
+      await expect(registryClient.removeDefinition(otherUserRecord)).rejects.toThrow(
+        'This registry token does not belong to the current wallet.'
+      )
+    })
+
+    it('should handle protocol definition removal with correct description', async () => {
+      const protocolRecord: RegistryRecord = {
+        definitionType: 'protocol',
+        protocolID: [1, 'testProtocol'],
+        name: 'Test Protocol',
+        iconURL: 'url',
+        description: 'desc',
+        documentationURL: 'docURL',
+        txid: 'protocolTxId',
+        outputIndex: 1,
+        satoshis: 1000,
+        lockingScript: 'protocolLockingScript',
+        registryOperator: 'mockPublicKey',
+        beef: [0, 1, 2]
+      }
+
+      const result = await registryClient.removeDefinition(protocolRecord)
+      expect(result).toBe('mockBroadcastSuccess')
+
+      expect(walletMock.createAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Remove protocol item: Test Protocol',
+          inputs: [
+            {
+              outpoint: 'protocolTxId.1',
+              unlockingScriptLength: 74,
+              inputDescription: 'Removing protocol token'
+            }
+          ]
+        })
+      )
+
+      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_protomap'], expect.objectContaining({
+        networkPreset: 'main'
+      }))
+    })
+
+    it('should handle certificate definition removal with correct description', async () => {
+      const certificateRecord: RegistryRecord = {
+        definitionType: 'certificate',
+        type: 'testCert',
+        name: 'Test Certificate',
+        iconURL: 'url',
+        description: 'desc',
+        documentationURL: 'docURL',
+        fields: {},
+        txid: 'certTxId',
+        outputIndex: 2,
+        satoshis: 1000,
+        lockingScript: 'certLockingScript',
+        registryOperator: 'mockPublicKey',
+        beef: [0, 1, 2]
+      }
+
+      const result = await registryClient.removeDefinition(certificateRecord)
+      expect(result).toBe('mockBroadcastSuccess')
+
+      expect(walletMock.createAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Remove certificate item: Test Certificate',
+          inputs: [
+            {
+              outpoint: 'certTxId.2',
+              unlockingScriptLength: 74,
+              inputDescription: 'Removing certificate token'
+            }
+          ]
+        })
+      )
+
+      expect(TopicBroadcaster).toHaveBeenCalledWith(['tm_certmap'], expect.objectContaining({
+        networkPreset: 'main'
+      }))
+    })
+
+    it('should use certificate type as identifier when name is undefined', async () => {
+      const certificateRecord: RegistryRecord = {
+        definitionType: 'certificate',
+        type: 'testCertType',
+        name: undefined as any,
+        iconURL: 'url',
+        description: 'desc',
+        documentationURL: 'docURL',
+        fields: {},
+        txid: 'certTxId',
+        outputIndex: 2,
+        satoshis: 1000,
+        lockingScript: 'certLockingScript',
+        registryOperator: 'mockPublicKey',
+        beef: [0, 1, 2]
+      }
+
+      const result = await registryClient.removeDefinition(certificateRecord)
+      expect(result).toBe('mockBroadcastSuccess')
+
+      expect(walletMock.createAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Remove certificate item: testCertType'
+        })
+      )
+    })
+
+    it('should use acceptDelayedBroadcast setting from constructor', async () => {
+      // Create a new client with acceptDelayedBroadcast: true
+      const clientWithDelayedBroadcast = new RegistryClient(walletMock as WalletInterface, { acceptDelayedBroadcast: true })
+      ; (clientWithDelayedBroadcast as any).resolver = {
+        query: jest.fn().mockResolvedValue({ type: 'output-list', outputs: [] })
+      }
+
+      await clientWithDelayedBroadcast.removeDefinition(validRecord)
+
+      expect(walletMock.createAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            acceptDelayedBroadcast: true
+          })
+        })
+      )
+
+      expect(walletMock.signAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            acceptDelayedBroadcast: true
+          })
+        })
       )
     })
   })

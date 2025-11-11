@@ -9,8 +9,7 @@ import { Utils } from '../primitives/index.js'
 import {
   Transaction,
   BroadcastResponse,
-  BroadcastFailure,
-  Beef
+  BroadcastFailure
 } from '../transaction/index.js'
 import {
   LookupResolver,
@@ -26,6 +25,7 @@ import {
 } from './types/index.js'
 
 const REGISTRANT_TOKEN_AMOUNT = 1
+const REGISTRANT_KEY_ID = '1'
 
 /**
  * RegistryClient manages on-chain registry definitions for three types:
@@ -37,16 +37,47 @@ const REGISTRANT_TOKEN_AMOUNT = 1
  * - Register new definitions using pushdrop-based UTXOs.
  * - Resolve existing definitions using a lookup service.
  * - List registry entries associated with the operator's wallet.
- * - Revoke an existing registry entry by spending its UTXO.
+ * - Remove existing registry entries by spending their UTXOs.
+ * - Update existing registry entries.
  *
  * Registry operators use this client to establish and manage
  * canonical references for baskets, protocols, and certificate types.
  */
 export class RegistryClient {
-  private network: 'mainnet' | 'testnet'
+  private network: 'mainnet' | 'testnet' | undefined
+  private resolver: LookupResolver
+  private cachedIdentityKey: PubKeyHex | undefined
+  private readonly acceptDelayedBroadcast: boolean
+
   constructor(
-    private readonly wallet: WalletInterface = new WalletClient()
-  ) { }
+    private readonly wallet: WalletInterface = new WalletClient(),
+    options: { acceptDelayedBroadcast?: boolean } = {}
+  ) {
+    this.acceptDelayedBroadcast = options.acceptDelayedBroadcast ?? false
+    this.resolver = new LookupResolver()
+  }
+
+  /**
+   * Gets the wallet's identity key, caching it after the first call.
+   * @returns The public identity key as a hex string.
+   */
+  private async getIdentityKey(): Promise<PubKeyHex> {
+    if (this.cachedIdentityKey === undefined) {
+      this.cachedIdentityKey = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
+    }
+    return this.cachedIdentityKey
+  }
+
+  /**
+   * Gets the network, initializing and caching it on first call.
+   * @returns The network type ('mainnet' or 'testnet').
+   */
+  private async getNetwork(): Promise<'mainnet' | 'testnet'> {
+    if (this.network === undefined) {
+      this.network = (await this.wallet.getNetwork({})).network
+    }
+    return this.network
+  }
 
   /**
    * Publishes a new on-chain definition for baskets, protocols, or certificates.
@@ -59,7 +90,7 @@ export class RegistryClient {
    * @returns A promise with the broadcast result or failure.
    */
   async registerDefinition(data: DefinitionData): Promise<BroadcastResponse | BroadcastFailure> {
-    const registryOperator = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
+    const registryOperator = await this.getIdentityKey()
     const pushdrop = new PushDrop(this.wallet)
 
     // Convert definition data into PushDrop fields
@@ -69,9 +100,10 @@ export class RegistryClient {
     const protocol = this.mapDefinitionTypeToWalletProtocol(data.definitionType)
 
     // Lock the fields into a pushdrop-based UTXO
-    const lockingScript = await pushdrop.lock(fields, protocol, '1', 'anyone', true)
+    const lockingScript = await pushdrop.lock(fields, protocol, REGISTRANT_KEY_ID, 'anyone', true)
 
     // Create a transaction
+    console.time('createAction')
     const { tx } = await this.wallet.createAction({
       description: `Register a new ${data.definitionType} item`,
       outputs: [
@@ -83,23 +115,25 @@ export class RegistryClient {
         }
       ],
       options: {
-        acceptDelayedBroadcast: false,
+        acceptDelayedBroadcast: this.acceptDelayedBroadcast,
         randomizeOutputs: false
       }
     })
-
+    console.timeEnd('createAction')
     if (tx === undefined) {
       throw new Error(`Failed to create ${data.definitionType} registration transaction!`)
     }
-
+    console.time('broadcast')
     // Broadcast to the relevant topic
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(data.definitionType)],
       {
-        networkPreset: this.network ??= (await this.wallet.getNetwork({})).network
+        networkPreset: await this.getNetwork()
       }
     )
-    return await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
+    const result = await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
+    console.timeEnd('broadcast')
+    return result
   }
 
   /**
@@ -121,11 +155,10 @@ export class RegistryClient {
     definitionType: T,
     query: RegistryQueryMapping[T]
   ): Promise<DefinitionData[]> {
-    const resolver = new LookupResolver()
     const serviceName = this.mapDefinitionTypeToServiceName(definitionType)
 
     // Make the lookup query
-    const result = await resolver.query({ service: serviceName, query })
+    const result = await this.resolver.query({ service: serviceName, query })
     if (result.type !== 'output-list') {
       return []
     }
@@ -189,25 +222,27 @@ export class RegistryClient {
   }
 
   /**
-   * Revokes a registry record by spending its associated UTXO.
+   * Removes a registry definition by spending its associated UTXO.
    *
-   * @param registryRecord - Must have valid txid, outputIndex, and lockingScript.
+   * @param registryRecord - The registry record to remove (must have valid txid, outputIndex, and lockingScript).
    * @returns Broadcast success/failure.
    */
-  async revokeOwnRegistryEntry(
+  async removeDefinition(
     registryRecord: RegistryRecord
   ): Promise<BroadcastResponse | BroadcastFailure> {
+    console.time('removeDefinition')
     if (registryRecord.txid === undefined || typeof registryRecord.outputIndex === 'undefined' || registryRecord.lockingScript === undefined) {
       throw new Error('Invalid registry record. Missing txid, outputIndex, or lockingScript.')
     }
 
     // Check if the registry record belongs to the current user
-    const currentIdentityKey = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
+    const currentIdentityKey = await this.getIdentityKey()
     if (registryRecord.registryOperator !== currentIdentityKey) {
       throw new Error('This registry token does not belong to the current wallet.')
     }
 
-    // Create a descriptive label for the item we’re revoking
+    console.time('createAction')
+    // Create a descriptive label for the item we're removing
     const itemIdentifier =
       registryRecord.definitionType === 'basket'
         ? registryRecord.basketID
@@ -219,32 +254,33 @@ export class RegistryClient {
 
     const outpoint = `${registryRecord.txid}.${registryRecord.outputIndex}`
     const { signableTransaction } = await this.wallet.createAction({
-      description: `Revoke ${registryRecord.definitionType} item: ${itemIdentifier}`,
+      description: `Remove ${registryRecord.definitionType} item: ${itemIdentifier}`,
       inputBEEF: registryRecord.beef,
       inputs: [
         {
           outpoint,
           unlockingScriptLength: 74,
-          inputDescription: `Revoking ${registryRecord.definitionType} token`
+          inputDescription: `Removing ${registryRecord.definitionType} token`
         }
       ],
       options: {
-        acceptDelayedBroadcast: false,
+        acceptDelayedBroadcast: this.acceptDelayedBroadcast,
         randomizeOutputs: false
       }
     })
+    console.timeEnd('createAction')
 
     if (signableTransaction === undefined) {
       throw new Error('Failed to create signable transaction.')
     }
-
+    console.time('signAction')
     const partialTx = Transaction.fromAtomicBEEF(signableTransaction.tx)
 
     // Prepare the unlocker
     const pushdrop = new PushDrop(this.wallet)
     const unlocker = pushdrop.unlock(
       this.mapDefinitionTypeToWalletProtocol(registryRecord.definitionType),
-      '1',
+      REGISTRANT_KEY_ID,
       'anyone'
     )
 
@@ -260,22 +296,27 @@ export class RegistryClient {
         }
       },
       options: {
-        acceptDelayedBroadcast: false
+        acceptDelayedBroadcast: this.acceptDelayedBroadcast
       }
     })
 
     if (signedTx === undefined) {
       throw new Error('Failed to finalize the transaction signature.')
     }
-
+    console.timeEnd('signAction')
     // Broadcast
+    console.time('broadcast')
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(registryRecord.definitionType)],
       {
-        networkPreset: this.network ??= (await this.wallet.getNetwork({})).network
+        networkPreset: await this.getNetwork(),
+        resolver: this.resolver
       }
     )
-    return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx))
+    const result = await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx))
+    console.timeEnd('broadcast')
+    console.timeEnd('removeDefinition')
+    return result
   }
 
   /**
@@ -299,7 +340,7 @@ export class RegistryClient {
     }
 
     // Check if the registry record belongs to the current user
-    const currentIdentityKey = (await this.wallet.getPublicKey({ identityKey: true })).publicKey
+    const currentIdentityKey = await this.getIdentityKey()
     if (registryRecord.registryOperator !== currentIdentityKey) {
       throw new Error('This registry token does not belong to the current wallet.')
     }
@@ -319,7 +360,7 @@ export class RegistryClient {
     // Build the new locking script with updated data
     const fields = this.buildPushDropFields(updatedData, currentIdentityKey)
     const protocol = this.mapDefinitionTypeToWalletProtocol(updatedData.definitionType)
-    const newLockingScript = await pushdrop.lock(fields, protocol, '1', 'anyone', true)
+    const newLockingScript = await pushdrop.lock(fields, protocol, REGISTRANT_KEY_ID, 'anyone', true)
 
     const outpoint = `${registryRecord.txid}.${registryRecord.outputIndex}`
     const { signableTransaction } = await this.wallet.createAction({
@@ -341,7 +382,7 @@ export class RegistryClient {
         }
       ],
       options: {
-        acceptDelayedBroadcast: false,
+        acceptDelayedBroadcast: this.acceptDelayedBroadcast,
         randomizeOutputs: false
       }
     })
@@ -355,7 +396,7 @@ export class RegistryClient {
     // Prepare the unlocker for the input
     const unlocker = pushdrop.unlock(
       this.mapDefinitionTypeToWalletProtocol(registryRecord.definitionType),
-      '1',
+      REGISTRANT_KEY_ID,
       'anyone'
     )
 
@@ -371,7 +412,7 @@ export class RegistryClient {
         }
       },
       options: {
-        acceptDelayedBroadcast: false
+        acceptDelayedBroadcast: this.acceptDelayedBroadcast
       }
     })
 
@@ -383,7 +424,8 @@ export class RegistryClient {
     const broadcaster = new TopicBroadcaster(
       [this.mapDefinitionTypeToTopic(registryRecord.definitionType)],
       {
-        networkPreset: this.network ??= (await this.wallet.getNetwork({})).network
+        networkPreset: await this.getNetwork(),
+        resolver: this.resolver
       }
     )
     return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx))
@@ -463,7 +505,7 @@ export class RegistryClient {
         if (decoded.fields.length !== 7) {
           throw new Error('Unexpected field count for basket type.')
         }
-        const [basketID, name, iconURL, description, docURL, operator] = decoded.fields
+        const [basketID, name, iconURL, description, docURL, operator, _signature] = decoded.fields
         registryOperator = Utils.toUTF8(operator)
 
         parsedData = {
@@ -487,7 +529,8 @@ export class RegistryClient {
           iconURL,
           description,
           docURL,
-          operator
+          operator,
+          _signature
         ] = decoded.fields
         registryOperator = Utils.toUTF8(operator)
 
@@ -513,7 +556,8 @@ export class RegistryClient {
           description,
           docURL,
           fieldsJSON,
-          operator
+          operator,
+          _signature
         ] = decoded.fields
         registryOperator = Utils.toUTF8(operator)
 
