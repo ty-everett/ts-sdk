@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.9.3 - 2025-11-11](#193---2025-11-11)
 - [1.9.2 - 2025-11-11](#192---2025-11-11)
 - [1.9.1 - 2025-11-10](#191---2025-11-10)
 - [1.9.0 - 2025-11-09](#190---2025-11-09)
@@ -173,6 +174,15 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 ### Security
+
+---
+
+### [1.9.3] - 2025-11-11
+
+### Added
+
+- Added `withDoubleSpendRetry` overlay tool to retry broadcast with resolved competing transactions.
+- Updated GlobalKVStore to use `withDoubleSpendRetry` in set/remove operations.
 
 ---
 
