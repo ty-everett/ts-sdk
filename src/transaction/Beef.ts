@@ -5,6 +5,9 @@ import BeefTx from './BeefTx.js'
 import { Reader, Writer, toHex, toArray, verifyNotNull } from '../primitives/utils.js'
 import { hash256 } from '../primitives/Hash.js'
 
+const BufferCtor =
+  typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined
+
 export const BEEF_V1 = 4022206465 // 0100BEEF in LE order
 export const BEEF_V2 = 4022206466 // 0200BEEF in LE order
 export const ATOMIC_BEEF = 0x01010101 // 01010101
@@ -73,9 +76,47 @@ export class Beef {
   version: number = BEEF_V2
   atomicTxid: string | undefined = undefined
   private txidIndex: Map<string, BeefTx> | undefined = undefined
+  private rawBytesCache?: Uint8Array
+  private hexCache?: string
+  private needsSort: boolean = true
 
   constructor (version: number = BEEF_V2) {
     this.version = version
+  }
+
+  private invalidateSerializationCaches (): void {
+    this.rawBytesCache = undefined
+    this.hexCache = undefined
+  }
+
+  private markMutated (requiresSort: boolean = true): void {
+    this.invalidateSerializationCaches()
+    if (requiresSort) {
+      this.needsSort = true
+    }
+  }
+
+  private ensureSerializableState (): void {
+    for (const tx of this.txs) {
+      void tx.txid
+    }
+  }
+
+  private ensureSortedForSerialization (): void {
+    if (this.needsSort) {
+      this.sortTxs()
+    }
+  }
+
+  private getSerializedBytes (): Uint8Array {
+    this.ensureSerializableState()
+    if (this.rawBytesCache == null) {
+      this.ensureSortedForSerialization()
+      const writer = new Writer()
+      this.toWriter(writer)
+      this.rawBytesCache = writer.toUint8Array()
+    }
+    return this.rawBytesCache
   }
 
   /**
@@ -123,6 +164,7 @@ export class Beef {
     }
     this.deleteFromIndex(txid)
     this.txs.splice(i, 1)
+    this.markMutated(true)
     btx = this.mergeTxidOnly(txid)
     return btx
   }
@@ -208,6 +250,7 @@ export class Beef {
    * @returns index of merged bump
    */
   mergeBump (bump: MerklePath): number {
+    this.markMutated(false)
     let bumpIndex: number | undefined
     // If this proof is identical to another one previously added, we use that first. Otherwise, we try to merge it with proofs from the same block.
     for (let i = 0; i < this.bumps.length; i++) {
@@ -266,6 +309,7 @@ export class Beef {
    * @returns txid of rawTx
    */
   mergeRawTx (rawTx: number[], bumpIndex?: number): BeefTx {
+    this.markMutated(true)
     const newTx: BeefTx = new BeefTx(rawTx, bumpIndex)
     this.removeExistingTxid(newTx.txid)
     this.txs.push(newTx)
@@ -285,6 +329,7 @@ export class Beef {
    * @returns txid of tx
    */
   mergeTransaction (tx: Transaction): BeefTx {
+    this.markMutated(true)
     const txid = tx.id('hex')
     this.removeExistingTxid(txid)
     let bumpIndex: number | undefined
@@ -315,6 +360,7 @@ export class Beef {
     if (existingTxIndex >= 0) {
       this.deleteFromIndex(txid)
       this.txs.splice(existingTxIndex, 1)
+      this.markMutated(true)
     }
   }
 
@@ -325,6 +371,7 @@ export class Beef {
       this.txs.push(tx)
       this.addToIndex(tx)
       this.tryToValidateBumpIndex(tx)
+      this.markMutated(true)
     }
     return tx
   }
@@ -521,11 +568,11 @@ export class Beef {
    * @returns A binary array representing the BEEF
    */
   toBinary (): number[] {
-    // Always serialize in dependency sorted order.
-    this.sortTxs()
-    const writer = new Writer()
-    this.toWriter(writer)
-    return writer.toArray()
+    return Array.from(this.getSerializedBytes())
+  }
+
+  toUint8Array (): Uint8Array {
+    return this.getSerializedBytes()
   }
 
   /**
@@ -539,7 +586,9 @@ export class Beef {
    * @returns serialized contents of this Beef with AtomicBEEF prefix.
    */
   toBinaryAtomic (txid: string): number[] {
-    this.sortTxs()
+    if (this.needsSort) {
+      this.sortTxs()
+    }
     const tx = this.findTxid(txid)
     if (tx == null) {
       throw new Error(`${txid} does not exist in this Beef`)
@@ -566,7 +615,16 @@ export class Beef {
    * @returns A hex string representing the BEEF
    */
   toHex (): string {
-    return toHex(this.toBinary())
+    if (this.hexCache != null) {
+      return this.hexCache
+    }
+    const bytes = this.getSerializedBytes()
+    const hex =
+      BufferCtor != null
+        ? BufferCtor.from(bytes).toString('hex')
+        : toHex(Array.from(bytes))
+    this.hexCache = hex
+    return hex
   }
 
   static fromReader (br: Reader): Beef {
@@ -745,6 +803,9 @@ export class Beef {
       .concat(txidOnly)
       .concat(result)
 
+    this.needsSort = false
+    this.invalidateSerializationCaches()
+
     return {
       missingInputs: Object.keys(missingInputs),
       notValid: txsNotValid.map((tx) => tx.txid),
@@ -763,6 +824,7 @@ export class Beef {
     c.bumps = Array.from(this.bumps)
     c.txs = Array.from(this.txs)
     c.txidIndex = undefined
+    c.needsSort = this.needsSort
     return c
   }
 
@@ -771,16 +833,21 @@ export class Beef {
    * @param knownTxids
    */
   trimKnownTxids (knownTxids: string[]): void {
+    let mutated = false
     for (let i = 0; i < this.txs.length;) {
       const tx = this.txs[i]
       if (tx.isTxidOnly && knownTxids.includes(tx.txid)) {
         this.deleteFromIndex(tx.txid)
         this.txs.splice(i, 1)
+        mutated = true
       } else {
         i++
       }
     }
     // TODO: bumps could be trimmed to eliminate unreferenced proofs.
+    if (mutated) {
+      this.markMutated(true)
+    }
   }
 
   /**

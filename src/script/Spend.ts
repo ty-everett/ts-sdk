@@ -7,7 +7,7 @@ import ScriptChunk from './ScriptChunk.js'
 import { minimallyEncode } from '../primitives/utils.js'
 import ScriptEvaluationError from './ScriptEvaluationError.js'
 import * as Hash from '../primitives/Hash.js'
-import TransactionSignature from '../primitives/TransactionSignature.js'
+import TransactionSignature, { SignatureHashCache } from '../primitives/TransactionSignature.js'
 import PublicKey from '../primitives/PublicKey.js'
 import { verify } from '../primitives/ECDSA.js'
 import TransactionInput from '../transaction/TransactionInput.js'
@@ -152,6 +152,7 @@ export default class Spend {
   memoryLimit: number
   stackMem: number
   altStackMem: number
+  private sigHashCache: SignatureHashCache
 
   /**
    * @constructor
@@ -216,6 +217,7 @@ export default class Spend {
     this.ifStack = []
     this.stackMem = 0
     this.altStackMem = 0
+    this.sigHashCache = { hashOutputsSingle: new Map() }
     this.reset()
   }
 
@@ -228,6 +230,7 @@ export default class Spend {
     this.ifStack = []
     this.stackMem = 0
     this.altStackMem = 0
+    this.sigHashCache = { hashOutputsSingle: new Map() }
   }
 
   private ensureStackMem (additional: number): void {
@@ -353,7 +356,7 @@ export default class Spend {
     pubkey: PublicKey,
     subscript: Script
   ): boolean {
-    const preimage = TransactionSignature.format({
+    const preimage = TransactionSignature.formatBytes({
       sourceTXID: this.sourceTXID,
       sourceOutputIndex: this.sourceOutputIndex,
       sourceSatoshis: this.sourceSatoshis,
@@ -364,7 +367,8 @@ export default class Spend {
       subscript,
       inputSequence: this.inputSequence,
       lockTime: this.lockTime,
-      scope: sig.scope
+      scope: sig.scope,
+      cache: this.sigHashCache
     })
     const hash = new BigNumber(Hash.hash256(preimage))
     return verify(hash, sig, pubkey)

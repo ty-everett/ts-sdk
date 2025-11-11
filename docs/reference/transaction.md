@@ -589,6 +589,7 @@ export class Beef {
     } 
     toWriter(writer: Writer): void 
     toBinary(): number[] 
+    toUint8Array(): Uint8Array 
     toBinaryAtomic(txid: string): number[] 
     toHex(): string 
     static fromReader(br: Reader): Beef 
@@ -1594,6 +1595,7 @@ export default class Transaction {
     async sign(): Promise<void> 
     async broadcast(broadcaster: Broadcaster = defaultBroadcaster()): Promise<BroadcastResponse | BroadcastFailure> 
     toBinary(): number[] 
+    toUint8Array(): Uint8Array 
     toEF(): number[] 
     toHexEF(): string 
     toHex(): string 

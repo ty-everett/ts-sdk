@@ -1,6 +1,7 @@
 import { Transaction } from '../transaction/index.js'
 import OverlayAdminTokenTemplate from './OverlayAdminTokenTemplate.js'
 import * as Utils from '../primitives/utils.js'
+import { getOverlayHostReputationTracker, HostReputationTracker } from './HostReputationTracker.js'
 
 const defaultFetch: typeof fetch =
   typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
@@ -92,6 +93,8 @@ export interface LookupResolverConfig {
   additionalHosts?: Record<string, string[]>
   /** Optional cache tuning. */
   cache?: CacheOptions
+  /** Optional storage for host reputation data. */
+  reputationStorage?: 'localStorage' | { get: (key: string) => string | null | undefined, set: (key: string, value: string) => void }
 }
 
 /** Facilitates lookups to URLs that return answers. */
@@ -204,6 +207,7 @@ export default class LookupResolver {
   private readonly hostOverrides: Record<string, string[]>
   private readonly additionalHosts: Record<string, string[]>
   private readonly networkPreset: 'mainnet' | 'testnet' | 'local'
+  private readonly hostReputation: HostReputationTracker
 
   // ---- Caches / memoization ----
   private readonly hostsCache: Map<string, { hosts: string[], expiresAt: number }>
@@ -222,6 +226,15 @@ export default class LookupResolver {
     this.assertValidOverrideServices(hostOverrides)
     this.hostOverrides = hostOverrides
     this.additionalHosts = config.additionalHosts ?? {}
+
+    const rs = config.reputationStorage
+    if (rs === 'localStorage') {
+      this.hostReputation = new HostReputationTracker()
+    } else if (typeof rs === 'object' && rs !== null && typeof rs.get === 'function' && typeof rs.set === 'function') {
+      this.hostReputation = new HostReputationTracker(rs)
+    } else {
+      this.hostReputation = getOverlayHostReputationTracker()
+    }
 
     // cache tuning
     this.hostsTtlMs = config.cache?.hostsTtlMs ?? 5 * 60 * 1000 // 5 min
@@ -262,10 +275,18 @@ export default class LookupResolver {
       )
     }
 
+    const rankedHosts = this.prepareHostsForQuery(
+      competentHosts,
+      `lookup service ${question.service}`
+    )
+    if (rankedHosts.length < 1) {
+      throw new Error(`All competent hosts for ${question.service} are temporarily unavailable due to backoff.`)
+    }
+
     // Fire all hosts with per-host timeout, harvest successful output-list responses
     const hostResponses = await Promise.allSettled(
-      competentHosts.map(async (host) => {
-        return await this.facilitator.lookup(host, question, timeout)
+      rankedHosts.map(async (host) => {
+        return await this.lookupHostWithTracking(host, question, timeout)
       })
     )
 
@@ -382,9 +403,15 @@ export default class LookupResolver {
     }
 
     // Query all SLAP trackers; tolerate failures.
+    const trackerHosts = this.prepareHostsForQuery(
+      this.slapTrackers,
+      'SLAP trackers'
+    )
+    if (trackerHosts.length === 0) return []
+
     const trackerResponses = await Promise.allSettled(
-      this.slapTrackers.map(async (tracker) =>
-        await this.facilitator.lookup(tracker, query, MAX_TRACKER_WAIT_TIME)
+      trackerHosts.map(async (tracker) =>
+        await this.lookupHostWithTracking(tracker, query, MAX_TRACKER_WAIT_TIME)
       )
     )
 
@@ -425,6 +452,48 @@ export default class LookupResolver {
       if (!service.startsWith('ls_')) {
         throw new Error(`Host override service names must start with "ls_": ${service}`)
       }
+    }
+  }
+
+  private prepareHostsForQuery (hosts: string[], context: string): string[] {
+    if (hosts.length === 0) return []
+    const now = Date.now()
+    const ranked = this.hostReputation.rankHosts(hosts, now)
+    const available = ranked.filter((h) => h.backoffUntil <= now).map((h) => h.host)
+    if (available.length > 0) return available
+
+    const soonest = Math.min(...ranked.map((h) => h.backoffUntil))
+    const waitMs = Math.max(soonest - now, 0)
+    throw new Error(
+      `All ${context} hosts are backing off for approximately ${waitMs}ms due to repeated failures.`
+    )
+  }
+
+  private async lookupHostWithTracking (
+    host: string,
+    question: LookupQuestion,
+    timeout?: number
+  ): Promise<LookupAnswer> {
+    const startedAt = Date.now()
+    try {
+      const answer = await this.facilitator.lookup(host, question, timeout)
+      const latency = Date.now() - startedAt
+      const isValid =
+        typeof answer === 'object' &&
+        answer !== null &&
+        answer.type === 'output-list' &&
+        Array.isArray((answer).outputs)
+
+      if (isValid) {
+        this.hostReputation.recordSuccess(host, latency)
+      } else {
+        this.hostReputation.recordFailure(host, 'Invalid lookup response')
+      }
+
+      return answer
+    } catch (err) {
+      this.hostReputation.recordFailure(host, err)
+      throw err
     }
   }
 }

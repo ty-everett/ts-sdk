@@ -1,6 +1,7 @@
 import LookupResolver, {
   HTTPSOverlayLookupFacilitator
 } from '../LookupResolver'
+import { getOverlayHostReputationTracker } from '../HostReputationTracker'
 import OverlayAdminTokenTemplate from '../../overlay-tools/OverlayAdminTokenTemplate'
 import { CompletedProtoWallet } from '../../auth/certificates/__tests/CompletedProtoWallet'
 import { PrivateKey } from '../../primitives/index'
@@ -37,8 +38,10 @@ const sampleBeef4 = new Transaction(
 ).toBEEF()
 
 describe('LookupResolver', () => {
+  const hostTracker = getOverlayHostReputationTracker()
   beforeEach(() => {
     mockFacilitator.lookup.mockReset()
+    hostTracker.reset()
   })
 
   it('should query the host and return the response when a single host is found via SLAP', async () => {
@@ -966,6 +969,123 @@ describe('LookupResolver', () => {
     ).rejects.toThrow(
       'HTTPS facilitator can only use URLs that start with "https:"'
     )
+  })
+
+  describe('Host reputation tracking', () => {
+    it('shares performance learnings across resolver instances and prefers low latency hosts', async () => {
+      const fastHost = 'https://fast.host'
+      const slowHost = 'https://slow.host'
+      const hosts = [slowHost, fastHost]
+      let fakeNow = 0
+      const nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => fakeNow)
+
+      try {
+        mockFacilitator.lookup.mockImplementation(async (url: string) => {
+          if (url === slowHost) {
+            fakeNow += 80
+          } else if (url === fastHost) {
+            fakeNow += 5
+          }
+          return {
+            type: 'output-list',
+            outputs: [
+              {
+                beef: url === fastHost ? sampleBeef2 : sampleBeef1,
+                outputIndex: url === fastHost ? 2 : 1
+              }
+            ]
+          }
+        })
+
+        const resolverA = new LookupResolver({
+          facilitator: mockFacilitator,
+          hostOverrides: {
+            ls_latency: hosts
+          }
+        })
+        await resolverA.query({
+          service: 'ls_latency',
+          query: { attempt: 1 }
+        })
+
+        mockFacilitator.lookup.mockClear()
+
+        const resolverB = new LookupResolver({
+          facilitator: mockFacilitator,
+          hostOverrides: {
+            ls_latency: hosts
+          }
+        })
+        await resolverB.query({
+          service: 'ls_latency',
+          query: { attempt: 2 }
+        })
+
+        const orderedHosts = mockFacilitator.lookup.mock.calls.map((call) => call[0])
+        expect(orderedHosts).toEqual([fastHost, slowHost])
+      } finally {
+        nowSpy.mockRestore()
+      }
+    })
+
+    it('exponentially backs off consistently failing hosts to avoid repeated work', async () => {
+      const failingHost = 'https://offline.host'
+      const healthyHost = 'https://healthy.host'
+      let fakeNow = 0
+      const nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => fakeNow)
+      const callLog: string[] = []
+      let failingCalls = 0
+
+      try {
+        mockFacilitator.lookup.mockImplementation(async (url: string) => {
+          callLog.push(url)
+          fakeNow += 5
+          if (url === failingHost) {
+            failingCalls += 1
+            throw new Error('offline')
+          }
+          return {
+            type: 'output-list',
+            outputs: [
+              {
+                beef: sampleBeef3,
+                outputIndex: 0
+              }
+            ]
+          }
+        })
+
+        const resolver = new LookupResolver({
+          facilitator: mockFacilitator,
+          hostOverrides: {
+            ls_backoff: [failingHost, healthyHost]
+          }
+        })
+
+        // First three attempts should contact both hosts (grace period)
+        await resolver.query({ service: 'ls_backoff', query: { attempt: 1 } })
+        fakeNow += 20
+        await resolver.query({ service: 'ls_backoff', query: { attempt: 2 } })
+        fakeNow += 20
+        await resolver.query({ service: 'ls_backoff', query: { attempt: 3 } })
+
+        expect(failingCalls).toBe(3)
+
+        // Immediately try again; failing host should now be in backoff and skipped
+        fakeNow += 20
+        await resolver.query({ service: 'ls_backoff', query: { attempt: 4 } })
+        expect(failingCalls).toBe(3)
+        const lastCall = callLog[callLog.length - 1]
+        expect(lastCall).toBe(healthyHost)
+
+        // Advance beyond the backoff window so the failing host is retried
+        fakeNow = 2000
+        await resolver.query({ service: 'ls_backoff', query: { attempt: 5 } })
+        expect(failingCalls).toBe(4)
+      } finally {
+        nowSpy.mockRestore()
+      }
+    })
   })
   describe('LookupResolver Resiliency', () => {
     beforeEach(() => {
