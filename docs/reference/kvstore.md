@@ -50,6 +50,7 @@ export interface KVStoreConfig {
     wallet?: WalletInterface;
     networkPreset?: "mainnet" | "testnet" | "local";
     acceptDelayedBroadcast?: boolean;
+    overlayBroadcast?: boolean;
     tokenSetDescription?: string;
     tokenUpdateDescription?: string;
     tokenRemovalDescription?: string;
@@ -80,6 +81,14 @@ Originator
 
 ```ts
 originator?: string
+```
+
+#### Property overlayBroadcast
+
+Whether to let overlay handle broadcasting (prevents UTXO spending on rejection)
+
+```ts
+overlayBroadcast?: boolean
 ```
 
 #### Property overlayHost

@@ -1,6 +1,6 @@
 import Transaction from '../transaction/Transaction.js'
 import * as Utils from '../primitives/utils.js'
-import { TopicBroadcaster, LookupResolver } from '../overlay-tools/index.js'
+import { TopicBroadcaster, LookupResolver, withDoubleSpendRetry } from '../overlay-tools/index.js'
 import { BroadcastResponse, BroadcastFailure } from '../transaction/Broadcaster.js'
 import { WalletInterface, WalletProtocol, CreateActionInput, OutpointString, PubKeyHex, CreateActionOutput, HexString } from '../wallet/Wallet.interfaces.js'
 import { PushDrop } from '../script/index.js'
@@ -22,6 +22,7 @@ const DEFAULT_CONFIG: KVStoreConfig = {
   topics: ['tm_kvstore'],
   networkPreset: 'mainnet',
   acceptDelayedBroadcast: false,
+  overlayBroadcast: false, // Use overlay broadcasting to prevent UTXO spending on broadcast rejection.
   tokenSetDescription: '', // Will be set dynamically
   tokenUpdateDescription: '', // Will be set dynamically
   tokenRemovalDescription: '' // Will be set dynamically
@@ -141,11 +142,7 @@ export class GlobalKVStore {
     const tags = options.tags ?? []
 
     try {
-      // Check for existing token to spend
-      const existingEntries = await this.queryOverlay({ key, controller }, { includeToken: true })
-      const existingToken = existingEntries.length > 0 ? existingEntries[0].token : undefined
-
-      // Create PushDrop locking script
+      // Create PushDrop locking script (reusable across retries)
       const pushdrop = new PushDrop(this.wallet, this.config.originator)
       const lockingScriptFields = [
         Utils.toArray(JSON.stringify(protocolID), 'utf8'),
@@ -167,82 +164,92 @@ export class GlobalKVStore {
         true
       )
 
-      let inputs: CreateActionInput[] = []
-      let inputBEEF: Beef | undefined
+      // Wrap entire operation in double-spend retry, including overlay query
+      const outpoint = await withDoubleSpendRetry(async () => {
+        // Re-query overlay on each attempt to get fresh token state
+        const existingEntries = await this.queryOverlay({ key, controller }, { includeToken: true })
+        const existingToken = existingEntries.length > 0 ? existingEntries[0].token : undefined
 
-      if (existingToken != null) {
-        inputs = [{
-          outpoint: `${existingToken.txid}.${existingToken.outputIndex}`,
-          unlockingScriptLength: 74,
-          inputDescription: 'Previous KVStore token'
-        }]
-        inputBEEF = existingToken.beef
-      }
+        if (existingToken != null) {
+          // Update existing token
+          const inputs: CreateActionInput[] = [{
+            outpoint: `${existingToken.txid}.${existingToken.outputIndex}`,
+            unlockingScriptLength: 74,
+            inputDescription: 'Previous KVStore token'
+          }]
+          const inputBEEF = existingToken.beef
 
-      if (inputs.length > 0) {
-        // Update existing token
-        const { signableTransaction } = await this.wallet.createAction({
-          description: tokenUpdateDescription,
-          inputBEEF: inputBEEF?.toBinary(),
-          inputs,
-          outputs: [{
-            satoshis: tokenAmount ?? this.config.tokenAmount as number,
-            lockingScript: lockingScript.toHex(),
-            outputDescription: 'KVStore token'
-          }],
-          options: {
-            acceptDelayedBroadcast: this.config.acceptDelayedBroadcast,
-            randomizeOutputs: false
+          const { signableTransaction } = await this.wallet.createAction({
+            description: tokenUpdateDescription,
+            inputBEEF: inputBEEF.toBinary(),
+            inputs,
+            outputs: [{
+              satoshis: tokenAmount ?? this.config.tokenAmount as number,
+              lockingScript: lockingScript.toHex(),
+              outputDescription: 'KVStore token'
+            }],
+            options: {
+              acceptDelayedBroadcast: this.config.acceptDelayedBroadcast,
+              noSend: this.config.overlayBroadcast,
+              randomizeOutputs: false
+            }
+          }, this.config.originator)
+
+          if (signableTransaction == null) {
+            throw new Error('Unable to create update transaction')
           }
-        }, this.config.originator)
 
-        if (signableTransaction == null) {
-          throw new Error('Unable to create update transaction')
-        }
+          const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
+          const unlocker = pushdrop.unlock(
+            this.config.protocolID as WalletProtocol,
+            key,
+            'anyone'
+          )
+          const unlockingScript = await unlocker.sign(tx, 0)
 
-        const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
-        const unlocker = pushdrop.unlock(
-          this.config.protocolID as WalletProtocol,
-          key,
-          'anyone'
-        )
-        const unlockingScript = await unlocker.sign(tx, 0)
+          const { tx: finalTx } = await this.wallet.signAction({
+            reference: signableTransaction.reference,
+            spends: { 0: { unlockingScript: unlockingScript.toHex() } },
+            options: {
+              acceptDelayedBroadcast: this.config.acceptDelayedBroadcast,
+              noSend: this.config.overlayBroadcast
+            }
+          }, this.config.originator)
 
-        const { tx: finalTx } = await this.wallet.signAction({
-          reference: signableTransaction.reference,
-          spends: { 0: { unlockingScript: unlockingScript.toHex() } }
-        }, this.config.originator)
-
-        if (finalTx == null) {
-          throw new Error('Unable to finalize update transaction')
-        }
-
-        const transaction = Transaction.fromAtomicBEEF(finalTx)
-        await this.submitToOverlay(transaction)
-        return `${transaction.id('hex')}.0`
-      } else {
-        // Create new token
-        const { tx } = await this.wallet.createAction({
-          description: tokenSetDescription,
-          outputs: [{
-            satoshis: tokenAmount ?? this.config.tokenAmount as number,
-            lockingScript: lockingScript.toHex(),
-            outputDescription: 'KVStore token'
-          }],
-          options: {
-            acceptDelayedBroadcast: this.config.acceptDelayedBroadcast,
-            randomizeOutputs: false
+          if (finalTx == null) {
+            throw new Error('Unable to finalize update transaction')
           }
-        }, this.config.originator)
 
-        if (tx == null) {
-          throw new Error('Failed to create transaction')
+          const transaction = Transaction.fromAtomicBEEF(finalTx)
+          await this.submitToOverlay(transaction)
+          return `${transaction.id('hex')}.0`
+        } else {
+          // Create new token
+          const { tx } = await this.wallet.createAction({
+            description: tokenSetDescription,
+            outputs: [{
+              satoshis: tokenAmount ?? this.config.tokenAmount as number,
+              lockingScript: lockingScript.toHex(),
+              outputDescription: 'KVStore token'
+            }],
+            options: {
+              acceptDelayedBroadcast: this.config.acceptDelayedBroadcast,
+              noSend: this.config.overlayBroadcast,
+              randomizeOutputs: false
+            }
+          }, this.config.originator)
+
+          if (tx == null) {
+            throw new Error('Failed to create transaction')
+          }
+
+          const transaction = Transaction.fromAtomicBEEF(tx)
+          await this.submitToOverlay(transaction)
+          return `${transaction.id('hex')}.0`
         }
+      }, this.topicBroadcaster)
 
-        const transaction = Transaction.fromAtomicBEEF(tx)
-        await this.submitToOverlay(transaction)
-        return `${transaction.id('hex')}.0`
-      }
+      return outpoint
     } finally {
       if (lockQueue.length > 0) {
         this.finishOperationOnKey(key, lockQueue)
@@ -274,54 +281,67 @@ export class GlobalKVStore {
     const tokenRemovalDescription = (options.tokenRemovalDescription != null && options.tokenRemovalDescription !== '') ? options.tokenRemovalDescription : `Remove KVStore value for ${key}`
 
     try {
-      const existingEntries = await this.queryOverlay({ key, controller }, { includeToken: true })
-
-      if (existingEntries.length === 0 || existingEntries[0].token == null) {
-        throw new Error('The item did not exist, no item was deleted.')
-      }
-
-      const existingToken = existingEntries[0].token
-      const inputs: CreateActionInput[] = [{
-        outpoint: `${existingToken.txid}.${existingToken.outputIndex}`,
-        unlockingScriptLength: 74,
-        inputDescription: 'KVStore token to remove'
-      }]
-
       const pushdrop = new PushDrop(this.wallet, this.config.originator)
-      const { signableTransaction } = await this.wallet.createAction({
-        description: tokenRemovalDescription,
-        inputBEEF: existingToken.beef.toBinary(),
-        inputs,
-        outputs,
-        options: {
-          acceptDelayedBroadcast: this.config.acceptDelayedBroadcast
+
+      // Remove token with double-spend retry
+      const txid = await withDoubleSpendRetry(async () => {
+        // Re-query overlay on each attempt to get fresh token state
+        const existingEntries = await this.queryOverlay({ key, controller }, { includeToken: true })
+
+        if (existingEntries.length === 0 || existingEntries[0].token == null) {
+          throw new Error('The item did not exist, no item was deleted.')
         }
-      }, this.config.originator)
 
-      if (signableTransaction == null) {
-        throw new Error('Unable to create removal transaction')
-      }
+        const existingToken = existingEntries[0].token
+        const inputs: CreateActionInput[] = [{
+          outpoint: `${existingToken.txid}.${existingToken.outputIndex}`,
+          unlockingScriptLength: 74,
+          inputDescription: 'KVStore token to remove'
+        }]
 
-      const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
-      const unlocker = pushdrop.unlock(
-        protocolID ?? this.config.protocolID as WalletProtocol,
-        key,
-        'anyone'
-      )
-      const unlockingScript = await unlocker.sign(tx, 0)
+        const { signableTransaction } = await this.wallet.createAction({
+          description: tokenRemovalDescription,
+          inputBEEF: existingToken.beef.toBinary(),
+          inputs,
+          outputs,
+          options: {
+            acceptDelayedBroadcast: this.config.acceptDelayedBroadcast,
+            randomizeOutputs: false,
+            noSend: this.config.overlayBroadcast
+          }
+        }, this.config.originator)
 
-      const { tx: finalTx } = await this.wallet.signAction({
-        reference: signableTransaction.reference,
-        spends: { 0: { unlockingScript: unlockingScript.toHex() } }
-      }, this.config.originator)
+        if (signableTransaction == null) {
+          throw new Error('Unable to create removal transaction')
+        }
 
-      if (finalTx == null) {
-        throw new Error('Unable to finalize removal transaction')
-      }
+        const tx = Transaction.fromAtomicBEEF(signableTransaction.tx)
+        const unlocker = pushdrop.unlock(
+          protocolID ?? this.config.protocolID as WalletProtocol,
+          key,
+          'anyone'
+        )
+        const unlockingScript = await unlocker.sign(tx, 0)
 
-      const transaction = Transaction.fromAtomicBEEF(finalTx)
-      await this.submitToOverlay(transaction)
-      return transaction.id('hex')
+        const { tx: finalTx } = await this.wallet.signAction({
+          reference: signableTransaction.reference,
+          spends: { 0: { unlockingScript: unlockingScript.toHex() } },
+          options: {
+            acceptDelayedBroadcast: this.config.acceptDelayedBroadcast,
+            noSend: this.config.overlayBroadcast
+          }
+        }, this.config.originator)
+
+        if (finalTx == null) {
+          throw new Error('Unable to finalize removal transaction')
+        }
+
+        const transaction = Transaction.fromAtomicBEEF(finalTx)
+        await this.submitToOverlay(transaction)
+        return transaction.id('hex')
+      }, this.topicBroadcaster)
+
+      return txid
     } finally {
       if (lockQueue.length > 0) {
         this.finishOperationOnKey(key, lockQueue)
