@@ -1,6 +1,7 @@
 import { AuthFetch } from '../auth/clients/index.js'
 import { DEFAULT_IDENTITY_CLIENT_OPTIONS, defaultIdentity, DisplayableIdentity, KNOWN_IDENTITY_TYPES } from './types/index.js'
 import {
+  Base64String,
   CertificateFieldNameUnder50Bytes,
   DiscoverByAttributesArgs,
   DiscoverByIdentityKeyArgs,
@@ -13,9 +14,9 @@ import {
 } from '../wallet/index.js'
 import { BroadcastFailure, BroadcastResponse, Transaction } from '../transaction/index.js'
 import Certificate from '../auth/certificates/Certificate.js'
-import { PushDrop } from '../script/index.js'
+import { LockingScript, PushDrop } from '../script/index.js'
 import { PrivateKey, Utils } from '../primitives/index.js'
-import { TopicBroadcaster } from '../overlay-tools/index.js'
+import { LookupResolver, SHIPBroadcaster, TopicBroadcaster } from '../overlay-tools/index.js'
 import { ContactsManager, Contact } from './ContactsManager.js'
 
 /**
@@ -132,6 +133,12 @@ export class IdentityClient {
     }
 
     const { certificates } = await this.wallet.discoverByIdentityKey(args, this.originator)
+
+    // TODO JACKIE REEEEEEEEEEEEEE
+    certificates.forEach(cert => {
+      console.log(cert.serialNumber)
+    })
+    
     return certificates.map(cert => {
       return IdentityClient.parseIdentity(cert)
     })
@@ -162,6 +169,8 @@ export class IdentityClient {
     // Guard if certificates might be absent
     const certs = certificatesResult?.certificates ?? []
 
+    console.log('reeeeeeeeee', certs)
+
     // Parse certificates and substitute with contacts where available
     return certs.map(cert =>
       contactByKey.get(cert.subject) ?? IdentityClient.parseIdentity(cert)
@@ -169,79 +178,89 @@ export class IdentityClient {
   }
 
   /**
-   * TODO: Implement once revocation overlay is created
+   * TODO: Implement once revocation overlay is created JACKIE REEEEEEEE
    * Remove public certificate revelation from overlay services by spending the identity token
    * @param serialNumber - Unique serial number of the certificate to revoke revelation
    */
-  // async revokeCertificateRevelation(
-  //   serialNumber: Base64String
-  // ): Promise<BroadcastResponse | BroadcastFailure> {
-  //   // 1. Find existing UTXO
-  //   const lookupResolver = new LookupResolver()
-  //   const result = await lookupResolver.query({
-  //     service: 'ls_identity',
-  //     query: {
-  //       serialNumber
-  //     }
-  //   })
+  async revokeCertificateRevelation(
+    serialNumber: Base64String
+  ): Promise<BroadcastResponse | BroadcastFailure> {
+    debugger
 
-  //   let outpoint: string
-  //   let lockingScript: LockingScript | undefined
-  //   if (result.type === 'output-list') {
-  //     const tx = Transaction.fromAtomicBEEF(result.outputs[this.options.outputIndex].beef)
-  //     outpoint = `${tx.id('hex')}.${this.options.outputIndex}` // Consider better way
-  //     lockingScript = tx.outputs[this.options.outputIndex].lockingScript
-  //   }
+    // 1. Find existing UTXO
+    const lookupResolver = new LookupResolver({
+      networkPreset: (await this.wallet.getNetwork({})).network
+    })
+    const result = await lookupResolver.query({
+      service: 'ls_identity',
+      query: {
+        serialNumber
+      }
+    })
 
-  //   if (lockingScript === undefined) {
-  //     throw new Error('Failed to get locking script for revelation output!')
-  //   }
+    console.log(result)
 
-  //   // 2. Parse results
-  //   const { signableTransaction } = await this.wallet.createAction({
-  //     description: '',
-  //     inputs: [{
-  //       inputDescription: 'Spend certificate revelation token',
-  //       outpoint,
-  //       unlockingScriptLength: 73
-  //     }],
-  //     options: {
-  //       randomizeOutputs: false
-  //     }
-  //   })
+    let outpoint: string
+    let lockingScript: LockingScript | undefined
+    if (result.type === 'output-list') {
+      const tx = Transaction.fromBEEF(result.outputs[0].beef)
+      outpoint = `${tx.id('hex')}.${this.options.outputIndex}` // Consider better way
+      lockingScript = tx.outputs[this.options.outputIndex].lockingScript
+    }
 
-  //   if (signableTransaction === undefined) {
-  //     throw new Error('Failed to create signable transaction')
-  //   }
+    if (lockingScript === undefined) {
+      throw new Error('Failed to get locking script for revelation output!')
+    }
 
-  //   const partialTx = Transaction.fromBEEF(signableTransaction.tx)
+    // 2. Parse results
+    const { signableTransaction } = await this.wallet.createAction({
+      description: 'Spend certificate revelation token',
+      inputBEEF: result.outputs[0].beef,
+      inputs: [{
+        inputDescription: 'Revelation token',
+        outpoint,
+        unlockingScriptLength: 74
+      }],
+      options: {
+        randomizeOutputs: false
+      }
+    })
 
-  //   const unlocker = new PushDrop(this.wallet).unlock(
-  //     this.options.protocolID,
-  //     this.options.keyID,
-  //     'self',
-  //     'all',
-  //     false,
-  //     1,
-  //     lockingScript
-  //   )
+    if (signableTransaction === undefined) {
+      throw new Error('Failed to create signable transaction')
+    }
 
-  //   const unlockingScript = await unlocker.sign(partialTx, this.options.outputIndex)
+    const partialTx = Transaction.fromBEEF(signableTransaction.tx)
+    
+    const unlocker = new PushDrop(this.wallet).unlock(
+      this.options.protocolID,
+      this.options.keyID,
+      'anyone'
+    )
 
-  //   const { tx: signedTx } = await this.wallet.signAction({
-  //     reference: signableTransaction.reference,
-  //     spends: {
-  //       [this.options.outputIndex]: {
-  //         unlockingScript: unlockingScript.toHex()
-  //       }
-  //     }
-  //   })
+    const unlockingScript = await unlocker.sign(partialTx, this.options.outputIndex)
 
-  //   // 4. Return broadcast status
-  //   // Submit the transaction to an overlay
-  //   const broadcaster = new SHIPBroadcaster(['tm_identity'])
-  //   return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
-  // }
+    const { tx: signedTx } = await this.wallet.signAction({
+      reference: signableTransaction.reference,
+      spends: {
+        [this.options.outputIndex]: {
+          unlockingScript: unlockingScript.toHex()
+        }
+      }
+    })
+
+    // 4. Return broadcast status
+    // Submit the transaction to an overlay
+
+    console.log("REEEEEEE")
+    const broadcaster = new SHIPBroadcaster(['tm_identity'])
+    console.log("REEEEEEE 2")
+
+    const broadcastResult = await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
+    console.log(broadcastResult)
+
+    return broadcastResult // await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
+  }
 
   /**
    * Load all records from the contacts basket
