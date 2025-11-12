@@ -564,6 +564,38 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ## Functions
 
+### Function: withDoubleSpendRetry
+
+Executes an operation with automatic retry logic for double-spend errors.
+When a double-spend is detected, broadcasts the competing transaction to
+update the overlay with missing state, then retries the operation.
+
+```ts
+export async function withDoubleSpendRetry<T>(operation: () => Promise<T>, broadcaster: TopicBroadcaster, maxRetries: number = MAX_DOUBLE_SPEND_RETRIES): Promise<T> 
+```
+
+See also: [TopicBroadcaster](./overlay-tools.md#class-topicbroadcaster)
+
+Returns
+
+The result of the successful operation
+
+Argument Details
+
++ **operation**
+  + The async operation to execute (e.g., createAction + signAction)
++ **broadcaster**
+  + The TopicBroadcaster to use for syncing missing state
++ **maxRetries**
+  + Maximum number of retry attempts (default: MAX_DOUBLE_SPEND_RETRIES)
+
+Throws
+
+If max retries exceeded or non-double-spend error occurs
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Enums](#enums), [Variables](#variables)
+
+---
 ## Types
 
 | |
