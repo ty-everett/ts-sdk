@@ -244,6 +244,7 @@
     "@eslint/js": "^9.23.0",
     "@jest/globals": "^29.7.0",
     "@rspack/cli": "^1.4.9",
+    "@rspack/core": "^1.4.11",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.14",
     "eslint": "^9.23.0",
@@ -256,8 +257,7 @@
     "ts2md": "^0.2.8",
     "tsconfig-to-dual-package": "^1.2.0",
     "typescript": "5.1",
-    "typescript-eslint": "^8.29.0",
-    "@rspack/core": "^1.4.11"
+    "typescript-eslint": "^8.29.0"
   },
   "ts-standard": {
     "project": "tsconfig.eslint.json",
