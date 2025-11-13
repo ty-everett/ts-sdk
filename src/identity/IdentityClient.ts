@@ -101,7 +101,7 @@ export class IdentityClient {
       options: {
         randomizeOutputs: false
       }
-    })
+    }, this.originator)
 
     if (tx !== undefined) {
       // Submit the transaction to an overlay
@@ -133,12 +133,6 @@ export class IdentityClient {
     }
 
     const { certificates } = await this.wallet.discoverByIdentityKey(args, this.originator)
-
-    // TODO JACKIE REEEEEEEEEEEEEE
-    certificates.forEach(cert => {
-      console.log(cert.serialNumber)
-    })
-    
     return certificates.map(cert => {
       return IdentityClient.parseIdentity(cert)
     })
@@ -169,8 +163,6 @@ export class IdentityClient {
     // Guard if certificates might be absent
     const certs = certificatesResult?.certificates ?? []
 
-    console.log('reeeeeeeeee', certs)
-
     // Parse certificates and substitute with contacts where available
     return certs.map(cert =>
       contactByKey.get(cert.subject) ?? IdentityClient.parseIdentity(cert)
@@ -178,15 +170,12 @@ export class IdentityClient {
   }
 
   /**
-   * TODO: Implement once revocation overlay is created JACKIE REEEEEEEE
    * Remove public certificate revelation from overlay services by spending the identity token
    * @param serialNumber - Unique serial number of the certificate to revoke revelation
    */
   async revokeCertificateRevelation(
     serialNumber: Base64String
   ): Promise<BroadcastResponse | BroadcastFailure> {
-    debugger
-
     // 1. Find existing UTXO
     const lookupResolver = new LookupResolver({
       networkPreset: (await this.wallet.getNetwork({})).network
@@ -197,8 +186,6 @@ export class IdentityClient {
         serialNumber
       }
     })
-
-    console.log(result)
 
     let outpoint: string
     let lockingScript: LockingScript | undefined
@@ -224,7 +211,7 @@ export class IdentityClient {
       options: {
         randomizeOutputs: false
       }
-    })
+    }, this.originator)
 
     if (signableTransaction === undefined) {
       throw new Error('Failed to create signable transaction')
@@ -232,7 +219,7 @@ export class IdentityClient {
 
     const partialTx = Transaction.fromBEEF(signableTransaction.tx)
     
-    const unlocker = new PushDrop(this.wallet).unlock(
+    const unlocker = new PushDrop(this.wallet, this.originator).unlock(
       this.options.protocolID,
       this.options.keyID,
       'anyone'
@@ -247,19 +234,17 @@ export class IdentityClient {
           unlockingScript: unlockingScript.toHex()
         }
       }
-    })
+    }, this.originator)
 
     // 4. Return broadcast status
     // Submit the transaction to an overlay
-
-    console.log("REEEEEEE")
-    const broadcaster = new SHIPBroadcaster(['tm_identity'])
-    console.log("REEEEEEE 2")
-
-    const broadcastResult = await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
-    console.log(broadcastResult)
-
-    return broadcastResult // await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
+    const broadcaster = new SHIPBroadcaster(['tm_identity'], {
+      networkPreset: (await this.wallet.getNetwork({})).network,
+      requireAcknowledgmentFromAllHostsForTopics: [],
+      requireAcknowledgmentFromAnyHostForTopics: [],
+      requireAcknowledgmentFromSpecificHostsForTopics: {'tm_identity': []},
+    });
+    return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
   }
 
   /**

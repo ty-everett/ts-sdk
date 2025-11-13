@@ -1780,7 +1780,6 @@ export default class WalletWireTransceiver implements WalletInterface {
     },
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<{ relinquished: true }> {
-    debugger
     const paramWriter = new Utils.Writer()
     const typeAsArray = Utils.toArray(args.type, 'base64')
     paramWriter.write(typeAsArray)
