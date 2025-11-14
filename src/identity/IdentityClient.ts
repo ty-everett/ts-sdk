@@ -207,7 +207,8 @@ export class IdentityClient {
         unlockingScriptLength: 74
       }],
       options: {
-        randomizeOutputs: false
+        randomizeOutputs: false,
+        acceptDelayedBroadcast: false
       }
     }, this.originator)
 
