@@ -173,7 +173,7 @@ export class IdentityClient {
    * Remove public certificate revelation from overlay services by spending the identity token
    * @param serialNumber - Unique serial number of the certificate to revoke revelation
    */
-  async revokeCertificateRevelation(
+  async revokeCertificateRevelation (
     serialNumber: Base64String
   ): Promise<BroadcastResponse | BroadcastFailure> {
     // 1. Find existing UTXO
@@ -187,7 +187,7 @@ export class IdentityClient {
       }
     })
 
-    let outpoint: string
+    let outpoint: string | undefined
     let lockingScript: LockingScript | undefined
     if (result.type === 'output-list') {
       const tx = Transaction.fromBEEF(result.outputs[0].beef)
@@ -195,7 +195,7 @@ export class IdentityClient {
       lockingScript = tx.outputs[this.options.outputIndex].lockingScript
     }
 
-    if (lockingScript === undefined) {
+    if (lockingScript === undefined || outpoint === undefined) {
       throw new Error('Failed to get locking script for revelation output!')
     }
 
@@ -218,7 +218,7 @@ export class IdentityClient {
     }
 
     const partialTx = Transaction.fromBEEF(signableTransaction.tx)
-    
+
     const unlocker = new PushDrop(this.wallet, this.originator).unlock(
       this.options.protocolID,
       this.options.keyID,
@@ -242,8 +242,8 @@ export class IdentityClient {
       networkPreset: (await this.wallet.getNetwork({})).network,
       requireAcknowledgmentFromAllHostsForTopics: [],
       requireAcknowledgmentFromAnyHostForTopics: [],
-      requireAcknowledgmentFromSpecificHostsForTopics: {'tm_identity': []},
-    });
+      requireAcknowledgmentFromSpecificHostsForTopics: { tm_identity: [] }
+    })
     return await broadcaster.broadcast(Transaction.fromAtomicBEEF(signedTx as number[]))
   }
 
