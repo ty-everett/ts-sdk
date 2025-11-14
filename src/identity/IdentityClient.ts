@@ -13,7 +13,7 @@ import {
 } from '../wallet/index.js'
 import { BroadcastFailure, BroadcastResponse, Transaction } from '../transaction/index.js'
 import Certificate from '../auth/certificates/Certificate.js'
-import { LockingScript, PushDrop } from '../script/index.js'
+import { PushDrop } from '../script/index.js'
 import { PrivateKey, Utils } from '../primitives/index.js'
 import { LookupResolver, SHIPBroadcaster, TopicBroadcaster, withDoubleSpendRetry } from '../overlay-tools/index.js'
 import { ContactsManager, Contact } from './ContactsManager.js'
