@@ -48,7 +48,6 @@ export class IdentityClient {
     certificate: WalletCertificate,
     fieldsToReveal: CertificateFieldNameUnder50Bytes[]
   ): Promise<BroadcastResponse | BroadcastFailure> {
-    debugger
     if (Object.keys(certificate.fields).length === 0) {
       throw new Error('Public reveal failed: Certificate has no fields to reveal!')
     }
@@ -123,7 +122,6 @@ export class IdentityClient {
     args: DiscoverByIdentityKeyArgs,
     overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
-    debugger
     if (overrideWithContacts) {
       // Override results with personal contacts if available
       const contacts = await this.contactsManager.getContacts(args.identityKey)
