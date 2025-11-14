@@ -61,7 +61,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export class ContactsManager {
-    constructor(wallet?: WalletInterface) 
+    constructor(wallet?: WalletInterface, originator?: string) 
     async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
     async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
     async removeContact(identityKey: string): Promise<void> 

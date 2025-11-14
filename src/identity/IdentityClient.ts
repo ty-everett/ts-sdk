@@ -344,13 +344,15 @@ export class IdentityClient {
         badgeIconURL = 'XUUV39HVPkpmMzYNTx7rpKzJvXfeiVyQWg2vfSpjBAuhunTCA9uG'
         badgeClickURL = 'https://projectbabbage.com/docs/self-identity' // TODO: Make this doc page exist
         break
-      default:
-        name = defaultIdentity.name
-        avatarURL = decryptedFields.profilePhoto
-        badgeLabel = defaultIdentity.badgeLabel
-        badgeIconURL = defaultIdentity.badgeIconURL
-        badgeClickURL = defaultIdentity.badgeClickURL // TODO: Make this doc page exist
+      default: {
+        const parsed = IdentityClient.tryToParseGenericIdentity(type, decryptedFields, certifierInfo)
+        name = parsed.name
+        avatarURL = parsed.avatarURL
+        badgeLabel = parsed.badgeLabel
+        badgeIconURL = parsed.badgeIconURL
+        badgeClickURL = parsed.badgeClickURL
         break
+      }
     }
 
     return {
@@ -362,5 +364,60 @@ export class IdentityClient {
       badgeLabel,
       badgeClickURL
     }
+  }
+
+  /**
+   * Helper to check if a value is a non-empty string
+   */
+  private static hasValue (value: any): value is string {
+    return value !== undefined && value !== null && value !== ''
+  }
+
+  /**
+   * Try to parse identity information from unknown certificate types
+   * by checking common field names
+   */
+  private static tryToParseGenericIdentity (
+    type: string,
+    decryptedFields: Record<string, any>,
+    certifierInfo: any
+  ): { name: string, avatarURL: string, badgeLabel: string, badgeIconURL: string, badgeClickURL: string } {
+    // Try to construct a name from common field patterns
+    const firstName = decryptedFields.firstName
+    const lastName = decryptedFields.lastName
+    const fullName = IdentityClient.hasValue(firstName) && IdentityClient.hasValue(lastName)
+      ? `${firstName} ${lastName}`
+      : IdentityClient.hasValue(firstName)
+        ? firstName
+        : IdentityClient.hasValue(lastName)
+          ? lastName
+          : undefined
+
+    const name = IdentityClient.hasValue(decryptedFields.name)
+      ? decryptedFields.name
+      : IdentityClient.hasValue(decryptedFields.userName)
+        ? decryptedFields.userName
+        : fullName ?? (IdentityClient.hasValue(decryptedFields.email) ? decryptedFields.email : defaultIdentity.name)
+
+    // Try to find an avatar/photo from common field names
+    const avatarURL = IdentityClient.hasValue(decryptedFields.profilePhoto)
+      ? decryptedFields.profilePhoto
+      : IdentityClient.hasValue(decryptedFields.avatar)
+        ? decryptedFields.avatar
+        : IdentityClient.hasValue(decryptedFields.icon)
+          ? decryptedFields.icon
+          : IdentityClient.hasValue(decryptedFields.photo)
+            ? decryptedFields.photo
+            : defaultIdentity.avatarURL
+
+    // Generate badge information
+    const badgeLabel = IdentityClient.hasValue(certifierInfo?.name)
+      ? `${type} certified by ${String(certifierInfo.name)}`
+      : defaultIdentity.badgeLabel
+
+    const badgeIconURL = IdentityClient.hasValue(certifierInfo?.iconUrl) ? certifierInfo.iconUrl : defaultIdentity.badgeIconURL
+    const badgeClickURL = defaultIdentity.badgeClickURL
+
+    return { name, avatarURL, badgeLabel, badgeIconURL, badgeClickURL }
   }
 }
