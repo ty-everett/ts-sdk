@@ -189,7 +189,7 @@ export class IdentityClient {
     let lockingScript: LockingScript | undefined
     if (result.type === 'output-list') {
       const tx = Transaction.fromBEEF(result.outputs[0].beef)
-      outpoint = `${tx.id('hex')}.${this.options.outputIndex}` // Consider better way
+      outpoint = `${tx.id('hex')}.${this.options.outputIndex}`
       lockingScript = tx.outputs[this.options.outputIndex].lockingScript
     }
 
