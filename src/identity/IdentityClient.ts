@@ -48,6 +48,7 @@ export class IdentityClient {
     certificate: WalletCertificate,
     fieldsToReveal: CertificateFieldNameUnder50Bytes[]
   ): Promise<BroadcastResponse | BroadcastFailure> {
+    debugger
     if (Object.keys(certificate.fields).length === 0) {
       throw new Error('Public reveal failed: Certificate has no fields to reveal!')
     }
@@ -75,10 +76,10 @@ export class IdentityClient {
       certificate,
       fieldsToReveal,
       verifier: new PrivateKey(1).toPublicKey().toString()
-    })
+    }, this.originator)
 
     // Build the lockingScript with pushdrop.create() and the transaction with createAction()
-    const lockingScript = await new PushDrop(this.wallet).lock(
+    const lockingScript = await new PushDrop(this.wallet, this.originator).lock(
       [Utils.toArray(JSON.stringify({ ...certificate, keyring: keyringForVerifier }))],
       this.options.protocolID,
       this.options.keyID,
@@ -122,6 +123,7 @@ export class IdentityClient {
     args: DiscoverByIdentityKeyArgs,
     overrideWithContacts = true
   ): Promise<DisplayableIdentity[]> {
+    debugger
     if (overrideWithContacts) {
       // Override results with personal contacts if available
       const contacts = await this.contactsManager.getContacts(args.identityKey)
