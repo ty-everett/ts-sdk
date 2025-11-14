@@ -134,7 +134,7 @@ export class IdentityClient {
     async publiclyRevealAttributes(certificate: WalletCertificate, fieldsToReveal: CertificateFieldNameUnder50Bytes[]): Promise<BroadcastResponse | BroadcastFailure> 
     async resolveByIdentityKey(args: DiscoverByIdentityKeyArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
     async resolveByAttributes(args: DiscoverByAttributesArgs, overrideWithContacts = true): Promise<DisplayableIdentity[]> 
-    async revokeCertificateRevelation(serialNumber: Base64String): Promise<BroadcastResponse | BroadcastFailure> 
+    async revokeCertificateRevelation(serialNumber: Base64String): Promise<void> 
     public async getContacts(identityKey?: PubKeyHex, forceRefresh = false, limit = 1000): Promise<Contact[]> 
     public async saveContact(contact: DisplayableIdentity, metadata?: Record<string, any>): Promise<void> 
     public async removeContact(identityKey: PubKeyHex): Promise<void> 
@@ -268,9 +268,9 @@ Argument Details
 Remove public certificate revelation from overlay services by spending the identity token
 
 ```ts
-async revokeCertificateRevelation(serialNumber: Base64String): Promise<BroadcastResponse | BroadcastFailure> 
+async revokeCertificateRevelation(serialNumber: Base64String): Promise<void> 
 ```
-See also: [Base64String](./wallet.md#type-base64string), [BroadcastFailure](./transaction.md#interface-broadcastfailure), [BroadcastResponse](./transaction.md#interface-broadcastresponse)
+See also: [Base64String](./wallet.md#type-base64string)
 
 Argument Details
 

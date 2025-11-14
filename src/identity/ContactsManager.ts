@@ -214,7 +214,7 @@ export class ContactsManager {
     }, this.originator)
 
     // Create locking script for the new contact token
-    const lockingScript = await new PushDrop(this.wallet).lock(
+    const lockingScript = await new PushDrop(this.wallet, this.originator).lock(
       [ciphertext],
       CONTACT_PROTOCOL_ID,
       keyID,
@@ -226,7 +226,7 @@ export class ContactsManager {
       const [txid, outputIndex] = String(existingOutput.outpoint).split('.')
       const prevOutpoint = `${txid}.${outputIndex}` as const
 
-      const pushdrop = new PushDrop(this.wallet)
+      const pushdrop = new PushDrop(this.wallet, this.originator)
       const { signableTransaction } = await this.wallet.createAction({
         description: 'Update Contact',
         inputBEEF: outputs.BEEF as number[],
@@ -339,7 +339,7 @@ export class ContactsManager {
           // Found the contact's output, spend it without creating a new one
           const prevOutpoint = `${txid}.${outputIndex}` as const
 
-          const pushdrop = new PushDrop(this.wallet)
+          const pushdrop = new PushDrop(this.wallet, this.originator)
           const { signableTransaction } = await this.wallet.createAction({
             description: 'Delete Contact',
             inputBEEF: outputs.BEEF as number[],

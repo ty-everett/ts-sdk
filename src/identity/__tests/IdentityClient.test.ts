@@ -193,7 +193,7 @@ describe('IdentityClient', () => {
         certificate,
         fieldsToReveal,
         verifier: expect.any(String)
-      })
+      }, undefined)
 
       // Validate that createAction was called.
       expect(walletMock.createAction).toHaveBeenCalled()
