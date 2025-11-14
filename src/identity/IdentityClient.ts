@@ -1,4 +1,3 @@
-import { AuthFetch } from '../auth/clients/index.js'
 import { DEFAULT_IDENTITY_CLIENT_OPTIONS, defaultIdentity, DisplayableIdentity, KNOWN_IDENTITY_TYPES } from './types/index.js'
 import {
   Base64String,
@@ -23,7 +22,6 @@ import { ContactsManager, Contact } from './ContactsManager.js'
  * IdentityClient lets you discover who others are, and let the world know who you are.
  */
 export class IdentityClient {
-  private readonly authClient: AuthFetch
   private readonly wallet: WalletInterface
   private readonly contactsManager: ContactsManager
   constructor (
@@ -31,9 +29,9 @@ export class IdentityClient {
     private readonly options = DEFAULT_IDENTITY_CLIENT_OPTIONS,
     private readonly originator?: OriginatorDomainNameStringUnder250Bytes
   ) {
+    this.originator = originator
     this.wallet = wallet ?? new WalletClient()
-    this.authClient = new AuthFetch(this.wallet)
-    this.contactsManager = new ContactsManager(this.wallet)
+    this.contactsManager = new ContactsManager(this.wallet, this.originator)
   }
 
   /**
