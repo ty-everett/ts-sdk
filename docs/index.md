@@ -52,7 +52,7 @@ Finally, you can deep dive into the details of the interface and types in the re
 - [Primitives](./reference/primitives.md)
 - [Script](./reference/script.md)
 - [Transaction](./reference/transaction.md)
-- [Mutual Authenitcation](./reference/auth.md)
+- [Mutual Authentication](./reference/auth.md)
 - [Identity](./reference/identity.md)
 - [Overlay Tools](./reference/overlay-tools.md)
 - [Registry](./reference/registry.md)
