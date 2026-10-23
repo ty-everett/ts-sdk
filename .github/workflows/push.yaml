@@ -6,28 +6,32 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: ['22.23.4', '24.22.1']
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Verify selected patched runtime
+      env:
+        EXPECTED_NODE: ${{ matrix.node-version }}
+      run: node -e 'require("node:assert/strict").equal(process.versions.node, process.env.EXPECTED_NODE)'
     - name: Cache node_modules
       id: cache-modules
       uses: actions/cache@v4
       with:
         path: node_modules
-        key: ${{ matrix.node-version }}-${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+        key: ${{ matrix.node-version }}-${{ runner.OS }}-build-${{ hashFiles('package-lock.json') }}
     - name: Build
       if: steps.cache-modules.outputs.cache-hit != 'true'
-      run: npm install
+      run: npm ci
     - name: Lint
       run: npm run lint:ci
     - name: Test with Coverage
       run: npm run test:coverage
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage/lcov.info
@@ -41,28 +45,30 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.repository == 'bsv-blockchain/ts-sdk' && github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
     - name: Authenticate with registry
       run: echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > ~/.npmrc
       env:
         NODE_AUTH_TOKEN: ${{ secrets.BSV_NPM_TOKEN }}
-    - uses: actions/checkout@v3
-    - name: Use Node.js 20.x
-      uses: actions/setup-node@v1
+    - uses: actions/checkout@v7
+    - name: Use Node.js 24.22.1
+      uses: actions/setup-node@v7
       with:
-        node-version: 20.x
+        node-version: '24.22.1'
       env:
         NODE_AUTH_TOKEN: ${{ secrets.BSV_NPM_TOKEN }}
+    - name: Verify publishing runtime
+      run: node -e 'require("node:assert/strict").equal(process.versions.node, "24.22.1")'
     - name: Cache node_modules
       id: cache-modules
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: node_modules
-        key: 20.x-${{ runner.OS }}-build-${{ hashFiles('package.json') }}
+        key: 24.22.1-${{ runner.OS }}-build-${{ hashFiles('package-lock.json') }}
     - name: Install deps
       if: steps.cache-modules.outputs.cache-hit != 'true'
-      run: npm install
+      run: npm ci
     - name: Build
       run: npm run build
     - name: Publish to NPM (expected to fail if version was not bumped manually)
